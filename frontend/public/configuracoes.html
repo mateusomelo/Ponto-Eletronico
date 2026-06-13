@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Configurações — Ponto Eletrônico</title>
+  <link rel="stylesheet" href="/fa/css/all.min.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <style>
+    @media (max-width: 600px) {
+      .form-row { grid-template-columns: 1fr !important; }
+    }
+  </style>
+</head>
+<body>
+<div id="sidebarMount"></div>
+<div class="main" id="main">
+  <div id="topbarMount"></div>
+  <div class="page-content">
+    <div class="card" style="max-width:720px">
+      <div class="card-header">
+        <span class="card-title"><i class="fas fa-cog" style="color:#3b82f6"></i> Configurações do Sistema</span>
+        <button class="btn btn-primary" id="btnSalvar"><i class="fas fa-save"></i> Salvar</button>
+      </div>
+      <div id="cfgBody"><div class="page-loader"><span class="spinner"></span></div></div>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/layout.js"></script>
+<script>
+let cfgData = {};
+
+const labels = {
+  empresa_nome:         { label: 'Nome da empresa',               tipo: 'text'   },
+  empresa_cnpj:         { label: 'CNPJ',                          tipo: 'text'   },
+  jornada_horas_dia:    { label: 'Horas por dia',                 tipo: 'number' },
+  intervalo_minutos:    { label: 'Intervalo mínimo (minutos)',     tipo: 'number' },
+  fuso_horario:         { label: 'Fuso horário',                  tipo: 'text'   },
+  geolocalizacao:       { label: 'Exigir geolocalização',         tipo: 'select', opts: [['1','Sim'],['0','Não']] },
+  max_tentativas_login: { label: 'Máx. tentativas de login',      tipo: 'number' },
+  session_expira_horas: { label: 'Expiração da sessão (horas)',   tipo: 'number' },
+};
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.requireAuth()) return;
+  renderLayout('Configurações');
+
+  if (!Auth.hasPermission('sistema.configurar')) {
+    document.querySelector('.page-content').innerHTML =
+      '<div class="alert alert-danger"><i class="fas fa-ban"></i> Você não possui permissão para acessar este recurso.</div>';
+    return;
+  }
+
+  try {
+    cfgData = await API.get('/configuracoes');
+    renderCfg();
+  } catch {
+    toast('Erro ao carregar as configurações.', 'error');
+  }
+});
+
+function renderCfg() {
+  const body = document.getElementById('cfgBody');
+  let html = '<div class="form-row" style="grid-template-columns:1fr 1fr">';
+
+  for (const [chave, meta] of Object.entries(labels)) {
+    const entry = cfgData[chave] || {};
+    const valor = entry.valor || '';
+
+    html += `<div class="form-group">
+      <label class="form-label">${meta.label}</label>`;
+
+    if (meta.tipo === 'select') {
+      html += `<select class="form-control" data-chave="${chave}">`;
+      meta.opts.forEach(([v, l]) => {
+        html += `<option value="${v}" ${valor === v ? 'selected' : ''}>${l}</option>`;
+      });
+      html += '</select>';
+    } else {
+      html += `<input type="${meta.tipo}" class="form-control" data-chave="${chave}" value="${valor}" />`;
+    }
+
+    if (entry.descricao) html += `<div class="text-sm text-muted mt-1">${entry.descricao}</div>`;
+    html += '</div>';
+  }
+
+  html += '</div>';
+  body.innerHTML = html;
+}
+
+document.getElementById('btnSalvar').addEventListener('click', async () => {
+  const inputs  = document.querySelectorAll('#cfgBody [data-chave]');
+  const updates = {};
+  inputs.forEach(el => { updates[el.dataset.chave] = el.value; });
+
+  const btn = document.getElementById('btnSalvar');
+  btn.disabled = true;
+
+  try {
+    await API.put('/configuracoes', updates);
+    toast('Configurações salvas com sucesso!', 'success');
+  } catch (err) {
+    toast(err.data?.erro || 'Erro ao salvar as configurações.', 'error');
+  } finally {
+    btn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>

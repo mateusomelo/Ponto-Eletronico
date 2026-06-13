@@ -1,0 +1,29 @@
+# Dependências
+node_modules/
+backend/node_modules/
+
+# Ambiente — NUNCA commitar chaves/senhas
+.env
+**/.env
+
+# Uploads (arquivos de usuários — não versionar)
+uploads/
+backend/uploads/
+
+# Certificados SSL locais
+backend/certs/
+
+# Gerado em build — não commitar (gerado por build.sh no Netlify)
+frontend/public/_redirects
+
+# Backup do banco — contém dados reais
+database/backup_producao.sql
+
+# Logs
+*.log
+server.log
+server.err
+
+# Sistema
+.DS_Store
+Thumbs.db

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — Ponto Eletrônico</title>
+  <link rel="stylesheet" href="/fa/css/all.min.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <script src="/chartjs/chart.umd.js"></script>
+  <style>
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 12px 24px; border-radius: 30px; font-weight: 700; font-size: 1rem;
+      margin-bottom: 24px;
+    }
+    .status-pill.dentro { background: #dcfce7; color: #166534; }
+    .status-pill.fora   { background: #fee2e2; color: #991b1b; }
+    .status-dot { width: 10px; height: 10px; border-radius: 50%; animation: blink 1.4s infinite; }
+    .dentro .status-dot { background: #16a34a; }
+    .fora   .status-dot { background: #dc2626; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    @media (max-width: 768px) {
+      /* Cabeçalho do funcionário: empilha verticalmente */
+      #dashContent .card > div:first-child { flex-direction: column !important; align-items: flex-start !important; }
+      #dashContent .card > div:first-child .btn { width: 100%; justify-content: center; }
+      /* Gráficos menores */
+      .chart-container { height: 180px !important; }
+      /* Grid de gráficos lado a lado vira coluna */
+      #dashContent [style*="display:grid"]   { grid-template-columns: 1fr !important; }
+      #dashContent [style*="display: grid"]  { grid-template-columns: 1fr !important; }
+      .stats-grid { grid-template-columns: 1fr 1fr !important; }
+    }
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr !important; }
+      .status-pill { padding: 10px 16px; font-size: .9rem; }
+    }
+  </style>
+</head>
+<body>
+<div id="sidebarMount"></div>
+<div class="main" id="main">
+  <div id="topbarMount"></div>
+  <div class="page-content" id="dashContent">
+    <div class="page-loader"><span class="spinner"></span></div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/layout.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.requireAuth()) return;
+  renderLayout('Dashboard');
+
+  try {
+    const data = await API.get('/dashboard');
+    if (data.tipo === 'funcionario') renderFuncionario(data);
+    else                             renderAdmin(data);
+  } catch (err) {
+    toast(err.data?.erro || 'Erro ao carregar o dashboard.', 'error');
+  }
+});
+
+// ── Dashboard Funcionário ────────────────────────────────────────────────
+function renderFuncionario(data) {
+  const user      = Auth.getUsuario();
+  const nome      = user?.nome || '';
+  const cargo     = user?.cargo_nome || '';
+  const saudacao  = saudacaoHora();
+  const statusCls = data.no_trabalho ? 'dentro' : 'fora';
+  const statusTxt = data.no_trabalho ? 'Você está trabalhando' : 'Você está fora do trabalho';
+  const ultimoTxt = data.ultimo_registro
+    ? `Último registro: <strong>${data.ultimo_registro.tipo}</strong> às ${fmtHora(data.ultimo_registro.data_hora)}`
+    : 'Nenhum registro realizado hoje.';
+
+  document.getElementById('dashContent').innerHTML = `
+    <div style="max-width:820px">
+      <!-- Saudação -->
+      <div class="card mb-6" style="padding:24px 28px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
+          <div>
+            <h2 style="font-size:1.3rem;font-weight:800;margin-bottom:4px">${saudacao}, ${nome.split(' ')[0]}!</h2>
+            <p class="text-muted text-sm">${cargo} · ${new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'})}</p>
+          </div>
+          <a href="ponto.html" class="btn btn-primary btn-lg">
+            <i class="fas fa-clock"></i> Registrar Ponto
+          </a>
+        </div>
+
+        <div style="margin-top:20px">
+          <div class="status-pill ${statusCls}">
+            <span class="status-dot"></span>
+            ${statusTxt}
+          </div>
+          <p class="text-sm text-muted">${ultimoTxt}</p>
+        </div>
+      </div>
+
+      <!-- Estatísticas pessoais -->
+      <div class="stats-grid mb-6" style="grid-template-columns:repeat(4,1fr)">
+        <div class="stat-card">
+          <div class="stat-icon orange"><i class="fas fa-calendar-day"></i></div>
+          <div class="stat-body"><div class="stat-value">${data.registros_hoje}</div><div class="stat-label">Registros Hoje</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue"><i class="fas fa-calendar-week"></i></div>
+          <div class="stat-body"><div class="stat-value">${data.registros_semana}</div><div class="stat-label">Esta Semana</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green"><i class="fas fa-calendar-alt"></i></div>
+          <div class="stat-body"><div class="stat-value">${data.registros_mes}</div><div class="stat-label">Este Mês</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple"><i class="fas fa-business-time"></i></div>
+          <div class="stat-body"><div class="stat-value">${data.dias_mes}</div><div class="stat-label">Dias Trabalhados</div></div>
+        </div>
+      </div>
+
+      <!-- Gráfico + Últimos registros -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px" id="gridPessoal">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title"><i class="fas fa-chart-bar" style="color:#3b82f6"></i> Meus Registros (7 dias)</span>
+          </div>
+          <div class="chart-container"><canvas id="chartPessoal"></canvas></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title"><i class="fas fa-history" style="color:#f59e0b"></i> Últimos Registros</span>
+            <a href="historico.html" class="btn btn-sm btn-outline">Ver todos</a>
+          </div>
+          <div id="tblPontosFunc"></div>
+        </div>
+      </div>
+    </div>`;
+
+  // Gráfico pessoal
+  const presData = data.presenca_diaria || [];
+  new Chart(document.getElementById('chartPessoal'), {
+    type: 'bar',
+    data: {
+      labels: presData.map(r => new Date(r.dia).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit' })),
+      datasets: [{ label: 'Registros', data: presData.map(r => r.total),
+        backgroundColor: '#3b82f680', borderColor: '#3b82f6', borderWidth: 2, borderRadius: 6 }],
+    },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } },
+  });
+
+  // Tabela últimos registros
+  const tb = document.getElementById('tblPontosFunc');
+  if (!data.ultimos_pontos.length) {
+    tb.innerHTML = '<div class="table-empty" style="padding:20px">Nenhum registro encontrado.</div>';
+  } else {
+    tb.innerHTML = data.ultimos_pontos.map(r => `
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border)">
+        <span class="badge ${r.tipo === 'entrada' ? 'badge-success' : 'badge-danger'}">${r.tipo}</span>
+        <div style="flex:1">
+          <div class="text-sm fw-600">${fmtDataHora(r.data_hora)}</div>
+          <div class="text-sm text-muted">${r.dispositivo || '-'} · ${r.ip || '-'}</div>
+        </div>
+      </div>`).join('');
+  }
+
+  if (window.innerWidth < 700) {
+    const g = document.getElementById('gridPessoal');
+    if (g) g.style.gridTemplateColumns = '1fr';
+  }
+}
+
+function saudacaoHora() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Bom dia';
+  if (h < 18) return 'Boa tarde';
+  return 'Boa noite';
+}
+
+// ── Dashboard Admin / Supervisor ──────────────────────────────────────────
+function renderAdmin(data) {
+  const isResp = window.innerWidth < 900;
+
+  document.getElementById('dashContent').innerHTML = `
+    <!-- Estatísticas -->
+    <div class="stats-grid mb-6">
+      <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-users"></i></div><div class="stat-body"><div class="stat-value">${data.total_usuarios}</div><div class="stat-label">Total de Usuários</div></div></div>
+      <div class="stat-card"><div class="stat-icon green"><i class="fas fa-user-check"></i></div><div class="stat-body"><div class="stat-value">${data.usuarios_ativos}</div><div class="stat-label">Usuários Ativos</div></div></div>
+      <div class="stat-card"><div class="stat-icon cyan"><i class="fas fa-building"></i></div><div class="stat-body"><div class="stat-value">${data.presentes_agora}</div><div class="stat-label">Presentes Agora</div></div></div>
+      <div class="stat-card"><div class="stat-icon orange"><i class="fas fa-calendar-day"></i></div><div class="stat-body"><div class="stat-value">${data.registros_hoje}</div><div class="stat-label">Registros Hoje</div></div></div>
+      <div class="stat-card"><div class="stat-icon purple"><i class="fas fa-calendar-week"></i></div><div class="stat-body"><div class="stat-value">${data.registros_semana}</div><div class="stat-label">Registros na Semana</div></div></div>
+      <div class="stat-card"><div class="stat-icon red"><i class="fas fa-calendar-alt"></i></div><div class="stat-body"><div class="stat-value">${data.registros_mes}</div><div class="stat-label">Registros no Mês</div></div></div>
+    </div>
+
+    <!-- Gráficos -->
+    <div style="display:grid;grid-template-columns:${isResp ? '1fr' : '1fr 1fr'};gap:16px;margin-bottom:24px">
+      <div class="card">
+        <div class="card-header"><span class="card-title"><i class="fas fa-chart-bar" style="color:#3b82f6"></i> Presença Diária (7 dias)</span></div>
+        <div class="chart-container"><canvas id="chartPresenca"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title"><i class="fas fa-clock" style="color:#10b981"></i> Registros por Hora (Hoje)</span></div>
+        <div class="chart-container"><canvas id="chartHoras"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Tabelas -->
+    <div style="display:grid;grid-template-columns:${isResp ? '1fr' : '1fr 1fr'};gap:16px">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><i class="fas fa-clock" style="color:#f59e0b"></i> Últimos Registros de Ponto</span>
+          <a href="historico.html" class="btn btn-sm btn-outline">Ver todos</a>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead><tr><th>Funcionário</th><th>Tipo</th><th>Horário</th></tr></thead>
+            <tbody id="tblPontos"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title"><i class="fas fa-user-clock" style="color:#8b5cf6"></i> Últimos Acessos</span></div>
+        <div class="table-container">
+          <table>
+            <thead><tr><th>Usuário</th><th>Cargo</th><th>Último Acesso</th></tr></thead>
+            <tbody id="tblAcessos"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
+
+  // Gráfico de presença
+  const presData = data.presenca_diaria || [];
+  new Chart(document.getElementById('chartPresenca'), {
+    type: 'bar',
+    data: {
+      labels: presData.map(r => new Date(r.dia).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit' })),
+      datasets: [{ label: 'Funcionários', data: presData.map(r => r.total),
+        backgroundColor: '#3b82f680', borderColor: '#3b82f6', borderWidth: 2, borderRadius: 6 }],
+    },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } },
+  });
+
+  // Gráfico por hora
+  const horaVals = Array.from({ length: 18 }, (_, i) => i + 5);
+  const porHoraMap = {};
+  (data.registros_por_hora || []).forEach(r => { porHoraMap[r.hora] = r.total; });
+
+  new Chart(document.getElementById('chartHoras'), {
+    type: 'line',
+    data: {
+      labels: horaVals.map(h => `${String(h).padStart(2, '0')}h`),
+      datasets: [{ label: 'Registros', data: horaVals.map(h => porHoraMap[h] || 0),
+        borderColor: '#10b981', backgroundColor: '#10b98120',
+        borderWidth: 2, fill: true, tension: 0.4, pointRadius: 3 }],
+    },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } },
+  });
+
+  // Tabela pontos
+  const tbP = document.getElementById('tblPontos');
+  tbP.innerHTML = data.ultimos_pontos.length
+    ? data.ultimos_pontos.map(r => `
+        <tr>
+          <td>${r.usuario_nome}</td>
+          <td><span class="badge ${r.tipo === 'entrada' ? 'badge-success' : 'badge-danger'}">${r.tipo}</span></td>
+          <td>${fmtDataHora(r.data_hora)}</td>
+        </tr>`).join('')
+    : '<tr><td colspan="3" class="table-empty">Nenhum registro hoje.</td></tr>';
+
+  // Tabela acessos
+  const tbA = document.getElementById('tblAcessos');
+  tbA.innerHTML = data.ultimos_acessos.length
+    ? data.ultimos_acessos.map(u => `
+        <tr>
+          <td>${u.nome}</td>
+          <td><span class="badge badge-primary">${u.cargo}</span></td>
+          <td>${fmtDataHora(u.ultimo_acesso)}</td>
+        </tr>`).join('')
+    : '<tr><td colspan="3" class="table-empty">Nenhum acesso registrado.</td></tr>';
+}
+</script>
+</body>
+</html>

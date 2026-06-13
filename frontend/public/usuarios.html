@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Usuários — Ponto Eletrônico</title>
+  <link rel="stylesheet" href="/fa/css/all.min.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <style>
+    @media (max-width: 768px) {
+      table th:nth-child(4), table td:nth-child(4),
+      table th:nth-child(7), table td:nth-child(7) { display: none; }
+      table td:last-child > div { flex-direction: column; gap: 6px; }
+      table td:last-child .btn  { width: 36px; height: 36px; padding: 0; justify-content: center; }
+    }
+    .avatar-upload-wrap { display:flex; flex-direction:column; align-items:center; margin-bottom:1.25rem; }
+    .avatar-upload {
+      position:relative; width:96px; height:96px; border-radius:50%;
+      cursor:pointer; border:3px solid var(--border); overflow:hidden;
+      background:var(--bg-secondary); transition:border-color .2s; flex-shrink:0;
+    }
+    .avatar-upload:hover { border-color:#3b82f6; }
+    .avatar-upload img  { width:100%; height:100%; object-fit:cover; display:block; }
+    .avatar-initial {
+      width:100%; height:100%; display:flex; align-items:center; justify-content:center;
+      font-size:2.2rem; font-weight:700; color:#64748b; background:#e2e8f0; user-select:none;
+    }
+    .avatar-overlay {
+      position:absolute; inset:0; background:rgba(0,0,0,.45);
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      color:#fff; font-size:.7rem; gap:3px; opacity:0; transition:opacity .2s;
+    }
+    .avatar-upload:hover .avatar-overlay { opacity:1; }
+    .avatar-overlay i { font-size:1.1rem; }
+    .avatar-hint { font-size:.72rem; color:#94a3b8; margin-top:.4rem; }
+    .salary-info-badge {
+      display:inline-flex; align-items:center; gap:6px;
+      background:#f0fdf4; color:#16a34a; border:1px solid #bbf7d0;
+      border-radius:6px; padding:2px 8px; font-size:.75rem; font-weight:600;
+    }
+    .tbl-avatar {
+      width:36px; height:36px; border-radius:50%; object-fit:cover;
+      border:2px solid #e2e8f0; flex-shrink:0;
+    }
+    .tbl-avatar-initial {
+      width:36px; height:36px; border-radius:50%; background:#3b82f6; color:#fff;
+      display:inline-flex; align-items:center; justify-content:center;
+      font-size:.85rem; font-weight:700; border:2px solid #bfdbfe; flex-shrink:0;
+    }
+    .user-cell { display:flex; align-items:center; gap:10px; }
+  </style>
+</head>
+<body>
+<div id="sidebarMount"></div>
+<div class="main" id="main">
+  <div id="topbarMount"></div>
+  <div class="page-content">
+
+    <div class="card mb-6">
+      <div class="card-header">
+        <span class="card-title"><i class="fas fa-users" style="color:#3b82f6"></i> Gerenciamento de Usuários</span>
+        <button class="btn btn-primary" id="btnNovoUsuario" data-perm="usuarios.criar">
+          <i class="fas fa-plus"></i> Novo Usuário
+        </button>
+      </div>
+
+      <div class="filters-bar">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="busca" placeholder="Buscar por nome, e-mail ou CPF..." />
+        </div>
+        <select class="form-control" id="filtroCargo" style="max-width:160px">
+          <option value="">Todos os cargos</option>
+        </select>
+        <select class="form-control" id="filtroAtivo" style="max-width:130px">
+          <option value="">Todos</option>
+          <option value="1">Ativos</option>
+          <option value="0">Inativos</option>
+        </select>
+        <button class="btn btn-outline" id="btnFiltrar"><i class="fas fa-filter"></i> Filtrar</button>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Foto</th><th>Nome</th><th>E-mail</th><th>CPF</th>
+              <th>Cargo</th><th>Status</th><th>Último Acesso</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tblUsuarios">
+            <tr><td colspan="8" class="table-empty"><span class="spinner"></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination" id="paginacao"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal Criar/Editar Usuário -->
+<div class="modal-overlay" id="modalUsuario">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modalUsuarioTitulo">Novo Usuário</h3>
+      <button class="modal-close" onclick="closeModal('modalUsuario')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editId" />
+
+      <div class="avatar-upload-wrap">
+        <div class="avatar-upload" id="avatarUpload" title="Clique para alterar foto">
+          <div class="avatar-initial" id="avatarInitial">?</div>
+          <img id="avatarPreview" src="" alt="Foto" style="display:none;position:absolute;inset:0" />
+          <div class="avatar-overlay"><i class="fas fa-camera"></i><span>Alterar foto</span></div>
+        </div>
+        <input type="file" id="fFoto" accept="image/jpeg,image/png,image/webp" style="display:none" />
+        <span class="avatar-hint">JPG, PNG ou WebP · máx. 2 MB</span>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nome completo *</label>
+          <input type="text" class="form-control" id="fNome" placeholder="João da Silva" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">CPF *</label>
+          <input type="text" class="form-control" id="fCPF" placeholder="000.000.000-00" maxlength="14" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">E-mail *</label>
+          <input type="email" class="form-control" id="fEmail" placeholder="joao@empresa.com" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Telefone</label>
+          <input type="text" class="form-control" id="fTelefone" placeholder="(11) 99999-9999" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Cargo *</label>
+          <select class="form-control" id="fCargo"></select>
+        </div>
+        <div class="form-group" id="senhaGroup">
+          <label class="form-label">Senha inicial *</label>
+          <input type="password" class="form-control" id="fSenha" placeholder="Mínimo 8 caracteres" />
+        </div>
+      </div>
+      <div class="form-group" id="ativoGroup" style="display:none">
+        <label class="form-label">Status</label>
+        <select class="form-control" id="fAtivo">
+          <option value="1">Ativo</option>
+          <option value="0">Inativo</option>
+        </select>
+      </div>
+
+      <div id="salarySection" style="display:none">
+        <hr style="margin:1rem 0;border-color:var(--border)" />
+        <p style="font-size:.8rem;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.75rem">
+          <i class="fas fa-money-bill-wave" style="color:#16a34a"></i> Remuneração
+        </p>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Salário mensal (R$)</label>
+            <input type="number" class="form-control" id="fSalario" placeholder="0,00" min="0" step="0.01" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Carga horária semanal (h)</label>
+            <input type="number" class="form-control" id="fCargaHoraria" placeholder="40" min="1" max="168" step="0.5" value="40" />
+          </div>
+        </div>
+        <div id="salaryCalc" style="display:none;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:.75rem 1rem;margin-top:.25rem">
+          <div style="display:flex;flex-wrap:wrap;gap:.75rem">
+            <div><span style="font-size:.72rem;color:#64748b">Por hora</span><br><strong id="calcHora">—</strong></div>
+            <div><span style="font-size:.72rem;color:#64748b">Por semana</span><br><strong id="calcSemana">—</strong></div>
+            <div><span style="font-size:.72rem;color:#64748b">Quinzenal</span><br><strong id="calcQuinzenal">—</strong></div>
+            <div><span style="font-size:.72rem;color:#64748b">Mensal</span><br><strong id="calcMensal">—</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="formError"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalUsuario')">Cancelar</button>
+      <button class="btn btn-primary" id="btnSalvarUsuario"><i class="fas fa-save"></i> Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Resetar Senha -->
+<div class="modal-overlay" id="modalResetSenha">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-header">
+      <h3 class="modal-title">Resetar Senha</h3>
+      <button class="modal-close" onclick="closeModal('modalResetSenha')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p class="text-sm text-muted mb-4" id="resetSenhaInfo"></p>
+      <div class="form-group">
+        <label class="form-label">Nova senha</label>
+        <input type="password" class="form-control" id="novaSenhaReset" placeholder="Mínimo 8 caracteres" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalResetSenha')">Cancelar</button>
+      <button class="btn btn-primary" id="btnConfirmarReset"><i class="fas fa-key"></i> Resetar</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/layout.js"></script>
+<script>
+let estadoPagina = { pagina: 1, por_pagina: 15, busca: '', cargo_id: '', ativo: '' };
+let cargos = [];
+let resetId = null;
+let fotoSelecionada = null;
+window._usersCache = [];
+
+// ── Init ──────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.requireAuth()) return;
+  renderLayout('Usuários');
+
+  if (!Auth.hasPermission('usuarios.visualizar')) {
+    document.querySelector('.page-content').innerHTML = '<div class="alert alert-danger">Acesso negado.</div>';
+    return;
+  }
+  if (!Auth.hasPermission('usuarios.criar')) {
+    document.getElementById('btnNovoUsuario').style.display = 'none';
+  }
+
+  cargos = await carregarCargos();
+  await listar();
+
+  document.getElementById('avatarUpload').addEventListener('click', () => {
+    document.getElementById('fFoto').click();
+  });
+  document.getElementById('fFoto').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    fotoSelecionada = file;
+    const preview = document.getElementById('avatarPreview');
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = 'block';
+    document.getElementById('avatarInitial').style.display = 'none';
+  });
+  ['fSalario', 'fCargaHoraria'].forEach(id => {
+    document.getElementById(id).addEventListener('input', calcularSalario);
+  });
+
+  // ── Máscaras de input ──────────────────────────────────
+  document.getElementById('fNome').addEventListener('input', function () {
+    // Permite letras (incluindo acentos), espaços e hífen
+    const cursor = this.selectionStart;
+    const antes  = this.value;
+    const depois = antes.replace(/[^a-zA-ZÀ-ÿ\s'-]/g, '');
+    if (antes !== depois) {
+      this.value = depois;
+      this.setSelectionRange(cursor - (antes.length - depois.length), cursor - (antes.length - depois.length));
+    }
+  });
+
+  document.getElementById('fCPF').addEventListener('input', function () {
+    let v = this.value.replace(/\D/g, '').slice(0, 11);
+    if (v.length > 9)      v = v.replace(/^(\d{3})(\d{3})(\d{3})(\d{0,2})/, '$1.$2.$3-$4');
+    else if (v.length > 6) v = v.replace(/^(\d{3})(\d{3})(\d{0,3})/, '$1.$2.$3');
+    else if (v.length > 3) v = v.replace(/^(\d{3})(\d{0,3})/, '$1.$2');
+    this.value = v;
+  });
+
+  document.getElementById('fTelefone').addEventListener('input', function () {
+    let v = this.value.replace(/\D/g, '').slice(0, 11);
+    if (v.length > 10)     v = v.replace(/^(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+    else if (v.length > 6) v = v.replace(/^(\d{2})(\d{4,5})(\d{0,4})/, '($1) $2-$3');
+    else if (v.length > 2) v = v.replace(/^(\d{2})(\d{0,5})/, '($1) $2');
+    else if (v.length > 0) v = v.replace(/^(\d{0,2})/, '($1');
+    this.value = v;
+  });
+});
+
+// ── Cargos ────────────────────────────────────────────────
+async function carregarCargos() {
+  try {
+    const lista = await API.get('/cargos');
+    const sel1 = document.getElementById('filtroCargo');
+    const sel2 = document.getElementById('fCargo');
+    lista.forEach(c => {
+      sel1.innerHTML += `<option value="${c.id}">${c.nome}</option>`;
+      sel2.innerHTML += `<option value="${c.id}">${c.nome}</option>`;
+    });
+    return lista;
+  } catch { return []; }
+}
+
+// ── Listar ────────────────────────────────────────────────
+async function listar() {
+  try {
+    document.getElementById('tblUsuarios').innerHTML =
+      '<tr><td colspan="8" class="table-empty"><span class="spinner"></span></td></tr>';
+    const data = await API.get('/usuarios', estadoPagina);
+    window._usersCache = data.usuarios;
+    renderTabela(data);
+    renderPagination(document.getElementById('paginacao'), {
+      total: data.total, pagina: data.pagina, por_pagina: data.por_pagina,
+      onPage: p => { estadoPagina.pagina = p; listar(); },
+    });
+  } catch (err) {
+    toast(err.data?.erro || 'Erro ao carregar usuários.', 'error');
+  }
+}
+
+function renderTabela({ usuarios }) {
+  const tb = document.getElementById('tblUsuarios');
+  if (!usuarios.length) {
+    tb.innerHTML = '<tr><td colspan="8" class="table-empty">Nenhum usuário encontrado.</td></tr>';
+    return;
+  }
+
+  const podEditar  = Auth.hasPermission('usuarios.editar');
+  const podExcluir = Auth.hasPermission('usuarios.excluir');
+  const ehGestor   = Auth.isSupervisor();
+
+  tb.innerHTML = usuarios.map((u, i) => {
+    const inicial = (u.nome || '?')[0].toUpperCase();
+    const avatarHtml = u.foto
+      ? `<img class="tbl-avatar" src="${u.foto}" alt="${inicial}" onerror="this.outerHTML='<span class=tbl-avatar-initial>${inicial}</span>'" />`
+      : `<span class="tbl-avatar-initial">${inicial}</span>`;
+
+    const salarioHtml = (ehGestor && u.salario_mensal)
+      ? `<span class="salary-info-badge">R$ ${Number(u.salario_mensal).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>`
+      : '';
+
+    return `
+    <tr>
+      <td>${avatarHtml}</td>
+      <td>
+        <div class="user-cell" style="flex-direction:column;align-items:flex-start;gap:2px">
+          <strong>${u.nome}</strong>${salarioHtml ? '<br>' + salarioHtml : ''}
+        </div>
+      </td>
+      <td>${u.email}</td>
+      <td class="text-sm">${fmtCPF(u.cpf)}</td>
+      <td><span class="badge badge-primary">${u.cargo_nome}</span></td>
+      <td>
+        ${u.bloqueado
+          ? '<span class="badge badge-danger">Bloqueado</span>'
+          : u.ativo
+            ? '<span class="badge badge-success">Ativo</span>'
+            : '<span class="badge badge-gray">Inativo</span>'}
+      </td>
+      <td class="text-sm text-muted">${fmtDataHora(u.ultimo_acesso) || 'Nunca'}</td>
+      <td>
+        <div style="display:flex;gap:4px">
+          ${podEditar ? `
+            <button class="btn btn-sm btn-outline" onclick="abrirEditar(${u.id})" title="Editar">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn btn-sm btn-outline" onclick="bloquear(${i})" title="${u.bloqueado ? 'Desbloquear' : 'Bloquear'}">
+              <i class="fas fa-${u.bloqueado ? 'lock-open' : 'lock'}"></i>
+            </button>
+            <button class="btn btn-sm btn-outline" onclick="abrirResetSenha(${i})" title="Resetar senha">
+              <i class="fas fa-key"></i>
+            </button>
+          ` : ''}
+          ${podExcluir ? `
+            <button class="btn btn-sm btn-danger" onclick="excluir(${i})" title="Excluir">
+              <i class="fas fa-trash"></i>
+            </button>
+          ` : ''}
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Filtros ───────────────────────────────────────────────
+document.getElementById('btnFiltrar').addEventListener('click', () => {
+  estadoPagina.busca    = document.getElementById('busca').value;
+  estadoPagina.cargo_id = document.getElementById('filtroCargo').value;
+  estadoPagina.ativo    = document.getElementById('filtroAtivo').value;
+  estadoPagina.pagina   = 1;
+  listar();
+});
+document.getElementById('busca').addEventListener('keyup', e => {
+  if (e.key === 'Enter') document.getElementById('btnFiltrar').click();
+});
+
+// ── Salary calc ───────────────────────────────────────────
+function calcularSalario() {
+  const salario = parseFloat(document.getElementById('fSalario').value) || 0;
+  const horas   = parseFloat(document.getElementById('fCargaHoraria').value) || 40;
+  const calcDiv = document.getElementById('salaryCalc');
+  if (salario <= 0) { calcDiv.style.display = 'none'; return; }
+  calcDiv.style.display = 'block';
+  const fmt = v => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits:2, maximumFractionDigits:2 })}`;
+  document.getElementById('calcHora').textContent      = fmt(salario / (horas * 4.3333));
+  document.getElementById('calcSemana').textContent    = fmt(salario / 4.3333);
+  document.getElementById('calcQuinzenal').textContent = fmt(salario / 2);
+  document.getElementById('calcMensal').textContent    = fmt(salario);
+}
+
+// ── Modal helpers ─────────────────────────────────────────
+function resetarFotoUI(fotoUrl) {
+  fotoSelecionada = null;
+  document.getElementById('fFoto').value = '';
+  const preview = document.getElementById('avatarPreview');
+  const initial = document.getElementById('avatarInitial');
+  if (fotoUrl) {
+    preview.src = fotoUrl; preview.style.display = 'block'; initial.style.display = 'none';
+  } else {
+    preview.style.display = 'none'; initial.style.display = 'flex'; initial.textContent = '?';
+  }
+  document.getElementById('salaryCalc').style.display = 'none';
+}
+
+function mostrarSecaoSalario() {
+  document.getElementById('salarySection').style.display = Auth.isSupervisor() ? 'block' : 'none';
+}
+
+// ── Novo usuário ──────────────────────────────────────────
+document.getElementById('btnNovoUsuario').addEventListener('click', () => {
+  document.getElementById('modalUsuarioTitulo').textContent = 'Novo Usuário';
+  document.getElementById('editId').value      = '';
+  document.getElementById('fNome').value       = '';
+  document.getElementById('fEmail').value      = '';
+  document.getElementById('fCPF').value        = '';
+  document.getElementById('fTelefone').value   = '';
+  document.getElementById('fCargo').value      = '';
+  document.getElementById('fSenha').value      = '';
+  document.getElementById('fSalario').value    = '';
+  document.getElementById('fCargaHoraria').value = '40';
+  document.getElementById('senhaGroup').style.display = 'block';
+  document.getElementById('ativoGroup').style.display = 'none';
+  document.getElementById('formError').innerHTML = '';
+  resetarFotoUI(null);
+  mostrarSecaoSalario();
+  openModal('modalUsuario');
+});
+
+// ── Máscaras: aplicar valor já formatado ──────────────────
+function aplicarMascaraCPF(v) {
+  v = (v || '').replace(/\D/g, '').slice(0, 11);
+  if (v.length > 9)      return v.replace(/^(\d{3})(\d{3})(\d{3})(\d{0,2})/, '$1.$2.$3-$4');
+  if (v.length > 6)      return v.replace(/^(\d{3})(\d{3})(\d{0,3})/, '$1.$2.$3');
+  if (v.length > 3)      return v.replace(/^(\d{3})(\d{0,3})/, '$1.$2');
+  return v;
+}
+
+function aplicarMascaraTelefone(v) {
+  v = (v || '').replace(/\D/g, '').slice(0, 11);
+  if (v.length > 10)     return v.replace(/^(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+  if (v.length > 6)      return v.replace(/^(\d{2})(\d{4,5})(\d{0,4})/, '($1) $2-$3');
+  if (v.length > 2)      return v.replace(/^(\d{2})(\d{0,5})/, '($1) $2');
+  if (v.length > 0)      return `(${v}`;
+  return v;
+}
+
+// ── Editar ────────────────────────────────────────────────
+async function abrirEditar(id) {
+  try {
+    const u = await API.get(`/usuarios/${id}`);
+    document.getElementById('modalUsuarioTitulo').textContent = 'Editar Usuário';
+    document.getElementById('editId').value       = u.id;
+    document.getElementById('fNome').value        = u.nome;
+    document.getElementById('fEmail').value       = u.email;
+    document.getElementById('fCPF').value         = aplicarMascaraCPF(u.cpf);
+    document.getElementById('fTelefone').value    = aplicarMascaraTelefone(u.telefone);
+    document.getElementById('fCargo').value       = u.cargo_id;
+    document.getElementById('fAtivo').value       = u.ativo;
+    document.getElementById('fSalario').value     = u.salario_mensal || '';
+    document.getElementById('fCargaHoraria').value = u.carga_horaria_semanal || 40;
+    document.getElementById('senhaGroup').style.display = 'none';
+    document.getElementById('ativoGroup').style.display = 'block';
+    document.getElementById('formError').innerHTML = '';
+    resetarFotoUI(u.foto || null);
+    if (u.nome) document.getElementById('avatarInitial').textContent = u.nome[0].toUpperCase();
+    mostrarSecaoSalario();
+    calcularSalario();
+    openModal('modalUsuario');
+  } catch { toast('Erro ao carregar usuário.', 'error'); }
+}
+
+// ── Salvar ────────────────────────────────────────────────
+document.getElementById('btnSalvarUsuario').addEventListener('click', async () => {
+  const id    = document.getElementById('editId').value;
+  const isNew = !id;
+
+  const body = {
+    nome:     document.getElementById('fNome').value.trim(),
+    email:    document.getElementById('fEmail').value.trim(),
+    cpf:      document.getElementById('fCPF').value.replace(/\D/g, ''),
+    telefone: document.getElementById('fTelefone').value.replace(/\D/g, '') || null,
+    cargo_id: parseInt(document.getElementById('fCargo').value),
+  };
+  if (isNew) body.senha = document.getElementById('fSenha').value;
+  else       body.ativo = parseInt(document.getElementById('fAtivo').value);
+
+  if (Auth.isSupervisor()) {
+    const sal = document.getElementById('fSalario').value;
+    const ch  = document.getElementById('fCargaHoraria').value;
+    body.salario_mensal        = sal ? parseFloat(sal) : null;
+    body.carga_horaria_semanal = ch  ? parseFloat(ch)  : 40;
+  }
+
+  document.getElementById('formError').innerHTML = '';
+  const btn = document.getElementById('btnSalvarUsuario');
+  btn.disabled = true;
+
+  try {
+    let userId = id;
+    if (isNew) {
+      const res = await API.post('/usuarios', body);
+      userId = res.id;
+    } else {
+      await API.put(`/usuarios/${id}`, body);
+    }
+    if (fotoSelecionada && userId) {
+      const fd = new FormData();
+      fd.append('foto', fotoSelecionada);
+      await fetch(`/api/usuarios/${userId}/foto`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${Auth.getToken()}` },
+        body: fd,
+      });
+    }
+    toast(isNew ? 'Usuário criado com sucesso!' : 'Usuário atualizado!', 'success');
+    closeModal('modalUsuario');
+    listar();
+  } catch (err) {
+    document.getElementById('formError').innerHTML =
+      `<div class="alert alert-danger">${err.data?.erro || 'Erro ao salvar.'}</div>`;
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// ── Bloquear ──────────────────────────────────────────────
+async function bloquear(idx) {
+  const u = window._usersCache[idx];
+  if (!u) return;
+  const acao = u.bloqueado ? 'desbloquear' : 'bloquear';
+  const ok = await confirmDialog(`Confirma ${acao} o usuário <strong>${u.nome}</strong>?`);
+  if (!ok) return;
+  try {
+    const res = await API.post(`/usuarios/${u.id}/bloquear`);
+    toast(res.mensagem, 'success');
+    listar();
+  } catch (err) { toast(err.data?.erro || 'Erro.', 'error'); }
+}
+
+// ── Excluir ───────────────────────────────────────────────
+async function excluir(idx) {
+  const u = window._usersCache[idx];
+  if (!u) return;
+  const ok = await confirmDialog(`Excluir o usuário <strong>${u.nome}</strong>? Esta ação é irreversível.`);
+  if (!ok) return;
+  try {
+    await API.delete(`/usuarios/${u.id}`);
+    toast('Usuário excluído.', 'success');
+    listar();
+  } catch (err) { toast(err.data?.erro || 'Erro ao excluir.', 'error'); }
+}
+
+// ── Resetar senha ─────────────────────────────────────────
+function abrirResetSenha(idx) {
+  const u = window._usersCache[idx];
+  if (!u) return;
+  resetId = u.id;
+  document.getElementById('resetSenhaInfo').textContent = `Definir nova senha para: ${u.nome}`;
+  document.getElementById('novaSenhaReset').value = '';
+  openModal('modalResetSenha');
+}
+
+document.getElementById('btnConfirmarReset').addEventListener('click', async () => {
+  const senha = document.getElementById('novaSenhaReset').value;
+  if (!senha || senha.length < 8) { toast('Senha deve ter no mínimo 8 caracteres.', 'error'); return; }
+  try {
+    await API.post(`/usuarios/${resetId}/resetar-senha`, { nova_senha: senha });
+    toast('Senha resetada com sucesso.', 'success');
+    closeModal('modalResetSenha');
+  } catch (err) { toast(err.data?.erro || 'Erro ao resetar.', 'error'); }
+});
+</script>
+</body>
+</html>

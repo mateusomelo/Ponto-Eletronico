@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meus Relatórios — Ponto Eletrônico</title>
+  <link rel="stylesheet" href="/fa/css/all.min.css" />
+  <link rel="stylesheet" href="/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <style>
+    .tab-bar {
+      display: flex; border-bottom: 2px solid var(--border);
+      margin-bottom: 0; overflow-x: auto; gap: 0;
+    }
+    .tab-btn {
+      padding: 10px 18px; font-size: .85rem; font-weight: 600;
+      color: var(--text-muted); background: none; border: none;
+      cursor: pointer; border-bottom: 2px solid transparent;
+      margin-bottom: -2px; white-space: nowrap; transition: all .2s;
+    }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-btn .tab-cnt {
+      background: var(--accent); color: #fff;
+      border-radius: 10px; padding: 1px 6px; font-size: .7rem;
+      margin-left: 5px; display: inline-block;
+    }
+    .tab-btn.active .tab-cnt { background: var(--accent); }
+
+    .rel-card {
+      border: 1px solid var(--border); border-radius: 12px;
+      padding: 14px 16px; margin-bottom: 10px;
+      display: flex; align-items: center; gap: 14px;
+      cursor: pointer; transition: box-shadow .2s, border-color .2s;
+      background: var(--bg-primary);
+    }
+    .rel-card:hover { box-shadow: var(--shadow-md); border-color: var(--accent); }
+    .rel-card-icon {
+      width: 44px; height: 44px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; flex-shrink: 0;
+    }
+    .rel-card-info { flex: 1; min-width: 0; }
+    .rel-card-comp { font-size: 1rem; font-weight: 700; }
+    .rel-card-meta { font-size: .78rem; color: var(--text-muted); margin-top: 2px; }
+    .rel-card-action { font-size: .8rem; color: var(--accent); font-weight: 600; white-space: nowrap; }
+
+    .icon-enviado  { background: #dbeafe; color: #1e40af; }
+    .icon-assinado { background: #dcfce7; color: #166534; }
+    .icon-rejeitado { background: #fee2e2; color: #991b1b; }
+    .icon-fechado  { background: #f0fdf4; color: #14532d; }
+    .icon-rascunho { background: #f3f4f6; color: #374151; }
+
+    .detalhe-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; margin-bottom: 14px; }
+    .detalhe-item label { font-size:.72rem; color:var(--text-muted); display:block; margin-bottom:2px; }
+    .detalhe-item span  { font-size:.85rem; font-weight:600; }
+
+    #mapRelatorio { height: 200px; border-radius: 10px; margin-bottom: 12px; }
+
+    .assinar-footer {
+      position: sticky; bottom: 0;
+      background: var(--bg-primary);
+      border-top: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex; gap: 10px; justify-content: flex-end;
+    }
+
+    @media (max-width: 768px) {
+      .detalhe-grid { grid-template-columns: 1fr; }
+      table th:nth-child(4), table td:nth-child(4) { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div id="sidebarMount"></div>
+<div class="main" id="main">
+  <div id="topbarMount"></div>
+  <div class="page-content">
+
+    <!-- ─── Lista ─── -->
+    <div id="viewLista">
+      <div class="card" style="padding-bottom:0">
+        <div class="card-header">
+          <span class="card-title">
+            <i class="fas fa-file-signature" style="color:#3b82f6"></i>
+            Meus Relatórios de Ponto
+          </span>
+          <button class="btn btn-sm btn-outline" onclick="carregarTodos()">
+            <i class="fas fa-sync-alt"></i> Atualizar
+          </button>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tab-bar" id="tabBar">
+          <button class="tab-btn active" onclick="filtrarTab('pendente', this)">
+            Pendentes <span class="tab-cnt" id="cntPendente">0</span>
+          </button>
+          <button class="tab-btn" onclick="filtrarTab('assinado', this)">
+            Assinados <span class="tab-cnt" id="cntAssinado" style="background:#10b981">0</span>
+          </button>
+          <button class="tab-btn" onclick="filtrarTab('rejeitado', this)">
+            Rejeitados <span class="tab-cnt" id="cntRejeitado" style="background:#ef4444">0</span>
+          </button>
+          <button class="tab-btn" onclick="filtrarTab('todos', this)">Todos</button>
+        </div>
+      </div>
+
+      <div id="listaRelatorios" style="margin-top:12px"></div>
+    </div>
+
+    <!-- ─── Detalhe ─── -->
+    <div id="viewDetalhe" style="display:none">
+      <div class="card" style="padding:0">
+        <div class="card-header" style="padding:14px 20px">
+          <button class="btn btn-outline btn-sm" onclick="voltarLista()">
+            <i class="fas fa-arrow-left"></i> Voltar
+          </button>
+          <span class="card-title" id="detTitulo">Relatório</span>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-sm btn-outline" id="btnDetPDF">
+              <i class="fas fa-file-pdf" style="color:#ef4444"></i> PDF
+            </button>
+            <button class="btn btn-sm btn-outline" id="btnDetExcel">
+              <i class="fas fa-file-excel" style="color:#10b981"></i> Excel
+            </button>
+          </div>
+        </div>
+
+        <!-- Status + info -->
+        <div style="padding:0 20px 12px;border-bottom:1px solid var(--border)">
+          <div id="detStatus" style="margin-bottom:10px"></div>
+
+          <!-- Resumo de horas -->
+          <div class="horas-grid" id="detHoras"></div>
+
+          <!-- Aviso de rejeição anterior -->
+          <div id="detRejeicao" style="display:none;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:12px 14px;font-size:.85rem;color:#92400e;margin-bottom:8px">
+            <strong><i class="fas fa-exclamation-triangle"></i> Relatório anteriormente rejeitado</strong>
+            <div id="detRejeicaoMotivo" style="margin-top:4px"></div>
+          </div>
+        </div>
+
+        <!-- Tabela de registros -->
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Data/Hora</th>
+                <th>Tipo</th>
+                <th>Dispositivo</th>
+                <th>GPS</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="tblRegistros">
+              <tr><td colspan="5" class="table-empty"><span class="spinner"></span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Botões de assinatura (fixos no rodapé) -->
+        <div class="assinar-footer" id="footerAssinar" style="display:none">
+          <span style="flex:1;font-size:.82rem;color:var(--text-muted);align-self:center">
+            Revise todos os registros antes de assinar.
+          </span>
+          <button class="btn btn-outline" onclick="openModal('modalRejeitar')" style="color:#ef4444;border-color:#ef4444">
+            <i class="fas fa-times"></i> Rejeitar
+          </button>
+          <button class="btn btn-primary" onclick="openModal('modalAssinar')">
+            <i class="fas fa-signature"></i> Assinar
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal: Confirmar assinatura -->
+<div class="modal-overlay" id="modalAssinar">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fas fa-signature" style="color:#10b981;margin-right:8px"></i>Assinar Relatório</h3>
+      <button class="modal-close" onclick="closeModal('modalAssinar')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:.9rem;margin-bottom:10px">
+        Ao assinar, você confirma que <strong>revisou todos os registros</strong> do período
+        e está de acordo com o conteúdo do relatório de ponto.
+      </p>
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 14px;font-size:.82rem;color:#166534">
+        <i class="fas fa-info-circle"></i>
+        Serão registrados: data, hora e seu IP para fins de auditoria.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalAssinar')">Cancelar</button>
+      <button class="btn btn-primary" id="btnConfirmarAssinar">
+        <i class="fas fa-check"></i> Confirmar Assinatura
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Rejeitar -->
+<div class="modal-overlay" id="modalRejeitar">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fas fa-times-circle" style="color:#ef4444;margin-right:8px"></i>Rejeitar Relatório</h3>
+      <button class="modal-close" onclick="closeModal('modalRejeitar')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:.88rem;color:var(--text-muted);margin-bottom:10px">
+        Informe o motivo da rejeição. O RH/Administrador será notificado para revisar.
+      </p>
+      <div class="form-group">
+        <label class="form-label">Motivo da rejeição <span style="color:#ef4444">*</span></label>
+        <textarea class="form-control" id="motivoRejeicao" rows="4" style="resize:vertical"
+                  placeholder="Ex: Existe uma hora extra não contabilizada no dia 15..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalRejeitar')">Cancelar</button>
+      <button class="btn btn-danger" id="btnConfirmarRejeitar">
+        <i class="fas fa-times"></i> Confirmar Rejeição
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Detalhes de registro -->
+<div class="modal-overlay" id="modalRegistro">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <h3 class="modal-title">Detalhes do Registro</h3>
+      <button class="modal-close" onclick="closeModal('modalRegistro')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div id="regSelfieWrap" style="text-align:center;margin-bottom:14px;display:none">
+        <img id="regSelfieImg" src="" alt="Selfie" style="width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid var(--border)" />
+      </div>
+      <div id="mapRelatorio" style="display:none"></div>
+      <div id="regEndereco" style="display:none;margin-bottom:12px;padding:10px 14px;background:#f0f9ff;border-radius:8px;font-size:.82rem">
+        <i class="fas fa-map-marker-alt" style="color:#3b82f6"></i>
+        <span id="regEnderecoTxt"></span>
+      </div>
+      <div class="detalhe-grid" id="regGrid"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalRegistro')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<script src="/leaflet/leaflet.js"></script>
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/layout.js"></script>
+<script>
+const STATUS_LABEL = {
+  rascunho: 'Rascunho', enviado: 'Pendente de Assinatura',
+  assinado: 'Assinado', rejeitado: 'Rejeitado', fechado: 'Fechado',
+};
+const STATUS_ICON  = {
+  rascunho: 'fa-file',           enviado: 'fa-clock',
+  assinado: 'fa-check-circle',   rejeitado: 'fa-times-circle',
+  fechado:  'fa-lock',
+};
+const STATUS_ICON_CLASS = {
+  rascunho: 'icon-rascunho', enviado: 'icon-enviado',
+  assinado: 'icon-assinado', rejeitado: 'icon-rejeitado', fechado: 'icon-fechado',
+};
+
+let _todos          = [];
+let _tabAtual       = 'pendente';
+let _fechamentoId   = null;
+let _registrosCache = [];
+let _mapInstance    = null;
+let _statusAtual    = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.requireAuth()) return;
+  renderLayout('Meus Relatórios');
+  await carregarTodos();
+  // Marcar notificações como lidas
+  API.patch('/notificacoes/ler-todas', {}).catch(() => {});
+  if (window.atualizarBadgeNotificacoes) window.atualizarBadgeNotificacoes();
+});
+
+async function carregarTodos() {
+  try {
+    const data = await API.get('/fechamento', { por_pagina: 100 });
+    _todos = data.fechamentos;
+
+    const pendentes  = _todos.filter(f => f.status === 'enviado').length;
+    const assinados  = _todos.filter(f => f.status === 'assinado').length;
+    const rejeitados = _todos.filter(f => f.status === 'rejeitado').length;
+
+    document.getElementById('cntPendente').textContent  = pendentes;
+    document.getElementById('cntAssinado').textContent  = assinados;
+    document.getElementById('cntRejeitado').textContent = rejeitados;
+
+    renderLista();
+  } catch (err) {
+    toast(err.data?.erro || 'Erro ao carregar relatórios.', 'error');
+  }
+}
+
+function filtrarTab(tab, el) {
+  _tabAtual = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderLista();
+}
+
+function renderLista() {
+  let lista = _todos;
+  if (_tabAtual === 'pendente')  lista = _todos.filter(f => f.status === 'enviado');
+  if (_tabAtual === 'assinado')  lista = _todos.filter(f => ['assinado','fechado'].includes(f.status));
+  if (_tabAtual === 'rejeitado') lista = _todos.filter(f => f.status === 'rejeitado');
+
+  const el = document.getElementById('listaRelatorios');
+  if (!lista.length) {
+    el.innerHTML = `<div class="card" style="text-align:center;padding:32px;color:var(--text-muted)">
+      <i class="fas fa-file-alt" style="font-size:2rem;margin-bottom:10px;opacity:.4"></i>
+      <div>Nenhum relatório encontrado.</div>
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = lista.map(f => {
+    const [ano, mes] = f.competencia.split('-');
+    const nomeMes = new Date(ano, mes - 1).toLocaleString('pt-BR', { month: 'long' });
+    const label   = `${nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1)} / ${ano}`;
+    let acao = '';
+    if (f.status === 'enviado')   acao = '<span style="color:#3b82f6;font-size:.85rem;font-weight:600"><i class="fas fa-pen-nib"></i> Revisar e Assinar</span>';
+    if (f.status === 'rejeitado') acao = '<span style="color:#ef4444;font-size:.85rem;font-weight:600"><i class="fas fa-exclamation-circle"></i> Rejeitado</span>';
+    if (f.status === 'assinado')  acao = '<span style="color:#10b981;font-size:.85rem;font-weight:600"><i class="fas fa-check"></i> Assinado</span>';
+    if (f.status === 'fechado')   acao = '<span style="color:#14532d;font-size:.85rem;font-weight:600"><i class="fas fa-lock"></i> Fechado</span>';
+    const meta = [];
+    if (f.enviado_em)  meta.push(`Enviado em ${fmtDataHora(f.enviado_em)}`);
+    if (f.assinado_em) meta.push(`Assinado em ${fmtDataHora(f.assinado_em)}`);
+    return `
+      <div class="rel-card" onclick="abrirDetalhe(${f.id})">
+        <div class="rel-card-icon ${STATUS_ICON_CLASS[f.status]}">
+          <i class="fas ${STATUS_ICON[f.status]}"></i>
+        </div>
+        <div class="rel-card-info">
+          <div class="rel-card-comp">${label}</div>
+          <div class="rel-card-meta">${meta.join(' · ')}</div>
+        </div>
+        <div class="rel-card-action">${acao}</div>
+      </div>`;
+  }).join('');
+}
+
+// ── Detalhe ───────────────────────────────────────────────
+async function abrirDetalhe(id) {
+  _fechamentoId = id;
+  _statusAtual  = null;
+  document.getElementById('viewLista').style.display   = 'none';
+  document.getElementById('viewDetalhe').style.display = 'block';
+  document.getElementById('tblRegistros').innerHTML =
+    '<tr><td colspan="5" class="table-empty"><span class="spinner"></span></td></tr>';
+  document.getElementById('detHoras').innerHTML   = '';
+  document.getElementById('detStatus').innerHTML  = '';
+  document.getElementById('footerAssinar').style.display = 'none';
+  document.getElementById('detRejeicao').style.display   = 'none';
+
+  try {
+    const data = await API.get(`/fechamento/${id}`);
+    const f    = data.fechamento;
+    const regs = data.registros;
+    const res  = data.resumo;
+    _registrosCache = regs;
+    _statusAtual    = f.status;
+
+    const [ano, mes] = f.competencia.split('-');
+    const nomeMes = new Date(ano, mes - 1).toLocaleString('pt-BR', { month: 'long' });
+    const label   = `${nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1)} / ${ano}`;
+    document.getElementById('detTitulo').textContent = label;
+
+    document.getElementById('btnDetPDF').onclick   = () => exportar('pdf', id);
+    document.getElementById('btnDetExcel').onclick = () => exportar('excel', id);
+
+    // Status badge
+    const statusMap = {
+      enviado:   { cls: 'badge-success', txt: 'Aguardando sua assinatura', icon: 'fa-clock' },
+      assinado:  { cls: 'badge-success', txt: 'Assinado por você', icon: 'fa-check-circle' },
+      rejeitado: { cls: 'badge-danger',  txt: 'Rejeitado', icon: 'fa-times-circle' },
+      fechado:   { cls: '',              txt: 'Fechado pelo RH', icon: 'fa-lock' },
+      rascunho:  { cls: '',              txt: 'Em preparação pelo RH', icon: 'fa-file' },
+    };
+    const sm = statusMap[f.status] || { cls: '', txt: f.status, icon: 'fa-question' };
+    let assSub = '';
+    if (f.assinado_em) assSub = `<div style="font-size:.78rem;color:#166534;margin-top:4px"><i class="fas fa-check"></i> Assinado em ${fmtDataHora(f.assinado_em)}</div>`;
+    if (f.fechado_definitivo_em) assSub += `<div style="font-size:.78rem;color:var(--text-muted);margin-top:2px">Fechado pelo RH em ${fmtDataHora(f.fechado_definitivo_em)}</div>`;
+    document.getElementById('detStatus').innerHTML = `
+      <span class="badge ${sm.cls}" style="font-size:.85rem;padding:6px 12px">
+        <i class="fas ${sm.icon}"></i> ${sm.txt}
+      </span>${assSub}`;
+
+    // Rejeição anterior
+    if (f.motivo_rejeicao && f.status !== 'rejeitado') {
+      document.getElementById('detRejeicao').style.display = 'block';
+      document.getElementById('detRejeicaoMotivo').textContent = f.motivo_rejeicao;
+    }
+
+    // Resumo horas
+    const neg = res.bancoMinutos < 0;
+    document.getElementById('detHoras').innerHTML = `
+      <div class="hora-item">
+        <span class="hora-valor">${res.horasTrabalhadas}</span>
+        <span class="hora-label">Trabalhadas</span>
+      </div>
+      <div class="hora-item">
+        <span class="hora-valor">${res.horasPrevistas}</span>
+        <span class="hora-label">Previstas</span>
+      </div>
+      <div class="hora-item ${res.minutosExtra > 0 ? 'positivo' : ''}">
+        <span class="hora-valor">${res.horasExtra}</span>
+        <span class="hora-label">Extras</span>
+      </div>
+      <div class="hora-item ${neg ? 'negativo' : 'positivo'}">
+        <span class="hora-valor">${res.bancoHoras}</span>
+        <span class="hora-label">Banco de Horas</span>
+      </div>
+      <div class="hora-item ${res.faltas > 0 ? 'negativo' : ''}">
+        <span class="hora-valor">${res.faltas}</span>
+        <span class="hora-label">Faltas</span>
+      </div>
+      <div class="hora-item ${res.atrasos > 0 ? 'negativo' : ''}">
+        <span class="hora-valor">${res.atrasos}</span>
+        <span class="hora-label">Atrasos</span>
+      </div>`;
+
+    // Tabela de registros
+    const tb = document.getElementById('tblRegistros');
+    if (!regs.length) {
+      tb.innerHTML = '<tr><td colspan="5" class="table-empty">Nenhum registro neste período.</td></tr>';
+    } else {
+      tb.innerHTML = regs.map((r, i) => `
+        <tr>
+          <td class="text-sm">${fmtDataHora(r.data_hora)}</td>
+          <td><span class="badge ${r.tipo === 'entrada' ? 'badge-success' : 'badge-danger'}">${r.tipo}</span></td>
+          <td class="text-sm">${r.dispositivo || '-'}</td>
+          <td class="text-sm">${r.latitude ? '<span style="color:var(--accent)"><i class="fas fa-map-marker-alt"></i> GPS</span>' : '-'}</td>
+          <td>
+            <button class="btn btn-xs btn-outline" onclick="verRegistro(${i})" title="Detalhes">
+              <i class="fas fa-eye"></i>
+            </button>
+          </td>
+        </tr>`).join('');
+    }
+
+    // Mostrar botões de assinatura se enviado
+    if (f.status === 'enviado') {
+      document.getElementById('footerAssinar').style.display = 'flex';
+    }
+  } catch (err) {
+    toast(err.data?.erro || 'Erro ao carregar relatório.', 'error');
+    voltarLista();
+  }
+}
+
+function voltarLista() {
+  _fechamentoId = null;
+  _registrosCache = [];
+  if (_mapInstance) { _mapInstance.remove(); _mapInstance = null; }
+  document.getElementById('viewDetalhe').style.display = 'none';
+  document.getElementById('viewLista').style.display   = 'block';
+}
+
+// ── Assinatura ────────────────────────────────────────────
+document.getElementById('btnConfirmarAssinar').addEventListener('click', async () => {
+  const btn = document.getElementById('btnConfirmarAssinar');
+  btn.disabled = true;
+  try {
+    await API.patch(`/fechamento/${_fechamentoId}/assinar`, {});
+    closeModal('modalAssinar');
+    toast('Relatório assinado com sucesso!', 'success');
+    if (window.atualizarBadgeNotificacoes) window.atualizarBadgeNotificacoes();
+    await abrirDetalhe(_fechamentoId);
+    carregarTodos();
+  } catch (err) {
+    toast(err.data?.erro || 'Erro ao assinar.', 'error');
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// ── Rejeição ──────────────────────────────────────────────
+document.getElementById('btnConfirmarRejeitar').addEventListener('click', async () => {
+  const motivo = document.getElementById('motivoRejeicao').value.trim();
+  if (!motivo) { toast('Informe o motivo da rejeição.', 'warning'); return; }
+
+  const btn = document.getElementById('btnConfirmarRejeitar');
+  btn.disabled = true;
+  try {
+    await API.patch(`/fechamento/${_fechamentoId}/rejeitar`, { motivo });
+    closeModal('modalRejeitar');
+    document.getElementById('motivoRejeicao').value = '';
+    toast('Relatório rejeitado. O RH foi notificado.', 'success');
+    if (window.atualizarBadgeNotificacoes) window.atualizarBadgeNotificacoes();
+    await abrirDetalhe(_fechamentoId);
+    carregarTodos();
+  } catch (err) {
+    toast(err.data?.erro || 'Erro ao rejeitar.', 'error');
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// ── Ver registro individual ───────────────────────────────
+function verRegistro(idx) {
+  const r = _registrosCache[idx];
+  if (!r) return;
+
+  document.getElementById('regSelfieWrap').style.display = 'none';
+  if (r.foto_registro) {
+    document.getElementById('regSelfieImg').src = r.foto_registro;
+    document.getElementById('regSelfieWrap').style.display = 'block';
+  }
+
+  const mapEl = document.getElementById('mapRelatorio');
+  if (r.latitude && r.longitude) {
+    mapEl.style.display = 'block';
+    setTimeout(() => {
+      if (_mapInstance) { _mapInstance.remove(); _mapInstance = null; }
+      _mapInstance = L.map('mapRelatorio').setView([r.latitude, r.longitude], 16);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap',
+      }).addTo(_mapInstance);
+      L.marker([r.latitude, r.longitude]).addTo(_mapInstance)
+        .bindPopup(`${r.tipo} — ${fmtDataHora(r.data_hora)}`).openPopup();
+      _mapInstance.invalidateSize();
+    }, 350);
+  } else {
+    mapEl.style.display = 'none';
+  }
+
+  const endEl = document.getElementById('regEndereco');
+  if (r.endereco_aprox) {
+    document.getElementById('regEnderecoTxt').textContent = r.endereco_aprox;
+    endEl.style.display = 'block';
+  } else {
+    endEl.style.display = 'none';
+  }
+
+  const campos = [
+    { label: 'Tipo',        val: r.tipo },
+    { label: 'Data/Hora',   val: fmtDataHora(r.data_hora) },
+    { label: 'Dispositivo', val: r.dispositivo  || '-' },
+    { label: 'Sistema Operacional', val: r.so    || '-' },
+    { label: 'Navegador',   val: r.navegador    || '-' },
+    ...(r.latitude  ? [{ label: 'Latitude',  val: Number(r.latitude).toFixed(6) }]  : []),
+    ...(r.longitude ? [{ label: 'Longitude', val: Number(r.longitude).toFixed(6) }] : []),
+    ...(r.precisao  ? [{ label: 'Precisão GPS', val: `±${Math.round(r.precisao)}m` }] : []),
+  ];
+
+  document.getElementById('regGrid').innerHTML = campos.map(c =>
+    `<div class="detalhe-item"><label>${c.label}</label><span>${c.val}</span></div>`
+  ).join('');
+
+  openModal('modalRegistro');
+}
+
+document.getElementById('modalRegistro').addEventListener('click', e => {
+  if (e.target === e.currentTarget && _mapInstance) { _mapInstance.remove(); _mapInstance = null; }
+});
+
+// ── Exportar ──────────────────────────────────────────────
+async function exportar(formato, id) {
+  try {
+    const res  = await API.download(`/fechamento/${id || _fechamentoId}/${formato}`);
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = `meu-relatorio.${formato === 'pdf' ? 'pdf' : 'xlsx'}`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch { toast('Erro ao exportar.', 'error'); }
+}
+</script>
+</body>
+</html>

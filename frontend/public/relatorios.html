@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Relatórios — Ponto Eletrônico</title>
+  <link rel="stylesheet" href="/fa/css/all.min.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <script src="/chartjs/chart.umd.js"></script>
+  <style>
+    @media (max-width: 768px) {
+      .chart-container { height: 180px !important; }
+      /* Grid de gráficos vira coluna */
+      #chartsRow { grid-template-columns: 1fr !important; }
+      /* Datas (De/Até) ficam em coluna */
+      #datesCustom { flex-direction: column !important; align-items: stretch !important; }
+      #datesCustom input { max-width: 100% !important; }
+      #datesCustom span  { display: none; }
+      /* Tabela: esconde colunas menos importantes */
+      table th:nth-child(6), table td:nth-child(6) { display: none; }
+    }
+    @media (max-width: 480px) {
+      table th:nth-child(4), table td:nth-child(4),
+      table th:nth-child(5), table td:nth-child(5) { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div id="sidebarMount"></div>
+<div class="main" id="main">
+  <div id="topbarMount"></div>
+  <div class="page-content">
+
+    <!-- Filtros globais -->
+    <div class="card mb-6">
+      <div class="card-header">
+        <span class="card-title"><i class="fas fa-file-alt" style="color:#3b82f6"></i> Central de Relatórios</span>
+      </div>
+      <div class="filters-bar">
+        <select class="form-control" id="periodo" style="max-width:180px">
+          <option value="hoje">Hoje</option>
+          <option value="semana">Esta semana</option>
+          <option value="mes" selected>Este mês</option>
+          <option value="personalizado">Personalizado</option>
+        </select>
+        <div id="datesCustom" style="display:none;gap:8px;align-items:center" class="d-flex">
+          <input type="date" class="form-control" id="dataInicio" style="max-width:150px" />
+          <span class="text-muted">até</span>
+          <input type="date" class="form-control" id="dataFim" style="max-width:150px" />
+        </div>
+        <button class="btn btn-primary" id="btnGerar"><i class="fas fa-chart-bar"></i> Gerar Relatório</button>
+        <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap" id="exportBtns">
+          <button class="btn btn-outline" id="btnPDF"   disabled><i class="fas fa-file-pdf" style="color:#ef4444"></i> Exportar PDF</button>
+          <button class="btn btn-outline" id="btnExcel" disabled><i class="fas fa-file-excel" style="color:#10b981"></i> Exportar Excel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resumo por funcionário -->
+    <div class="card mb-6">
+      <div class="card-header">
+        <span class="card-title"><i class="fas fa-users" style="color:#8b5cf6"></i> Resumo por Funcionário</span>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Funcionário</th>
+              <th>Cargo</th>
+              <th>Dias Trabalhados</th>
+              <th>Entradas</th>
+              <th>Saídas</th>
+              <th>Último Registro</th>
+            </tr>
+          </thead>
+          <tbody id="tblResumo">
+            <tr><td colspan="6" class="table-empty">Clique em "Gerar Relatório" para visualizar os dados.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px" id="chartsRow">
+      <div class="card">
+        <div class="card-header"><span class="card-title"><i class="fas fa-chart-bar" style="color:#3b82f6"></i> Dias Trabalhados por Funcionário</span></div>
+        <div class="chart-container" style="height:280px"><canvas id="chartFuncs"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title"><i class="fas fa-chart-pie" style="color:#10b981"></i> Entradas vs. Saídas</span></div>
+        <div class="chart-container" style="height:280px"><canvas id="chartTipos"></canvas></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/layout.js"></script>
+<script>
+let chartFuncs = null, chartTipos = null;
+let currentParams = {};
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.requireAuth()) return;
+  renderLayout('Relatórios');
+
+  if (!Auth.hasPermission('relatorios.visualizar')) {
+    document.querySelector('.page-content').innerHTML =
+      '<div class="alert alert-danger"><i class="fas fa-ban"></i> Você não possui permissão para acessar este recurso.</div>';
+    return;
+  }
+
+  if (!Auth.hasPermission('relatorios.exportar')) {
+    document.getElementById('exportBtns').style.display = 'none';
+  }
+
+  if (window.innerWidth < 900) document.getElementById('chartsRow').style.gridTemplateColumns = '1fr';
+
+  document.getElementById('periodo').addEventListener('change', e => {
+    document.getElementById('datesCustom').style.display = e.target.value === 'personalizado' ? 'flex' : 'none';
+  });
+});
+
+function getParams() {
+  const periodo = document.getElementById('periodo').value;
+  const today   = new Date();
+  let inicio, fim;
+
+  fim = today.toISOString().split('T')[0];
+
+  if (periodo === 'hoje') { inicio = fim; }
+  else if (periodo === 'semana') {
+    const d = new Date(today);
+    d.setDate(d.getDate() - 6);
+    inicio = d.toISOString().split('T')[0];
+  } else if (periodo === 'mes') {
+    inicio = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+  } else {
+    inicio = document.getElementById('dataInicio').value;
+    fim    = document.getElementById('dataFim').value;
+  }
+
+  return { data_inicio: inicio, data_fim: fim };
+}
+
+document.getElementById('btnGerar').addEventListener('click', async () => {
+  currentParams = getParams();
+  await gerarRelatorio(currentParams);
+});
+
+async function gerarRelatorio(params) {
+  const btn = document.getElementById('btnGerar');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px"></span> Gerando...';
+
+  try {
+    const resumo = await API.get('/relatorios/resumo-usuario', params);
+    renderResumo(resumo);
+
+    const nomes = resumo.map(r => r.nome.split(' ')[0]);
+    const dias  = resumo.map(r => r.dias_trabalhados);
+    const ents  = resumo.reduce((s, r) => s + r.total_entradas, 0);
+    const sais  = resumo.reduce((s, r) => s + r.total_saidas,   0);
+
+    if (chartFuncs) chartFuncs.destroy();
+    if (chartTipos) chartTipos.destroy();
+
+    chartFuncs = new Chart(document.getElementById('chartFuncs'), {
+      type: 'bar',
+      data: {
+        labels: nomes,
+        datasets: [{ label: 'Dias', data: dias,
+          backgroundColor: '#3b82f680', borderColor: '#3b82f6', borderWidth: 2, borderRadius: 6 }],
+      },
+      options: { responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } },
+    });
+
+    chartTipos = new Chart(document.getElementById('chartTipos'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Entradas', 'Saídas'],
+        datasets: [{ data: [ents, sais], backgroundColor: ['#10b981', '#ef4444'], borderWidth: 0 }],
+      },
+      options: { responsive: true, maintainAspectRatio: false, cutout: '65%',
+        plugins: { legend: { position: 'bottom' } } },
+    });
+
+    document.getElementById('btnPDF').disabled   = false;
+    document.getElementById('btnExcel').disabled = false;
+
+  } catch (err) {
+    toast(err.data?.erro || 'Erro ao gerar o relatório.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-chart-bar"></i> Gerar Relatório';
+  }
+}
+
+function renderResumo(data) {
+  const tb = document.getElementById('tblResumo');
+  if (!data.length) {
+    tb.innerHTML = '<tr><td colspan="6" class="table-empty">Nenhum dado encontrado no período selecionado.</td></tr>';
+    return;
+  }
+  tb.innerHTML = data.map(u => `
+    <tr>
+      <td><strong>${u.nome}</strong><br><span class="text-sm text-muted">${u.email}</span></td>
+      <td><span class="badge badge-primary">${u.cargo}</span></td>
+      <td><strong>${u.dias_trabalhados}</strong></td>
+      <td><span class="badge badge-success">${u.total_entradas}</span></td>
+      <td><span class="badge badge-danger">${u.total_saidas}</span></td>
+      <td class="text-sm text-muted">${fmtDataHora(u.ultimo_registro) || '-'}</td>
+    </tr>`).join('');
+}
+
+async function exportar(fmt) {
+  if (!currentParams.data_inicio) { toast('Gere o relatório antes de exportar.', 'warning'); return; }
+  try {
+    const res  = await API.download(`/relatorios/${fmt}`, currentParams);
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = `relatorio.${fmt === 'pdf' ? 'pdf' : 'xlsx'}`; a.click();
+    URL.revokeObjectURL(url);
+  } catch { toast('Erro ao exportar o relatório.', 'error'); }
+}
+
+document.getElementById('btnPDF').addEventListener('click',   () => exportar('pdf'));
+document.getElementById('btnExcel').addEventListener('click', () => exportar('excel'));
+</script>
+</body>
+</html>

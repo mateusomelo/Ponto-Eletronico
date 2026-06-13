@@ -1,0 +1,789 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registrar Ponto — Ponto Eletrônico</title>
+  <link rel="stylesheet" href="/fa/css/all.min.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <style>
+    .ponto-center {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .ponto-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      padding: 36px 32px;
+      width: 100%;
+      max-width: 480px;
+      text-align: center;
+    }
+
+    .ponto-user-avatar {
+      width: 80px; height: 80px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; color: #fff; font-weight: 800;
+      margin: 0 auto 16px;
+      box-shadow: 0 8px 20px rgba(30,58,95,.3);
+      overflow: hidden;
+    }
+
+    .ponto-user-name  { font-size: 1.3rem; font-weight: 800; margin-bottom: 4px; }
+    .ponto-user-cargo { color: var(--text-muted); font-size: .875rem; margin-bottom: 24px; }
+
+    .ponto-clock {
+      font-size: 3rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      color: var(--primary);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .ponto-date { color: var(--text-muted); font-size: .9rem; margin-bottom: 20px; }
+
+    .ponto-status {
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-size: .85rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .ponto-status.no-trabalho { background: #dcfce7; color: #166534; }
+    .ponto-status.fora        { background: #fee2e2; color: #991b1b; }
+
+    /* ── Painel de permissões ───────────────────────── */
+    .perms-panel {
+      background: #f8faff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      text-align: left;
+    }
+
+    .perm-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: .78rem;
+      font-weight: 500;
+    }
+    .perm-item i   { width: 14px; text-align: center; flex-shrink: 0; }
+    .perm-ok       { color: #16a34a; }
+    .perm-err      { color: #dc2626; }
+    .perm-warn     { color: #d97706; }
+    .perm-info     { color: var(--text-muted); }
+
+    /* ── Botões de ponto ────────────────────────────── */
+    .ponto-btns { display: flex; gap: 14px; justify-content: center; margin-bottom: 20px; }
+
+    .btn-ponto {
+      flex: 1;
+      padding: 16px;
+      border-radius: var(--radius);
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 700;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      transition: all .2s;
+      max-width: 180px;
+    }
+    .btn-ponto i { font-size: 1.6rem; }
+    .btn-ponto:disabled { opacity: .4; cursor: not-allowed; transform: none !important; }
+    .btn-entrada { background: #dcfce7; color: #166534; border: 2px solid #bbf7d0; }
+    .btn-entrada:hover:not(:disabled) { background: #16a34a; color: #fff; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(22,163,74,.3); }
+    .btn-saida   { background: #fee2e2; color: #991b1b; border: 2px solid #fecaca; }
+    .btn-saida:hover:not(:disabled)   { background: #dc2626; color: #fff; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(220,38,38,.3); }
+
+    /* ── Lista de hoje ──────────────────────────────── */
+    .ponto-registros { width: 100%; max-width: 480px; }
+
+    .registro-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .registro-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .registro-dot.entrada { background: var(--success); }
+    .registro-dot.saida   { background: var(--danger); }
+    .registro-tipo { font-weight: 600; font-size: .875rem; text-transform: capitalize; }
+    .registro-hora { color: var(--text-muted); font-size: .8rem; margin-top: 1px; }
+
+    /* ── Modal câmera ───────────────────────────────── */
+    #modalCamera .modal { max-width: 480px; }
+
+    .camera-wrap {
+      position: relative;
+      width: 100%;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      aspect-ratio: 4/3;
+    }
+
+    #cameraVideo, #cameraCanvas {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    #cameraCanvas { display: none; }
+
+    .foto-preview {
+      width: 100%;
+      border-radius: 12px;
+      display: none;
+      object-fit: cover;
+      aspect-ratio: 4/3;
+    }
+
+    .camera-steps {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 16px;
+      font-size: .8rem;
+      color: var(--text-muted);
+    }
+    .camera-steps .step {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: .75rem;
+    }
+    .camera-steps .step.active { background: var(--primary); color: #fff; }
+    .camera-steps .step.done   { background: var(--success); color: #fff; }
+    .camera-steps .sep { color: var(--border); font-size: 1rem; }
+
+    @keyframes successPulse {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    .success-animation { animation: successPulse .5s ease; }
+
+    /* ── Mobile ─────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .ponto-center { gap: 14px; }
+      .ponto-card   { padding: 28px 20px; border-radius: 16px; }
+      .ponto-clock  { font-size: 2.4rem; }
+      .btn-ponto    { padding: 18px 12px; max-width: none; min-height: 80px; }
+      .btn-ponto i  { font-size: 1.8rem; }
+      .ponto-btns   { gap: 12px; }
+      .ponto-user-avatar { width: 70px; height: 70px; font-size: 1.8rem; }
+    }
+  </style>
+</head>
+<body>
+<div id="sidebarMount"></div>
+<div class="main" id="main">
+  <div id="topbarMount"></div>
+  <div class="page-content">
+    <div class="ponto-center">
+
+      <!-- Card principal -->
+      <div class="ponto-card" id="pontoCard">
+        <div class="ponto-user-avatar" id="pontoAvatar">?</div>
+        <div class="ponto-user-name"  id="pontoNome">Carregando...</div>
+        <div class="ponto-user-cargo" id="pontoCargo"></div>
+
+        <div class="ponto-clock" id="pontoClock">00:00:00</div>
+        <div class="ponto-date"  id="pontoDate"></div>
+
+        <div class="ponto-status fora" id="pontoStatus">
+          <i class="fas fa-circle"></i> Verificando...
+        </div>
+
+        <!-- Painel de permissões e dispositivo -->
+        <div class="perms-panel">
+          <div class="perm-item perm-warn" id="permGPS">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>GPS: obtendo localização...</span>
+          </div>
+          <div class="perm-item perm-warn" id="permCamera" style="display:none">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>Câmera: verificando...</span>
+          </div>
+          <div class="perm-item perm-info" id="permDispositivo">
+            <i class="fas fa-desktop"></i>
+            <span>Detectando dispositivo...</span>
+          </div>
+        </div>
+
+        <div class="ponto-btns">
+          <button class="btn-ponto btn-entrada" id="btnEntrada" disabled>
+            <i class="fas fa-sign-in-alt"></i>
+            <span>Registrar<br>Entrada</span>
+          </button>
+          <button class="btn-ponto btn-saida" id="btnSaida" disabled>
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Registrar<br>Saída</span>
+          </button>
+        </div>
+
+        <div id="pontoMsg"></div>
+      </div>
+
+      <!-- Registros do dia -->
+      <div class="ponto-registros">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title"><i class="fas fa-list" style="color:#3b82f6"></i> Registros de Hoje</span>
+            <a href="historico.html" class="btn btn-sm btn-outline">Histórico completo</a>
+          </div>
+          <div id="listaHoje">
+            <div class="table-empty"><span class="spinner"></span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Modal câmera / selfie -->
+<div class="modal-overlay" id="modalCamera">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <h3 class="modal-title" id="cameraTitulo">Registrar Entrada</h3>
+      <button class="modal-close" onclick="cancelarCamera()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+
+      <div class="camera-steps">
+        <div class="step done" id="step1">1</div>
+        <div class="sep">›</div>
+        <div class="step active" id="step2">2</div>
+        <div class="sep">›</div>
+        <div class="step" id="step3">3</div>
+        <span style="margin-left:4px" id="stepsLabel">GPS · Selfie · Confirmar</span>
+      </div>
+
+      <div class="camera-wrap" id="cameraWrap">
+        <video id="cameraVideo" autoplay playsinline muted></video>
+        <canvas id="cameraCanvas"></canvas>
+      </div>
+
+      <img id="fotoPreview" class="foto-preview" alt="Foto capturada" />
+
+      <div id="cameraInfo" style="margin-top:12px;font-size:.82rem;color:var(--text-muted);text-align:center"></div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="cancelarCamera()">Cancelar</button>
+      <!-- Pular foto — visível apenas no desktop com câmera -->
+      <button class="btn btn-outline" id="btnPularFoto" style="display:none" onclick="pularFoto()">
+        <i class="fas fa-forward"></i> Pular Foto
+      </button>
+      <button class="btn btn-primary" id="btnCapturar" style="gap:8px">
+        <i class="fas fa-camera"></i> Tirar Foto
+      </button>
+      <button class="btn btn-success" id="btnConfirmar" style="display:none;gap:8px">
+        <i class="fas fa-check"></i> <span id="btnConfirmarLabel">Registrar Entrada</span>
+      </button>
+      <button class="btn btn-outline" id="btnRetirar" style="display:none" onclick="retirarFoto()">
+        <i class="fas fa-redo"></i> Refazer
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/layout.js"></script>
+<script>
+// ── Estado global ─────────────────────────────────────────
+let geoCoords   = null;
+let geoObtido   = false;
+let watchId     = null;    // ID do watchPosition (para cancelar depois)
+let tipoAtual   = null;
+let stream      = null;
+let fotoBlob    = null;
+let statusAtual = null;
+let isMobile    = false;   // dispositivo móvel (Android/iPhone/iPad)
+let temCamera   = false;   // câmera disponível e autorizada
+
+// ── Inicialização ─────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.requireAuth()) return;
+  renderLayout('Registrar Ponto');
+
+  const user = Auth.getUsuario();
+  if (user) {
+    const avatarEl = document.getElementById('pontoAvatar');
+    if (user.foto) {
+      avatarEl.innerHTML = `<img src="${user.foto}" alt="${user.nome}" style="width:100%;height:100%;object-fit:cover;" />`;
+    } else {
+      avatarEl.textContent = user.nome[0].toUpperCase();
+    }
+    document.getElementById('pontoNome').textContent  = user.nome;
+    document.getElementById('pontoCargo').textContent = user.cargo_nome || '';
+  }
+
+  // Relógio
+  (function tick() {
+    const now = new Date();
+    document.getElementById('pontoClock').textContent = now.toLocaleTimeString('pt-BR');
+    document.getElementById('pontoDate').textContent  = now.toLocaleDateString('pt-BR', {
+      weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
+    });
+    setTimeout(tick, 1000);
+  })();
+
+  // Detecção e permissões (aguarda câmera antes de liberar botões)
+  await inicializarPermissoes();
+  iniciarGPS();
+
+  await carregarStatus();
+  await carregarHoje();
+});
+
+// ── Detecção de dispositivo ───────────────────────────────
+function detectarDispositivo() {
+  const ua = navigator.userAgent;
+  // Considera móvel: Android phones, iPhones, iPads, tablets Android
+  isMobile = /Android.*Mobile|iPhone|iPod/i.test(ua) ||
+             /iPad/i.test(ua) ||
+             (/Android/i.test(ua) && !/Windows/i.test(ua));
+
+  if (/iPhone|iPod/i.test(ua)) return { label: 'iPhone', icone: 'fas fa-mobile-alt' };
+  if (/iPad/i.test(ua))        return { label: 'iPad',   icone: 'fas fa-tablet-alt' };
+  if (/Android.*Mobile/i.test(ua)) return { label: 'Android', icone: 'fas fa-mobile-alt' };
+  if (/Android/i.test(ua))    return { label: 'Tablet Android', icone: 'fas fa-tablet-alt' };
+  if (/Windows/i.test(ua))    return { label: 'Windows (Desktop)', icone: 'fas fa-desktop' };
+  if (/Mac OS/i.test(ua))     return { label: 'macOS (Desktop)', icone: 'fas fa-desktop' };
+  if (/Linux/i.test(ua))      return { label: 'Linux (Desktop)', icone: 'fas fa-desktop' };
+  return { label: 'Desconhecido', icone: 'fas fa-question-circle' };
+}
+
+function setPerm(id, tipo, texto, icone) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.className = `perm-item perm-${tipo}`;
+  el.innerHTML = `<i class="${icone}"></i><span>${texto}</span>`;
+}
+
+// ── Inicializar permissões ────────────────────────────────
+async function inicializarPermissoes() {
+  const disp = detectarDispositivo();
+  setPerm('permDispositivo', 'info', disp.label, disp.icone);
+
+  // Mostra linha de câmera para todos
+  document.getElementById('permCamera').style.display = 'flex';
+
+  if (isMobile) {
+    // Móvel: câmera OBRIGATÓRIA — solicita permissão automaticamente
+    setPerm('permCamera', 'warn', 'Câmera: solicitando permissão...', 'fas fa-spinner fa-spin');
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+      s.getTracks().forEach(t => t.stop()); // para imediatamente; só serve para disparar o diálogo
+      temCamera = true;
+      setPerm('permCamera', 'ok', 'Câmera autorizada (obrigatória)', 'fas fa-check-circle');
+    } catch {
+      temCamera = false;
+      setPerm('permCamera', 'err',
+        'Câmera negada — autorize a câmera para registrar ponto no celular',
+        'fas fa-times-circle');
+    }
+  } else {
+    // Desktop: câmera OPCIONAL — apenas verifica se existe, sem pedir permissão agora
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) throw new Error();
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      temCamera = devices.some(d => d.kind === 'videoinput');
+      if (temCamera) {
+        setPerm('permCamera', 'info', 'Webcam detectada (foto opcional)', 'fas fa-camera');
+      } else {
+        setPerm('permCamera', 'info', 'Sem webcam — registro sem foto liberado', 'fas fa-camera-slash');
+      }
+    } catch {
+      temCamera = false;
+      setPerm('permCamera', 'info', 'Sem webcam — registro sem foto liberado', 'fas fa-camera-slash');
+    }
+  }
+}
+
+// ── GPS (watchPosition para precisão crescente) ───────────
+function iniciarGPS() {
+  if (!navigator.geolocation) {
+    setPerm('permGPS', 'err', 'GPS não suportado neste navegador', 'fas fa-ban');
+    return;
+  }
+
+  watchId = navigator.geolocation.watchPosition(
+    pos => {
+      const acc = Math.round(pos.coords.accuracy);
+      geoCoords = {
+        latitude:  pos.coords.latitude,
+        longitude: pos.coords.longitude,
+        precisao:  pos.coords.accuracy,
+      };
+      geoObtido = true;
+
+      let tipo, icone, msg;
+      if (acc <= 50) {
+        tipo = 'ok'; icone = 'fas fa-check-circle';
+        msg = `GPS preciso (±${acc}m)`;
+        pararGPS(); // precisão ótima → para de monitorar
+      } else if (acc <= 200) {
+        tipo = 'ok'; icone = 'fas fa-map-marker-alt';
+        msg = `GPS obtido (±${acc}m)`;
+      } else if (acc <= 1000) {
+        tipo = 'warn'; icone = 'fas fa-exclamation-triangle';
+        msg = `GPS impreciso (±${acc}m) — aguardando melhor sinal...`;
+      } else if (acc <= 10000) {
+        tipo = 'warn'; icone = 'fas fa-exclamation-triangle';
+        msg = `Sem GPS — usando localização por Wi-Fi (±${(acc / 1000).toFixed(1)}km)`;
+      } else {
+        // Computador cabeado / sem Wi-Fi → geolocalização por IP
+        tipo = 'warn'; icone = 'fas fa-map-marker-alt';
+        msg = `Sem GPS — localização aproximada por IP (±${(acc / 1000).toFixed(0)}km). Registrando assim mesmo.`;
+      }
+
+      setPerm('permGPS', tipo, msg, icone);
+      habilitarBotoes();
+    },
+    err => {
+      geoObtido = false;
+      let msg = 'GPS negado';
+      if (err.code === 1) msg = 'GPS negado — habilite a localização para registrar';
+      if (err.code === 2) msg = 'GPS indisponível no dispositivo';
+      if (err.code === 3) msg = 'GPS: tempo esgotado — tente recarregar a página';
+      setPerm('permGPS', 'err', msg, 'fas fa-times-circle');
+    },
+    { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
+  );
+}
+
+function pararGPS() {
+  if (watchId !== null) {
+    navigator.geolocation.clearWatch(watchId);
+    watchId = null;
+  }
+}
+
+// ── Habilitar botões ──────────────────────────────────────
+function habilitarBotoes() {
+  if (!geoObtido) return;
+  // Móvel precisa de câmera autorizada também
+  if (isMobile && !temCamera) return;
+
+  const s = statusAtual;
+  if (!s) return;
+  document.getElementById('btnEntrada').disabled = s.no_trabalho;
+  document.getElementById('btnSaida').disabled   = !s.no_trabalho;
+}
+
+// ── Status do ponto ───────────────────────────────────────
+async function carregarStatus() {
+  try {
+    const data = await API.get('/ponto/status');
+    statusAtual = data;
+    atualizarUI(data);
+  } catch {
+    toast('Erro ao verificar status.', 'error');
+  }
+}
+
+function atualizarUI(data) {
+  const statusEl = document.getElementById('pontoStatus');
+  if (data.no_trabalho) {
+    statusEl.className = 'ponto-status no-trabalho';
+    statusEl.innerHTML = '<i class="fas fa-circle"></i> Trabalhando';
+  } else {
+    statusEl.className = 'ponto-status fora';
+    statusEl.innerHTML = '<i class="fas fa-circle"></i> Fora do trabalho';
+  }
+
+  if (geoObtido && (!isMobile || temCamera)) {
+    document.getElementById('btnEntrada').disabled = data.no_trabalho;
+    document.getElementById('btnSaida').disabled   = !data.no_trabalho;
+  } else {
+    document.getElementById('btnEntrada').disabled = true;
+    document.getElementById('btnSaida').disabled   = true;
+  }
+}
+
+// ── Acionar registro ──────────────────────────────────────
+async function acionarRegistro(tipo) {
+  if (!geoObtido) {
+    toast('Aguarde a obtenção do GPS.', 'warning');
+    return;
+  }
+  if (isMobile && !temCamera) {
+    toast('Autorize a câmera nas configurações do navegador para registrar ponto pelo celular.', 'error');
+    return;
+  }
+
+  tipoAtual = tipo;
+  fotoBlob  = null;
+
+  // Desktop sem câmera → registra direto sem foto
+  if (!isMobile && !temCamera) {
+    await enviarRegistro(tipo, null);
+    return;
+  }
+
+  // Tem câmera (obrigatória no mobile, opcional no desktop) → abre modal
+  abrirModalCamera(tipo);
+}
+
+// ── Modal câmera ──────────────────────────────────────────
+async function abrirModalCamera(tipo) {
+  document.getElementById('cameraTitulo').textContent =
+    tipo === 'entrada' ? 'Registrar Entrada' : 'Registrar Saída';
+  document.getElementById('btnConfirmarLabel').textContent =
+    tipo === 'entrada' ? 'Registrar Entrada' : 'Registrar Saída';
+
+  // "Pular foto" só aparece no desktop com câmera
+  document.getElementById('btnPularFoto').style.display = (!isMobile && temCamera) ? '' : 'none';
+
+  // Reset visual
+  document.getElementById('cameraWrap').style.display  = 'block';
+  document.getElementById('fotoPreview').style.display = 'none';
+  document.getElementById('btnCapturar').style.display  = '';
+  document.getElementById('btnConfirmar').style.display = 'none';
+  document.getElementById('btnRetirar').style.display   = 'none';
+  document.getElementById('cameraInfo').textContent =
+    isMobile
+      ? 'Posicione seu rosto no centro e clique em "Tirar Foto".'
+      : 'Foto opcional. Tire uma selfie ou clique em "Pular Foto".';
+
+  setStep(2);
+
+  // Abre câmera
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+    document.getElementById('cameraVideo').srcObject = stream;
+    if (isMobile) {
+      temCamera = true;
+      setPerm('permCamera', 'ok', 'Câmera autorizada (obrigatória)', 'fas fa-check-circle');
+    }
+  } catch {
+    if (isMobile) {
+      toast('Câmera negada. Foto obrigatória em dispositivos móveis.', 'error');
+      temCamera = false;
+      setPerm('permCamera', 'err',
+        'Câmera negada — autorize a câmera para registrar ponto no celular',
+        'fas fa-times-circle');
+      return;
+    } else {
+      // Desktop: câmera falhou na hora de abrir → registra sem foto
+      toast('Webcam indisponível. Registrando sem foto.', 'info');
+      await enviarRegistro(tipo, null);
+      return;
+    }
+  }
+
+  openModal('modalCamera');
+}
+
+function setStep(n) {
+  for (let i = 1; i <= 3; i++) {
+    const el = document.getElementById(`step${i}`);
+    el.className = 'step' + (i < n ? ' done' : i === n ? ' active' : '');
+  }
+}
+
+function cancelarCamera() {
+  pararCamera();
+  closeModal('modalCamera');
+}
+
+function pararCamera() {
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+    stream = null;
+  }
+  const vid = document.getElementById('cameraVideo');
+  if (vid) vid.srcObject = null;
+}
+
+function capturarFoto() {
+  const video  = document.getElementById('cameraVideo');
+  const canvas = document.getElementById('cameraCanvas');
+  canvas.width  = video.videoWidth  || 640;
+  canvas.height = video.videoHeight || 480;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+
+  canvas.toBlob(blob => {
+    fotoBlob = blob;
+
+    const url = URL.createObjectURL(blob);
+    const img = document.getElementById('fotoPreview');
+    img.src = url;
+    img.style.display = 'block';
+    document.getElementById('cameraWrap').style.display  = 'none';
+    document.getElementById('btnCapturar').style.display  = 'none';
+    document.getElementById('btnPularFoto').style.display = 'none';
+    document.getElementById('btnConfirmar').style.display = '';
+    document.getElementById('btnRetirar').style.display   = '';
+    document.getElementById('cameraInfo').innerHTML =
+      '<i class="fas fa-check-circle" style="color:var(--success)"></i> Foto capturada! Confira e clique em Registrar.';
+    setStep(3);
+
+    pararCamera();
+  }, 'image/jpeg', 0.85);
+}
+
+function retirarFoto() {
+  fotoBlob = null;
+  document.getElementById('fotoPreview').style.display = 'none';
+  document.getElementById('cameraWrap').style.display  = 'block';
+  document.getElementById('btnCapturar').style.display  = '';
+  document.getElementById('btnPularFoto').style.display = (!isMobile && temCamera) ? '' : 'none';
+  document.getElementById('btnConfirmar').style.display = 'none';
+  document.getElementById('btnRetirar').style.display   = 'none';
+  document.getElementById('cameraInfo').textContent =
+    isMobile
+      ? 'Posicione seu rosto no centro e clique em "Tirar Foto".'
+      : 'Foto opcional. Tire uma selfie ou clique em "Pular Foto".';
+  setStep(2);
+
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
+    .then(s => { stream = s; document.getElementById('cameraVideo').srcObject = s; })
+    .catch(() => { toast('Erro ao reabrir câmera.', 'error'); cancelarCamera(); });
+}
+
+// Desktop: pular foto e registrar direto
+async function pularFoto() {
+  pararCamera();
+  closeModal('modalCamera');
+  await enviarRegistro(tipoAtual, null);
+}
+
+// Confirmar com foto
+async function confirmarRegistro() {
+  if (!geoCoords) return;
+  await enviarRegistro(tipoAtual, fotoBlob);
+}
+
+// ── Enviar registro (com ou sem foto) ─────────────────────
+async function enviarRegistro(tipo, foto) {
+  // Desabilita botões durante envio
+  document.getElementById('btnEntrada').disabled = true;
+  document.getElementById('btnSaida').disabled   = true;
+
+  const btnC = document.getElementById('btnConfirmar');
+  if (foto !== null) {
+    // Vindo do modal com foto
+    btnC.disabled = true;
+    btnC.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px"></span> Enviando...';
+  }
+
+  try {
+    const fd = new FormData();
+    fd.append('tipo',      tipo);
+    fd.append('latitude',  geoCoords.latitude);
+    fd.append('longitude', geoCoords.longitude);
+    fd.append('precisao',  geoCoords.precisao || 0);
+    if (foto) fd.append('foto', foto, 'selfie.jpg');
+
+    const res = await fetch('/api/ponto/registrar', {
+      method:  'POST',
+      headers: { Authorization: `Bearer ${Auth.getToken()}` },
+      body:    fd,
+    });
+    const data = await res.json();
+    if (!res.ok) throw data;
+
+    // Para o watchPosition após registro bem-sucedido
+    pararGPS();
+
+    // Fecha modal se estiver aberto
+    pararCamera();
+    closeModal('modalCamera');
+
+    document.getElementById('pontoCard').classList.add('success-animation');
+    setTimeout(() => document.getElementById('pontoCard').classList.remove('success-animation'), 500);
+
+    const cor = tipo === 'entrada' ? '#10b981' : '#ef4444';
+    document.getElementById('pontoMsg').innerHTML = `
+      <div class="alert alert-success" style="justify-content:center">
+        <i class="fas fa-check-circle"></i>
+        <strong>${data.mensagem}</strong>
+        <span style="color:${cor};font-weight:700">&nbsp;${fmtHora(data.registro.data_hora)}</span>
+      </div>`;
+
+    toast(data.mensagem, 'success');
+    await carregarStatus();
+    await carregarHoje();
+  } catch (err) {
+    const msg = err.erro || 'Erro ao registrar ponto.';
+    const modalAberto = document.getElementById('modalCamera').classList.contains('show');
+    if (modalAberto) {
+      document.getElementById('cameraInfo').innerHTML =
+        `<span style="color:var(--danger)"><i class="fas fa-times-circle"></i> ${msg}</span>`;
+    } else {
+      document.getElementById('pontoMsg').innerHTML =
+        `<div class="alert alert-danger"><i class="fas fa-times-circle"></i> ${msg}</div>`;
+    }
+    toast(msg, 'error');
+    habilitarBotoes();
+  } finally {
+    btnC.disabled = false;
+    btnC.innerHTML = `<i class="fas fa-check"></i> <span id="btnConfirmarLabel">${tipo === 'entrada' ? 'Registrar Entrada' : 'Registrar Saída'}</span>`;
+  }
+}
+
+// ── Registros de hoje ─────────────────────────────────────
+async function carregarHoje() {
+  try {
+    const { registros } = await API.get('/ponto/hoje');
+    const el = document.getElementById('listaHoje');
+
+    if (!registros.length) {
+      el.innerHTML = '<div class="table-empty" style="padding:20px">Nenhum registro hoje.</div>';
+      return;
+    }
+
+    el.innerHTML = registros.map(r => `
+      <div class="registro-item">
+        <div class="registro-dot ${r.tipo}"></div>
+        <div style="flex:1">
+          <div class="registro-tipo">${r.tipo}</div>
+          <div class="registro-hora">${fmtDataHora(r.data_hora)}</div>
+          ${r.endereco_aprox ? `<div class="registro-hora" style="margin-top:2px"><i class="fas fa-map-marker-alt" style="color:#3b82f6"></i> ${r.endereco_aprox.substring(0, 60)}…</div>` : ''}
+        </div>
+        ${r.foto_registro ? `<img src="${r.foto_registro}" alt="selfie" style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0;" />` : ''}
+      </div>`).join('');
+  } catch {}
+}
+
+// ── Eventos ───────────────────────────────────────────────
+document.getElementById('btnEntrada').addEventListener('click', () => acionarRegistro('entrada'));
+document.getElementById('btnSaida').addEventListener('click',   () => acionarRegistro('saida'));
+document.getElementById('btnCapturar').addEventListener('click', capturarFoto);
+document.getElementById('btnConfirmar').addEventListener('click', confirmarRegistro);
+
+// Para a câmera se fechar o modal pelo fundo
+document.getElementById('modalCamera').addEventListener('click', e => {
+  if (e.target === e.currentTarget) pararCamera();
+});
+</script>
+</body>
+</html>
+

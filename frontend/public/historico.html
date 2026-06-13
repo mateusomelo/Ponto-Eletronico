@@ -1,0 +1,339 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Histórico de Ponto — Ponto Eletrônico</title>
+  <link rel="stylesheet" href="/fa/css/all.min.css" />
+  <link rel="stylesheet" href="/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <style>
+    #mapDetalhes { height: 220px; border-radius: 10px; margin-bottom: 12px; }
+
+    .detalhe-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 16px;
+      margin-bottom: 12px;
+    }
+    .detalhe-item label { font-size:.72rem; color:var(--text-muted); display:block; margin-bottom:2px; }
+    .detalhe-item span  { font-size:.85rem; font-weight:600; }
+
+    .selfie-wrap {
+      text-align: center;
+      margin-bottom: 14px;
+    }
+    .selfie-wrap img {
+      width: 120px; height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--border);
+      box-shadow: var(--shadow-md);
+    }
+
+    @media (max-width: 768px) {
+      /* No mobile mostra só: #, Funcionário, Data/Hora, Tipo, e botão detalhes */
+      .col-ip, .col-gps,
+      table th:nth-child(7), table td:nth-child(7),
+      table th:nth-child(8), table td:nth-child(8)
+      { display: none !important; }
+      .detalhe-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div id="sidebarMount"></div>
+<div class="main" id="main">
+  <div id="topbarMount"></div>
+  <div class="page-content">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fas fa-history" style="color:#3b82f6"></i> Histórico de Registros de Ponto</span>
+        <div style="display:flex;gap:8px" id="exportBtns">
+          <button class="btn btn-sm btn-outline" id="btnExportPDF"><i class="fas fa-file-pdf" style="color:#ef4444"></i> PDF</button>
+          <button class="btn btn-sm btn-outline" id="btnExportExcel"><i class="fas fa-file-excel" style="color:#10b981"></i> Excel</button>
+        </div>
+      </div>
+
+      <div class="filters-bar">
+        <div class="search-box" id="buscaFuncionario" style="display:none">
+          <i class="fas fa-user"></i>
+          <input type="text" id="buscaUID" placeholder="Filtrar por funcionário..." />
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <label class="text-sm text-muted">De:</label>
+          <input type="date" class="form-control" id="dataInicio" style="max-width:150px" />
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <label class="text-sm text-muted">Até:</label>
+          <input type="date" class="form-control" id="dataFim" style="max-width:150px" />
+        </div>
+        <select class="form-control" id="filtroTipo" style="max-width:130px">
+          <option value="">Todos</option>
+          <option value="entrada">Entrada</option>
+          <option value="saida">Saída</option>
+        </select>
+        <button class="btn btn-primary" id="btnBuscar"><i class="fas fa-search"></i> Buscar</button>
+        <button class="btn btn-outline" id="btnLimpar">Limpar</button>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th id="thUsuario">Funcionário</th>
+              <th>Data/Hora</th>
+              <th>Tipo</th>
+              <th class="col-ip">IP</th>
+              <th class="col-gps">Localização</th>
+              <th>Dispositivo</th>
+              <th>Navegador</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tblHistorico">
+            <tr><td colspan="9" class="table-empty"><span class="spinner"></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination" id="paginacao"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal detalhes do registro -->
+<div class="modal-overlay" id="modalDetalhes">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-header">
+      <h3 class="modal-title">Detalhes do Registro</h3>
+      <button class="modal-close" onclick="closeModal('modalDetalhes')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Selfie -->
+      <div class="selfie-wrap" id="selfieWrap" style="display:none">
+        <img id="selfieImg" src="" alt="Selfie do registro" />
+        <div class="text-sm text-muted" style="margin-top:6px">Foto no momento do registro</div>
+      </div>
+
+      <!-- Mapa -->
+      <div id="mapDetalhes" style="display:none"></div>
+
+      <!-- Endereço -->
+      <div id="enderecoBox" style="display:none;margin-bottom:12px;padding:10px 14px;background:#f0f9ff;border-radius:8px;font-size:.82rem">
+        <i class="fas fa-map-marker-alt" style="color:#3b82f6"></i>
+        <span id="enderecoTxt"></span>
+      </div>
+
+      <!-- Grid de info -->
+      <div class="detalhe-grid" id="detalheGrid"></div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalDetalhes')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<script src="/leaflet/leaflet.js"></script>
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/layout.js"></script>
+<script>
+let estado       = { pagina: 1, por_pagina: 20 };
+let ehGestor     = false;
+let temDetalhes  = false;
+let _cache       = [];
+let _mapInstance = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.requireAuth()) return;
+  renderLayout('Histórico de Ponto');
+
+  ehGestor    = Auth.isSupervisor();
+  temDetalhes = Auth.hasPermission('registros.detalhes') || Auth.isSupervisor();
+
+  const hoje     = new Date();
+  const mesAtras = new Date(hoje.getFullYear(), hoje.getMonth() - 1, hoje.getDate());
+  document.getElementById('dataFim').value    = hoje.toISOString().split('T')[0];
+  document.getElementById('dataInicio').value = mesAtras.toISOString().split('T')[0];
+
+  if (!Auth.hasPermission('relatorios.exportar')) {
+    document.getElementById('exportBtns').style.display = 'none';
+  }
+
+  if (!ehGestor) {
+    document.getElementById('thUsuario').style.display = 'none';
+    document.getElementById('buscaFuncionario').style.display = 'none';
+  } else {
+    document.getElementById('buscaFuncionario').style.display = 'flex';
+  }
+
+  // Sem permissão de detalhes → esconde colunas de IP e GPS
+  if (!temDetalhes) {
+    document.querySelectorAll('.col-ip, .col-gps').forEach(el => el.style.display = 'none');
+  }
+
+  await buscar();
+});
+
+async function buscar() {
+  const params = {
+    pagina:      estado.pagina,
+    por_pagina:  estado.por_pagina,
+    data_inicio: document.getElementById('dataInicio').value,
+    data_fim:    document.getElementById('dataFim').value,
+    tipo:        document.getElementById('filtroTipo').value,
+  };
+
+  if (ehGestor) {
+    const b = document.getElementById('buscaUID').value.trim();
+    if (b) params.busca = b;
+  }
+
+  try {
+    document.getElementById('tblHistorico').innerHTML =
+      '<tr><td colspan="9" class="table-empty"><span class="spinner"></span></td></tr>';
+
+    const data = await API.get('/ponto/historico', params);
+    _cache = data.registros;
+    renderTabela(data.registros);
+    renderPagination(document.getElementById('paginacao'), {
+      total: data.total, pagina: data.pagina, por_pagina: data.por_pagina,
+      onPage: p => { estado.pagina = p; buscar(); },
+    });
+  } catch (err) {
+    toast(err.data?.erro || 'Erro ao buscar registros.', 'error');
+  }
+}
+
+function renderTabela(registros) {
+  const tb = document.getElementById('tblHistorico');
+  if (!registros.length) {
+    tb.innerHTML = '<tr><td colspan="9" class="table-empty">Nenhum registro encontrado.</td></tr>';
+    return;
+  }
+
+  tb.innerHTML = registros.map((r, i) => `
+    <tr>
+      <td class="text-sm text-muted">#${r.id}</td>
+      ${ehGestor ? `<td>${r.usuario_nome || '-'}</td>` : ''}
+      <td>${fmtDataHora(r.data_hora)}</td>
+      <td><span class="badge ${r.tipo === 'entrada' ? 'badge-success' : 'badge-danger'}">${r.tipo}</span></td>
+      <td class="text-sm col-ip">${r.ip || '-'}</td>
+      <td class="text-sm col-gps">
+        ${r.latitude ? `<span style="color:var(--accent)"><i class="fas fa-map-marker-alt"></i> GPS</span>` : '-'}
+      </td>
+      <td class="text-sm">${r.dispositivo || '-'}</td>
+      <td class="text-sm">${r.navegador || '-'}</td>
+      <td>
+        <button class="btn btn-sm btn-outline" onclick="verDetalhes(${i})" title="Ver detalhes">
+          <i class="fas fa-eye"></i>
+        </button>
+      </td>
+    </tr>`).join('');
+}
+
+function verDetalhes(idx) {
+  const r = _cache[idx];
+  if (!r) return;
+
+  // Selfie
+  const selfieWrap = document.getElementById('selfieWrap');
+  const selfieImg  = document.getElementById('selfieImg');
+  if (temDetalhes && r.foto_registro) {
+    selfieImg.src = r.foto_registro;
+    selfieWrap.style.display = 'block';
+  } else {
+    selfieWrap.style.display = 'none';
+  }
+
+  // Mapa Leaflet
+  const mapEl = document.getElementById('mapDetalhes');
+  if (temDetalhes && r.latitude && r.longitude) {
+    mapEl.style.display = 'block';
+
+    // Espera modal abrir e animação concluir antes de iniciar o mapa
+    setTimeout(() => {
+      if (_mapInstance) { _mapInstance.remove(); _mapInstance = null; }
+      _mapInstance = L.map('mapDetalhes').setView([r.latitude, r.longitude], 16);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap',
+      }).addTo(_mapInstance);
+      L.marker([r.latitude, r.longitude]).addTo(_mapInstance)
+        .bindPopup(`Registro de ${r.tipo}<br>${fmtDataHora(r.data_hora)}`).openPopup();
+      _mapInstance.invalidateSize();
+    }, 350);
+  } else {
+    mapEl.style.display = 'none';
+  }
+
+  // Endereço
+  const endBox = document.getElementById('enderecoBox');
+  if (r.endereco_aprox) {
+    document.getElementById('enderecoTxt').textContent = r.endereco_aprox;
+    endBox.style.display = 'block';
+  } else {
+    endBox.style.display = 'none';
+  }
+
+  // Grid de info
+  const campos = [
+    { label: 'Funcionário',   val: r.usuario_nome || '-' },
+    { label: 'Tipo',         val: r.tipo },
+    { label: 'Data/Hora',    val: fmtDataHora(r.data_hora) },
+    { label: 'Dispositivo',  val: r.dispositivo || '-' },
+    { label: 'Sistema Operacional', val: r.so || '-' },
+    { label: 'Navegador',    val: r.navegador || '-' },
+  ];
+
+  if (temDetalhes) {
+    campos.push({ label: 'IP Interno',  val: r.ip        || '-' });
+    campos.push({ label: 'IP Público',  val: r.ip_publico|| '-' });
+    if (r.latitude)  campos.push({ label: 'Latitude',   val: r.latitude.toFixed(6) });
+    if (r.longitude) campos.push({ label: 'Longitude',  val: r.longitude.toFixed(6) });
+    if (r.precisao)  campos.push({ label: 'Precisão GPS', val: `±${Math.round(r.precisao)}m` });
+  }
+
+  document.getElementById('detalheGrid').innerHTML = campos.map(c => `
+    <div class="detalhe-item">
+      <label>${c.label}</label>
+      <span>${c.val}</span>
+    </div>`).join('');
+
+  openModal('modalDetalhes');
+}
+
+document.getElementById('btnBuscar').addEventListener('click', () => { estado.pagina = 1; buscar(); });
+document.getElementById('btnLimpar').addEventListener('click', () => {
+  document.getElementById('dataInicio').value = '';
+  document.getElementById('dataFim').value    = '';
+  document.getElementById('filtroTipo').value = '';
+  if (ehGestor) document.getElementById('buscaUID').value = '';
+  estado.pagina = 1;
+  buscar();
+});
+
+async function exportar(formato) {
+  const params = {
+    data_inicio: document.getElementById('dataInicio').value,
+    data_fim:    document.getElementById('dataFim').value,
+    tipo:        document.getElementById('filtroTipo').value,
+  };
+  try {
+    const res  = await API.download(`/relatorios/${formato}`, params);
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = `relatorio-ponto.${formato === 'pdf' ? 'pdf' : 'xlsx'}`; a.click();
+    URL.revokeObjectURL(url);
+  } catch { toast('Erro ao exportar.', 'error'); }
+}
+
+document.getElementById('btnExportPDF').addEventListener('click',   () => exportar('pdf'));
+document.getElementById('btnExportExcel').addEventListener('click', () => exportar('excel'));
+</script>
+</body>
+</html>
+

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Logs de Auditoria — Ponto Eletrônico</title>
+  <link rel="stylesheet" href="/fa/css/all.min.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <style>
+    @media (max-width: 768px) {
+      table th:nth-child(5), table td:nth-child(5),
+      table th:nth-child(6), table td:nth-child(6) { display: none; }
+    }
+    @media (max-width: 480px) {
+      table th:nth-child(4), table td:nth-child(4) { display: none; }
+    }
+    .log-detail-row {
+      display: flex; gap: 8px; margin-bottom: 8px;
+      font-size: .85rem; align-items: flex-start;
+    }
+    .log-detail-row label {
+      min-width: 110px; font-weight: 600; color: var(--text-muted);
+      font-size: .78rem; padding-top: 2px; flex-shrink: 0;
+    }
+    .log-detail-row span { flex: 1; word-break: break-all; }
+    .log-json {
+      background: #f8faff; border: 1px solid var(--border);
+      border-radius: 6px; padding: 10px 12px;
+      font-size: .75rem; overflow: auto; max-height: 220px;
+      margin-top: 4px; white-space: pre; font-family: monospace;
+    }
+    .log-section-title {
+      font-size: .78rem; font-weight: 700; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: .05em;
+      margin: 12px 0 6px; border-bottom: 1px solid var(--border); padding-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+<div id="sidebarMount"></div>
+<div class="main" id="main">
+  <div id="topbarMount"></div>
+  <div class="page-content">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">
+          <i class="fas fa-shield-alt" style="color:#ef4444"></i> Logs de Auditoria
+        </span>
+        <span class="badge badge-danger"><i class="fas fa-lock"></i> Apenas Administradores</span>
+      </div>
+
+      <div class="filters-bar">
+        <select class="form-control" id="filtroAcao" style="max-width:200px">
+          <option value="">Todas as ações</option>
+          <option value="login">Login</option>
+          <option value="logout">Logout</option>
+          <option value="ponto">Ponto</option>
+          <option value="usuario">Usuários</option>
+          <option value="cargo">Cargos</option>
+          <option value="senha">Senhas</option>
+          <option value="permissoes">Permissões</option>
+          <option value="fechamento">Fechamento</option>
+        </select>
+        <div style="display:flex;align-items:center;gap:6px">
+          <label class="text-sm text-muted">De:</label>
+          <input type="date" class="form-control" id="dataInicio" style="max-width:150px" />
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <label class="text-sm text-muted">Até:</label>
+          <input type="date" class="form-control" id="dataFim" style="max-width:150px" />
+        </div>
+        <button class="btn btn-primary" id="btnBuscar"><i class="fas fa-search"></i> Filtrar</button>
+        <button class="btn btn-outline" id="btnLimpar">Limpar</button>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Data/Hora</th>
+              <th>Usuário</th>
+              <th>Ação</th>
+              <th>Descrição</th>
+              <th>IP</th>
+              <th>Detalhes</th>
+            </tr>
+          </thead>
+          <tbody id="tblLogs">
+            <tr><td colspan="6" class="table-empty"><span class="spinner"></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination" id="paginacao"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal detalhes -->
+<div class="modal-overlay" id="modalDetalhes">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fas fa-file-alt" style="margin-right:8px;color:#3b82f6"></i>Detalhes do Log</h3>
+      <button class="modal-close" onclick="closeModal('modalDetalhes')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="modalDetalhesBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalDetalhes')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/layout.js"></script>
+<script>
+let estado = { pagina: 1, por_pagina: 30 };
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.requireAuth()) return;
+  renderLayout('Logs de Auditoria');
+
+  if (!Auth.isAdmin()) {
+    document.querySelector('.page-content').innerHTML =
+      '<div class="card" style="color:#ef4444;padding:24px"><i class="fas fa-lock"></i> Acesso restrito a administradores.</div>';
+    return;
+  }
+
+  const hoje = new Date().toISOString().split('T')[0];
+  document.getElementById('dataFim').value = hoje;
+  await buscar();
+});
+
+async function buscar() {
+  const params = {
+    pagina:      estado.pagina,
+    por_pagina:  estado.por_pagina,
+    acao:        document.getElementById('filtroAcao').value,
+    data_inicio: document.getElementById('dataInicio').value,
+    data_fim:    document.getElementById('dataFim').value,
+  };
+
+  try {
+    document.getElementById('tblLogs').innerHTML =
+      '<tr><td colspan="6" class="table-empty"><span class="spinner"></span></td></tr>';
+
+    const data = await API.get('/logs', params);
+    window._logsCache = data.registros;
+    renderTabela(data.registros);
+    renderPagination(document.getElementById('paginacao'), {
+      total: data.total, pagina: data.pagina, por_pagina: data.por_pagina,
+      onPage: p => { estado.pagina = p; buscar(); },
+    });
+  } catch (err) {
+    toast(err.data?.erro || 'Erro ao carregar logs.', 'error');
+  }
+}
+
+const acaoCores = {
+  'login.sucesso':          'badge-success',
+  'login.falhou':           'badge-danger',
+  'logout':                 'badge-gray',
+  'ponto.entrada':          'badge-success',
+  'ponto.saida':            'badge-warning',
+  'usuario.criado':         'badge-info',
+  'usuario.editado':        'badge-info',
+  'usuario.excluido':       'badge-danger',
+  'usuario.bloqueado':      'badge-danger',
+  'usuario.desbloqueado':   'badge-success',
+  'senha.alterada':         'badge-warning',
+  'senha.resetada':         'badge-warning',
+  'cargo.criado':           'badge-info',
+  'cargo.editado':          'badge-info',
+  'cargo.excluido':         'badge-danger',
+  'permissoes.alteradas':   'badge-warning',
+  'fechamento.criado':      'badge-info',
+  'fechamento.enviado':     'badge-info',
+  'fechamento.assinado':    'badge-success',
+  'fechamento.rejeitado':   'badge-danger',
+  'fechamento.fechado_definitivo': 'badge-success',
+  'fechamento.reaberto':    'badge-warning',
+  'fechamento.excluido':    'badge-danger',
+};
+
+function renderTabela(logs) {
+  const tb = document.getElementById('tblLogs');
+  if (!logs.length) {
+    tb.innerHTML = '<tr><td colspan="6" class="table-empty">Nenhum log encontrado.</td></tr>';
+    return;
+  }
+
+  tb.innerHTML = logs.map((l, i) => {
+    const cor = acaoCores[l.acao] || 'badge-gray';
+    const temDetalhes = l.dados_antes || l.dados_depois || l.descricao;
+    return `
+      <tr>
+        <td class="text-sm">${fmtDataHora(l.created_at)}</td>
+        <td>${l.usuario_nome || '<span class="text-muted">Sistema</span>'}</td>
+        <td><span class="badge ${cor}">${l.acao}</span></td>
+        <td class="text-sm">${l.descricao || '-'}</td>
+        <td class="text-sm text-muted">${l.ip || '-'}</td>
+        <td>
+          <button class="btn btn-xs btn-outline" onclick="verDetalhes(${i})" title="Ver detalhes">
+            <i class="fas fa-eye"></i>
+          </button>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+function formatarJson(valor) {
+  if (!valor) return null;
+  try {
+    // mysql2 já retorna JSON como objeto — só stringify
+    if (typeof valor === 'object') return JSON.stringify(valor, null, 2);
+    // Se vier como string, parse primeiro
+    return JSON.stringify(JSON.parse(valor), null, 2);
+  } catch {
+    return String(valor);
+  }
+}
+
+function verDetalhes(idx) {
+  const l = window._logsCache[idx];
+  if (!l) return;
+
+  let html = '';
+
+  // Informações principais
+  html += `<div class="log-section-title">Informações</div>`;
+  html += row('Ação',      `<span class="badge ${acaoCores[l.acao] || 'badge-gray'}">${l.acao}</span>`);
+  html += row('Usuário',   l.usuario_nome || '<em>Sistema</em>');
+  html += row('Data/Hora', fmtDataHora(l.created_at));
+  html += row('IP',        l.ip || '-');
+  if (l.user_agent) html += row('Navegador', l.user_agent);
+  if (l.descricao)  html += row('Descrição', l.descricao);
+
+  // Dados antes
+  const jsonAntes = formatarJson(l.dados_antes);
+  if (jsonAntes) {
+    html += `<div class="log-section-title">Dados Anteriores</div>`;
+    html += `<div class="log-json">${escHtml(jsonAntes)}</div>`;
+  }
+
+  // Dados depois
+  const jsonDepois = formatarJson(l.dados_depois);
+  if (jsonDepois) {
+    html += `<div class="log-section-title">Dados Novos</div>`;
+    html += `<div class="log-json">${escHtml(jsonDepois)}</div>`;
+  }
+
+  document.getElementById('modalDetalhesBody').innerHTML = html;
+  openModal('modalDetalhes');
+}
+
+function row(label, valor) {
+  return `<div class="log-detail-row"><label>${label}</label><span>${valor}</span></div>`;
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+document.getElementById('btnBuscar').addEventListener('click', () => { estado.pagina = 1; buscar(); });
+document.getElementById('btnLimpar').addEventListener('click', () => {
+  document.getElementById('filtroAcao').value  = '';
+  document.getElementById('dataInicio').value  = '';
+  document.getElementById('dataFim').value     = '';
+  estado.pagina = 1;
+  buscar();
+});
+</script>
+</body>
+</html>

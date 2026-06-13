@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cargos &amp; Permissões — Ponto Eletrônico</title>
+  <link rel="stylesheet" href="/fa/css/all.min.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <style>
+    .perm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .perm-check {
+      display: flex; align-items: center; gap: 8px; font-size: .85rem;
+      padding: 6px 8px; border-radius: 6px; background: #f8faff; cursor: pointer;
+    }
+    .perm-check:hover { background: #eff6ff; }
+    .perm-check input { accent-color: var(--accent); }
+
+    .cargo-card {
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 16px; margin-bottom: 12px; transition: box-shadow .15s;
+    }
+    .cargo-card:hover { box-shadow: var(--shadow-md); }
+    .cargo-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+
+    .nivel-badge { padding: 3px 10px; border-radius: 20px; font-size: .72rem; font-weight: 700; }
+    .nivel-1 { background: #fef9c3; color: #854d0e; }
+    .nivel-2 { background: #e0f2fe; color: #075985; }
+    .nivel-3 { background: #f0fdf4; color: #166534; }
+
+    @media (max-width: 768px) {
+      #mainGrid { grid-template-columns: 1fr !important; }
+      .perm-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div id="sidebarMount"></div>
+<div class="main" id="main">
+  <div id="topbarMount"></div>
+  <div class="page-content">
+
+    <div style="display:grid;grid-template-columns:1fr 1.5fr;gap:20px" id="mainGrid">
+
+      <!-- Lista de cargos -->
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title"><i class="fas fa-id-badge" style="color:#3b82f6"></i> Cargos</span>
+            <button class="btn btn-sm btn-primary" id="btnNovoCargo" data-perm="cargos.criar">
+              <i class="fas fa-plus"></i> Novo
+            </button>
+          </div>
+          <div id="listaCargos"><div class="page-loader"><span class="spinner"></span></div></div>
+        </div>
+      </div>
+
+      <!-- Editor de permissões -->
+      <div>
+        <div class="card" id="editorCard">
+          <div class="card-header">
+            <span class="card-title" id="editorTitulo">
+              <i class="fas fa-lock" style="color:#f59e0b"></i> Selecione um cargo
+            </span>
+            <div style="display:flex;gap:8px" id="editorActions">
+              <button class="btn btn-sm btn-success"  id="btnSalvarPerms"  style="display:none"><i class="fas fa-save"></i> Salvar Permissões</button>
+              <button class="btn btn-sm btn-outline"  id="btnEditarCargo"  style="display:none"><i class="fas fa-edit"></i> Editar</button>
+              <button class="btn btn-sm btn-danger"   id="btnExcluirCargo" style="display:none"><i class="fas fa-trash"></i> Excluir</button>
+            </div>
+          </div>
+          <div id="editorBody">
+            <p class="text-muted text-sm" style="padding:20px">Clique em um cargo para editar suas permissões.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal Cargo -->
+<div class="modal-overlay" id="modalCargo">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modalCargoTitulo">Novo Cargo</h3>
+      <button class="modal-close" onclick="closeModal('modalCargo')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="cargoEditId" />
+      <div class="form-group">
+        <label class="form-label">Nome do cargo *</label>
+        <input type="text" class="form-control" id="cargoNome" placeholder="Ex.: Gerente de RH" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descrição</label>
+        <input type="text" class="form-control" id="cargoDesc" placeholder="Breve descrição do cargo..." />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nível de acesso *</label>
+        <select class="form-control" id="cargoNivel">
+          <option value="1">1 — Administrador</option>
+          <option value="2">2 — Supervisor / RH</option>
+          <option value="3" selected>3 — Funcionário</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalCargo')">Cancelar</button>
+      <button class="btn btn-primary" id="btnSalvarCargo"><i class="fas fa-save"></i> Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/layout.js"></script>
+<script>
+let allPerms   = [];
+let cargos     = [];
+let cargoAtual = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.requireAuth()) return;
+  renderLayout('Cargos & Permissões');
+
+  if (window.innerWidth < 900) document.getElementById('mainGrid').style.gridTemplateColumns = '1fr';
+
+  if (!Auth.isAdmin()) {
+    document.getElementById('btnNovoCargo').style.display = 'none';
+  }
+
+  [allPerms, cargos] = await Promise.all([
+    API.get('/cargos/permissoes').catch(() => []),
+    API.get('/cargos').catch(() => []),
+  ]);
+
+  renderCargos();
+});
+
+function renderCargos() {
+  const el = document.getElementById('listaCargos');
+  if (!cargos.length) {
+    el.innerHTML = '<p class="text-muted text-sm" style="padding:20px">Nenhum cargo cadastrado.</p>';
+    return;
+  }
+
+  el.innerHTML = cargos.map(c => `
+    <div class="cargo-card" onclick="selecionarCargo(${c.id})" style="cursor:pointer">
+      <div class="cargo-header">
+        <div>
+          <strong>${c.nome}</strong>
+          <span class="nivel-badge nivel-${c.nivel}" style="margin-left:8px">Nível ${c.nivel}</span>
+        </div>
+        <span class="badge badge-gray">${c.total_usuarios} usuário(s)</span>
+      </div>
+      <div class="text-sm text-muted">${c.descricao || 'Sem descrição'}</div>
+      <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px">
+        ${c.permissoes.slice(0, 5).map(p => `<span class="badge badge-info">${p.nome}</span>`).join('')}
+        ${c.permissoes.length > 5 ? `<span class="badge badge-gray">+${c.permissoes.length - 5}</span>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+function selecionarCargo(id) {
+  cargoAtual = cargos.find(c => c.id === id);
+  if (!cargoAtual) return;
+
+  document.getElementById('editorTitulo').innerHTML =
+    `<i class="fas fa-lock" style="color:#f59e0b"></i> Permissões: ${cargoAtual.nome}`;
+
+  const podGerenciar = Auth.hasPermission('permissoes.gerenciar');
+  document.getElementById('btnSalvarPerms').style.display  = podGerenciar ? 'flex' : 'none';
+  document.getElementById('btnEditarCargo').style.display  = Auth.hasPermission('cargos.editar')  ? 'flex' : 'none';
+  document.getElementById('btnExcluirCargo').style.display = Auth.hasPermission('cargos.excluir') ? 'flex' : 'none';
+
+  const permsAtivas = new Set(cargoAtual.permissoes.map(p => p.id));
+
+  // Agrupar permissões por módulo
+  const grupos = {};
+  allPerms.forEach(p => {
+    const grp = p.nome.split('.')[0];
+    if (!grupos[grp]) grupos[grp] = [];
+    grupos[grp].push(p);
+  });
+
+  let html = '';
+  for (const [grp, perms] of Object.entries(grupos)) {
+    html += `<div style="margin-bottom:16px">
+      <div class="text-sm fw-700" style="margin-bottom:8px;color:var(--primary);text-transform:uppercase;letter-spacing:.04em">${grp}</div>
+      <div class="perm-grid">`;
+    perms.forEach(p => {
+      html += `
+        <label class="perm-check">
+          <input type="checkbox" data-perm-id="${p.id}" ${permsAtivas.has(p.id) ? 'checked' : ''} ${!podGerenciar ? 'disabled' : ''} />
+          <span>${p.descricao || p.nome}</span>
+        </label>`;
+    });
+    html += '</div></div>';
+  }
+
+  document.getElementById('editorBody').innerHTML = html;
+  document.getElementById('btnEditarCargo').setAttribute('data-id', id);
+  document.getElementById('btnExcluirCargo').setAttribute('data-id', id);
+}
+
+document.getElementById('btnSalvarPerms').addEventListener('click', async () => {
+  if (!cargoAtual) return;
+  const checks = document.querySelectorAll('#editorBody input[type=checkbox]');
+  const perms  = Array.from(checks).filter(c => c.checked).map(c => parseInt(c.dataset.permId));
+
+  try {
+    await API.put(`/cargos/${cargoAtual.id}`, { permissoes: perms });
+    toast('Permissões salvas com sucesso!', 'success');
+    cargos = await API.get('/cargos');
+    renderCargos();
+    selecionarCargo(cargoAtual.id);
+  } catch (err) { toast(err.data?.erro || 'Erro ao salvar as permissões.', 'error'); }
+});
+
+document.getElementById('btnNovoCargo').addEventListener('click', () => {
+  document.getElementById('cargoEditId').value = '';
+  document.getElementById('cargoNome').value   = '';
+  document.getElementById('cargoDesc').value   = '';
+  document.getElementById('cargoNivel').value  = '3';
+  document.getElementById('modalCargoTitulo').textContent = 'Novo Cargo';
+  openModal('modalCargo');
+});
+
+document.getElementById('btnEditarCargo').addEventListener('click', () => {
+  if (!cargoAtual) return;
+  document.getElementById('cargoEditId').value = cargoAtual.id;
+  document.getElementById('cargoNome').value   = cargoAtual.nome;
+  document.getElementById('cargoDesc').value   = cargoAtual.descricao || '';
+  document.getElementById('cargoNivel').value  = cargoAtual.nivel;
+  document.getElementById('modalCargoTitulo').textContent = 'Editar Cargo';
+  openModal('modalCargo');
+});
+
+document.getElementById('btnSalvarCargo').addEventListener('click', async () => {
+  const id   = document.getElementById('cargoEditId').value;
+  const body = {
+    nome:      document.getElementById('cargoNome').value.trim(),
+    descricao: document.getElementById('cargoDesc').value.trim(),
+    nivel:     parseInt(document.getElementById('cargoNivel').value),
+  };
+  if (!body.nome) { toast('O nome do cargo é obrigatório.', 'error'); return; }
+
+  try {
+    if (id) await API.put(`/cargos/${id}`, body);
+    else    await API.post('/cargos', body);
+    toast('Cargo salvo com sucesso.', 'success');
+    closeModal('modalCargo');
+    cargos = await API.get('/cargos');
+    renderCargos();
+  } catch (err) { toast(err.data?.erro || 'Erro ao salvar o cargo.', 'error'); }
+});
+
+document.getElementById('btnExcluirCargo').addEventListener('click', async () => {
+  if (!cargoAtual) return;
+  const ok = await confirmDialog(`Excluir o cargo <strong>${cargoAtual.nome}</strong>? Esta ação não pode ser desfeita.`);
+  if (!ok) return;
+  try {
+    await API.delete(`/cargos/${cargoAtual.id}`);
+    toast('Cargo excluído com sucesso.', 'success');
+    cargos = await API.get('/cargos');
+    renderCargos();
+    cargoAtual = null;
+    document.getElementById('editorBody').innerHTML = '<p class="text-muted text-sm" style="padding:20px">Selecione um cargo para editar suas permissões.</p>';
+    document.getElementById('editorTitulo').innerHTML = '<i class="fas fa-lock" style="color:#f59e0b"></i> Selecione um cargo';
+    document.getElementById('btnSalvarPerms').style.display  = 'none';
+    document.getElementById('btnEditarCargo').style.display  = 'none';
+    document.getElementById('btnExcluirCargo').style.display = 'none';
+  } catch (err) { toast(err.data?.erro || 'Erro ao excluir o cargo.', 'error'); }
+});
+</script>
+</body>
+</html>

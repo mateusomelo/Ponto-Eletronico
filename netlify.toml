@@ -1,0 +1,43 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# NETLIFY — Ponto Eletrônico (Frontend)
+#
+# Como funciona:
+#   1. O Netlify executa `sh build.sh` antes de cada deploy.
+#   2. O build.sh lê a variável BACKEND_URL e gera frontend/public/_redirects.
+#   3. Os redirects fazem proxy transparente para o backend no Railway.
+#   4. O frontend usa /api/* normalmente (sem saber que há dois servidores).
+#
+# Pré-requisito: definir BACKEND_URL em Site settings > Environment variables
+# Exemplo:       https://ponto-eletronico-backend.up.railway.app
+# ─────────────────────────────────────────────────────────────────────────────
+
+[build]
+  publish = "frontend/public"
+  command = "sh build.sh"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+# ── Headers de segurança ─────────────────────────────────────────────────────
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options        = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy        = "strict-origin-when-cross-origin"
+
+# ── Cache para assets estáticos ──────────────────────────────────────────────
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.woff2"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

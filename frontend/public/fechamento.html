@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fechamento de Folha — Ponto Eletrônico</title>
+  <link rel="stylesheet" href="/fa/css/all.min.css" />
+  <link rel="stylesheet" href="/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <style>
+    .workflow-steps {
+      display: flex; gap: 0; margin-bottom: 16px;
+      background: var(--bg-secondary); border-radius: 10px;
+      border: 1px solid var(--border); overflow: hidden;
+    }
+    .workflow-step {
+      flex: 1; text-align: center; padding: 10px 6px;
+      font-size: .72rem; color: var(--text-muted);
+      border-right: 1px solid var(--border);
+      position: relative;
+    }
+    .workflow-step:last-child { border-right: none; }
+    .workflow-step.active {
+      background: var(--accent); color: #fff; font-weight: 600;
+    }
+    .workflow-step.done {
+      background: #dcfce7; color: #166534;
+    }
+    .workflow-step.rejected {
+      background: #fee2e2; color: #991b1b;
+    }
+    .workflow-step i { display: block; font-size: 1rem; margin-bottom: 4px; }
+
+    #mapFechamento { height: 200px; border-radius: 10px; margin-bottom: 12px; }
+    .selfie-sm { width: 34px; height: 34px; border-radius: 50%; object-fit: cover;
+                  border: 2px solid var(--border); cursor: pointer; }
+    .detalhe-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px 16px; margin-bottom:14px; }
+    .detalhe-item label { font-size:.72rem; color:var(--text-muted); display:block; margin-bottom:2px; }
+    .detalhe-item span  { font-size:.85rem; font-weight:600; }
+
+    .func-check-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 10px; border-radius: 8px; cursor: pointer;
+      transition: background .15s;
+    }
+    .func-check-item:hover { background: var(--bg-secondary); }
+    .func-check-item.ja-tem { opacity: .5; cursor: not-allowed; }
+    .func-check-item input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; flex-shrink: 0; }
+    .func-check-item .fi-nome { font-size: .88rem; font-weight: 600; }
+    .func-check-item .fi-cargo { font-size: .75rem; color: var(--text-muted); }
+
+    .rejeicao-box {
+      background: #fff0f0; border: 1px solid #fca5a5; border-radius: 8px;
+      padding: 12px 14px; margin-bottom: 12px; font-size: .85rem; color: #991b1b;
+    }
+    .rejeicao-box strong { display: block; margin-bottom: 4px; }
+
+    @media (max-width: 768px) {
+      .detalhe-grid { grid-template-columns: 1fr; }
+      table th:nth-child(4), table td:nth-child(4),
+      table th:nth-child(5), table td:nth-child(5) { display: none; }
+    }
+    @media print {
+      #sidebarMount, #topbarMount, .btn, .filters-bar, .pagination, .modal-overlay
+      { display: none !important; }
+      #cardDetalhe { display: block !important; }
+    }
+  </style>
+</head>
+<body>
+<div id="sidebarMount"></div>
+<div class="main" id="main">
+  <div id="topbarMount"></div>
+  <div class="page-content">
+
+    <!-- ─── Lista de fechamentos ─── -->
+    <div id="cardLista">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">
+            <i class="fas fa-file-invoice-dollar" style="color:#3b82f6"></i>
+            Fechamento de Folha
+          </span>
+          <button class="btn btn-primary" id="btnNovoFechamento">
+            <i class="fas fa-plus"></i> Novo Fechamento
+          </button>
+        </div>
+
+        <!-- Filtros -->
+        <div class="filters-bar">
+          <input type="month" class="form-control" id="filtroComp" style="max-width:160px" />
+          <input type="text"  class="form-control" id="filtroNome" placeholder="Funcionário..." style="max-width:200px" />
+          <select class="form-control" id="filtroStatus" style="max-width:180px">
+            <option value="">Todos os status</option>
+            <option value="rascunho">Rascunho</option>
+            <option value="enviado">Enviado para Assinatura</option>
+            <option value="assinado">Assinado</option>
+            <option value="rejeitado">Rejeitado</option>
+            <option value="fechado">Fechado</option>
+          </select>
+          <button class="btn btn-primary" id="btnFiltrar"><i class="fas fa-search"></i> Filtrar</button>
+          <button class="btn btn-outline" id="btnLimparFiltro">Limpar</button>
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Funcionário</th>
+                <th>Cargo</th>
+                <th>Competência</th>
+                <th>Status</th>
+                <th>Enviado em</th>
+                <th>Assinado em</th>
+                <th>Responsável</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="tblFechamentos">
+              <tr><td colspan="8" class="table-empty"><span class="spinner"></span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination" id="paginacao"></div>
+      </div>
+    </div>
+
+    <!-- ─── Detalhe de um fechamento ─── -->
+    <div id="cardDetalhe" style="display:none">
+      <div class="card">
+        <div class="card-header">
+          <button class="btn btn-outline btn-sm" onclick="voltarLista()">
+            <i class="fas fa-arrow-left"></i> Voltar
+          </button>
+          <span class="card-title" id="detalheTitle">Detalhes</span>
+          <div style="display:flex;gap:8px;flex-wrap:wrap" id="botoesDetalhe"></div>
+        </div>
+
+        <!-- Workflow steps -->
+        <div style="padding:12px 20px 0">
+          <div class="workflow-steps" id="workflowSteps"></div>
+        </div>
+
+        <!-- Info do fechamento -->
+        <div style="padding:12px 20px 0;display:flex;flex-wrap:wrap;gap:20px" id="resumoInfo"></div>
+
+        <!-- Caixa de rejeição (se rejeitado) -->
+        <div style="padding:0 20px" id="rejeicaoWrap" style="display:none"></div>
+
+        <!-- Resumo de horas -->
+        <div style="padding:12px 20px 0">
+          <div class="horas-grid" id="horasGrid"></div>
+        </div>
+
+        <!-- Tabela de registros -->
+        <div class="table-container" style="margin-top:8px">
+          <table>
+            <thead>
+              <tr>
+                <th>Data/Hora</th>
+                <th>Tipo</th>
+                <th>Dispositivo</th>
+                <th>GPS</th>
+                <th>Foto</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="tblDetalhes">
+              <tr><td colspan="6" class="table-empty"><span class="spinner"></span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal: Novo Fechamento -->
+<div class="modal-overlay" id="modalNovo">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <h3 class="modal-title">Novo Fechamento de Folha</h3>
+      <button class="modal-close" onclick="closeModal('modalNovo')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Competência (mês/ano)</label>
+        <input type="month" class="form-control" id="inputCompetencia" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Funcionários</label>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.85rem">
+            <input type="checkbox" id="chkTodos" />
+            <strong>Selecionar todos</strong>
+          </label>
+          <input type="text" class="form-control" id="buscaFunc" placeholder="Buscar funcionário..."
+                 style="max-width:200px;font-size:.82rem" />
+        </div>
+        <div id="listaFuncionarios" style="max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px">
+          <div class="table-empty" style="padding:16px">Selecione a competência acima</div>
+        </div>
+        <div id="funcContagem" style="font-size:.78rem;color:var(--text-muted);margin-top:6px"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Observação (opcional)</label>
+        <textarea class="form-control" id="inputObs" rows="2" style="resize:vertical"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalNovo')">Cancelar</button>
+      <button class="btn btn-primary" id="btnCriarFechamento">
+        <i class="fas fa-check"></i> Criar Fechamento
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Assinar (admin) -->
+<div class="modal-overlay" id="modalAssinarAdmin">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fas fa-signature" style="color:#10b981;margin-right:8px"></i>Assinar Relatório</h3>
+      <button class="modal-close" onclick="closeModal('modalAssinarAdmin')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:.9rem;margin-bottom:10px">
+        Você está assinando este relatório em nome do funcionário ou como responsável pelo fechamento.
+      </p>
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 14px;font-size:.82rem;color:#166534">
+        <i class="fas fa-info-circle"></i>
+        Serão registrados: data, hora e IP para fins de auditoria.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalAssinarAdmin')">Cancelar</button>
+      <button class="btn btn-primary" id="btnConfirmarAssinarAdmin">
+        <i class="fas fa-check"></i> Confirmar Assinatura
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Rejeitar (admin) -->
+<div class="modal-overlay" id="modalRejeitarAdmin">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fas fa-times-circle" style="color:#ef4444;margin-right:8px"></i>Rejeitar Relatório</h3>
+      <button class="modal-close" onclick="closeModal('modalRejeitarAdmin')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:.88rem;color:var(--text-muted);margin-bottom:10px">
+        Informe o motivo da rejeição. O funcionário será notificado.
+      </p>
+      <div class="form-group">
+        <label class="form-label">Motivo da rejeição <span style="color:#ef4444">*</span></label>
+        <textarea class="form-control" id="motivoRejeitarAdmin" rows="4" style="resize:vertical"
+                  placeholder="Descreva o motivo da rejeição..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalRejeitarAdmin')">Cancelar</button>
+      <button class="btn btn-danger" id="btnConfirmarRejeitarAdmin">
+        <i class="fas fa-times"></i> Confirmar Rejeição
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Detalhes de registro individual -->
+<div class="modal-overlay" id="modalRegistro">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <h3 class="modal-title">Detalhes do Registro</h3>
+      <button class="modal-close" onclick="closeModal('modalRegistro')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div id="regSelfieWrap" style="text-align:center;margin-bottom:14px;display:none">
+        <img id="regSelfieImg" src="" alt="Selfie" style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:3px solid var(--border)" />
+      </div>
+      <div id="mapFechamento" style="display:none"></div>
+      <div id="regEndereco" style="display:none;margin-bottom:12px;padding:10px 14px;background:#f0f9ff;border-radius:8px;font-size:.82rem">
+        <i class="fas fa-map-marker-alt" style="color:#3b82f6"></i>
+        <span id="regEnderecoTxt"></span>
+      </div>
+      <div class="detalhe-grid" id="regGrid"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalRegistro')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<script src="/leaflet/leaflet.js"></script>
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/layout.js"></script>
+<script>
+const STATUS_LABEL = {
+  rascunho:  'Rascunho',
+  enviado:   'Enviado para Assinatura',
+  assinado:  'Assinado',
+  rejeitado: 'Rejeitado',
+  fechado:   'Fechado',
+};
+const STATUS_CLASS = {
+  rascunho:  'status-rascunho',
+  enviado:   'status-enviado',
+  assinado:  'status-assinado',
+  rejeitado: 'status-rejeitado',
+  fechado:   'status-fechado',
+};
+
+let podeGerenciar = false;
+let temDetalhes   = false;
+let ehAdmin       = false;
+let estado        = { pagina: 1, por_pagina: 30 };
+let _fechamentoId = null;
+let _registrosCache = [];
+let _mapInstance    = null;
+let _todosFuncionarios = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.requireAuth()) return;
+  renderLayout('Fechamento de Folha');
+
+  // Verificar acesso mínimo
+  if (!Auth.hasPermission('fechamento.visualizar') && !Auth.hasPermission('fechamento.criar') && !Auth.isSupervisor()) {
+    window.location.href = '/meus-relatorios.html';
+    return;
+  }
+
+  podeGerenciar = Auth.hasPermission('fechamento.criar') || Auth.isSupervisor();
+  temDetalhes   = Auth.hasPermission('registros.detalhes') || Auth.isSupervisor();
+  ehAdmin       = Auth.isAdmin();
+
+  if (!podeGerenciar) {
+    document.getElementById('btnNovoFechamento').style.display = 'none';
+  }
+
+  // Filtro: competência padrão = mês atual
+  const hoje = new Date();
+  document.getElementById('filtroComp').value =
+    `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}`;
+
+  await listar();
+  inicializarModalNovo();
+});
+
+// ── Lista ─────────────────────────────────────────────────
+async function listar() {
+  try {
+    document.getElementById('tblFechamentos').innerHTML =
+      '<tr><td colspan="8" class="table-empty"><span class="spinner"></span></td></tr>';
+
+    const params = { pagina: estado.pagina, por_pagina: estado.por_pagina };
+    const comp = document.getElementById('filtroComp').value;
+    const nome = document.getElementById('filtroNome').value.trim();
+    const sts  = document.getElementById('filtroStatus').value;
+    if (comp) params.competencia = comp;
+    if (sts)  params.status      = sts;
+
+    const data = await API.get('/fechamento', params);
+    let fechamentos = data.fechamentos;
+
+    // Filtro local por nome (backend não tem busca por nome de funcionário ainda)
+    if (nome) {
+      fechamentos = fechamentos.filter(f =>
+        (f.usuario_nome || '').toLowerCase().includes(nome.toLowerCase())
+      );
+    }
+
+    const tb = document.getElementById('tblFechamentos');
+    if (!fechamentos.length) {
+      tb.innerHTML = '<tr><td colspan="8" class="table-empty">Nenhum fechamento encontrado.</td></tr>';
+    } else {
+      tb.innerHTML = fechamentos.map(f => {
+        const [ano, mes] = f.competencia.split('-');
+        const nomeMes = new Date(ano, mes - 1).toLocaleString('pt-BR', { month: 'short' });
+        const comp    = `${nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1)}/${ano}`;
+        const acoes   = [];
+        if (podeGerenciar && f.status === 'rascunho') {
+          acoes.push(`<button class="btn btn-xs btn-outline" onclick="enviarParaAssinatura(${f.id})" title="Enviar para assinatura"><i class="fas fa-paper-plane"></i></button>`);
+          acoes.push(`<button class="btn btn-xs btn-danger"  onclick="excluir(${f.id})" title="Excluir"><i class="fas fa-trash"></i></button>`);
+        }
+        if (podeGerenciar && f.status === 'enviado') {
+          acoes.push(`<button class="btn btn-xs btn-outline" onclick="reabrirRascunho(${f.id})" title="Voltar para rascunho"><i class="fas fa-undo"></i></button>`);
+        }
+        if (podeGerenciar && f.status === 'rejeitado') {
+          acoes.push(`<button class="btn btn-xs btn-outline" onclick="enviarParaAssinatura(${f.id})" title="Reenviar para assinatura"><i class="fas fa-redo"></i></button>`);
+          acoes.push(`<button class="btn btn-xs btn-outline" onclick="reabrirRascunho(${f.id})" title="Voltar para rascunho"><i class="fas fa-undo"></i></button>`);
+        }
+        if (podeGerenciar && f.status === 'assinado') {
+          acoes.push(`<button class="btn btn-xs btn-primary" onclick="fecharDefinitivo(${f.id})" title="Fechar definitivamente"><i class="fas fa-lock"></i></button>`);
+          acoes.push(`<button class="btn btn-xs btn-outline" onclick="reabrirRascunho(${f.id})" title="Voltar para rascunho"><i class="fas fa-undo"></i></button>`);
+        }
+        if (ehAdmin && f.status === 'fechado') {
+          acoes.push(`<button class="btn btn-xs btn-warning" onclick="reabrirFechado(${f.id})" title="Reabrir fechamento definitivo (Admin)"><i class="fas fa-lock-open"></i></button>`);
+        }
+        return `
+          <tr>
+            <td><strong>${f.usuario_nome || '-'}</strong></td>
+            <td class="text-sm text-muted">${f.cargo_nome || '-'}</td>
+            <td><strong>${comp}</strong></td>
+            <td><span class="badge ${STATUS_CLASS[f.status] || ''}">${STATUS_LABEL[f.status] || f.status}</span></td>
+            <td class="text-sm text-muted">${f.enviado_em ? fmtDataHora(f.enviado_em) : '-'}</td>
+            <td class="text-sm text-muted">${f.assinado_em ? fmtDataHora(f.assinado_em) : '-'}</td>
+            <td class="text-sm">${f.criado_por_nome || '-'}</td>
+            <td>
+              <button class="btn btn-xs btn-outline" onclick="abrirDetalhe(${f.id})" title="Ver detalhes">
+                <i class="fas fa-eye"></i>
+              </button>
+              ${acoes.join(' ')}
+            </td>
+          </tr>`;
+      }).join('');
+    }
+
+    renderPagination(document.getElementById('paginacao'), {
+      total: data.total, pagina: data.pagina, por_pagina: data.por_pagina,
+      onPage: p => { estado.pagina = p; listar(); },
+    });
+  } catch (err) {
+    toast(err.data?.erro || 'Erro ao carregar fechamentos.', 'error');
+  }
+}
+
+// ── Detalhe ───────────────────────────────────────────────
+async function abrirDetalhe(id) {
+  _fechamentoId = id;
+  document.getElementById('cardLista').style.display   = 'none';
+  document.getElementById('cardDetalhe').style.display = 'block';
+  document.getElementById('tblDetalhes').innerHTML =
+    '<tr><td colspan="6" class="table-empty"><span class="spinner"></span></td></tr>';
+  document.getElementById('horasGrid').innerHTML = '';
+  document.getElementById('resumoInfo').innerHTML = '';
+  document.getElementById('rejeicaoWrap').innerHTML = '';
+  document.getElementById('botoesDetalhe').innerHTML = '';
+
+  try {
+    const data = await API.get(`/fechamento/${id}`);
+    const f    = data.fechamento;
+    const regs = data.registros;
+    const res  = data.resumo;
+    _registrosCache = regs;
+
+    const [ano, mes] = f.competencia.split('-');
+    const nomeMes = new Date(ano, mes - 1).toLocaleString('pt-BR', { month: 'long' });
+    const label   = `${nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1)} / ${ano}`;
+    document.getElementById('detalheTitle').textContent = `${f.usuario_nome || ''} — ${label}`;
+
+    // Workflow
+    renderWorkflow(f.status);
+
+    // Botões de ação
+    const btns = [];
+    if (podeGerenciar) {
+      if (['rascunho', 'rejeitado'].includes(f.status)) {
+        btns.push(`<button class="btn btn-sm btn-primary" onclick="enviarParaAssinatura(${f.id})">
+          <i class="fas fa-paper-plane"></i> Enviar para Assinatura</button>`);
+      }
+      if (f.status === 'enviado') {
+        btns.push(`<button class="btn btn-sm btn-primary" onclick="abrirModalAssinar(${f.id})">
+          <i class="fas fa-signature"></i> Assinar</button>`);
+        btns.push(`<button class="btn btn-sm btn-outline" onclick="abrirModalRejeitar(${f.id})" style="color:#ef4444;border-color:#ef4444">
+          <i class="fas fa-times"></i> Rejeitar</button>`);
+      }
+      if (f.status === 'assinado') {
+        btns.push(`<button class="btn btn-sm btn-primary" onclick="fecharDefinitivo(${f.id})">
+          <i class="fas fa-lock"></i> Fechar Definitivamente</button>`);
+      }
+      if (!['rascunho', 'fechado'].includes(f.status)) {
+        btns.push(`<button class="btn btn-sm btn-outline" onclick="reabrirRascunho(${f.id})">
+          <i class="fas fa-undo"></i> Voltar para Rascunho</button>`);
+      }
+      if (ehAdmin && f.status === 'fechado') {
+        btns.push(`<button class="btn btn-sm btn-warning" onclick="reabrirFechado(${f.id})">
+          <i class="fas fa-lock-open"></i> Reabrir (Admin)</button>`);
+      }
+    }
+    btns.push(`<button class="btn btn-sm btn-outline" onclick="exportar('pdf')"><i class="fas fa-file-pdf" style="color:#ef4444"></i> PDF</button>`);
+    btns.push(`<button class="btn btn-sm btn-outline" onclick="exportar('excel')"><i class="fas fa-file-excel" style="color:#10b981"></i> Excel</button>`);
+    document.getElementById('botoesDetalhe').innerHTML = btns.join('');
+
+    // Info geral
+    document.getElementById('resumoInfo').innerHTML = `
+      <div><label class="text-sm text-muted">Status</label>
+        <div><span class="badge ${STATUS_CLASS[f.status]}">${STATUS_LABEL[f.status]}</span></div></div>
+      <div><label class="text-sm text-muted">Funcionário</label><strong>${f.usuario_nome || '-'}</strong></div>
+      <div><label class="text-sm text-muted">Cargo</label><span>${f.cargo_nome || '-'}</span></div>
+      <div><label class="text-sm text-muted">Criado por</label><span>${f.criado_por_nome || '-'}</span></div>
+      ${f.enviado_em ? `<div><label class="text-sm text-muted">Enviado em</label><span>${fmtDataHora(f.enviado_em)}</span></div>` : ''}
+      ${f.assinado_em ? `<div><label class="text-sm text-muted">Assinado em</label><span>${fmtDataHora(f.assinado_em)} — IP: ${f.assinado_ip || '-'}</span></div>` : ''}
+      ${f.fechado_definitivo_em ? `<div><label class="text-sm text-muted">Fechado em</label><span>${fmtDataHora(f.fechado_definitivo_em)}</span></div>` : ''}
+      ${f.observacao ? `<div style="flex-basis:100%"><label class="text-sm text-muted">Observação</label><span>${f.observacao}</span></div>` : ''}
+    `;
+
+    // Rejeição
+    if (f.motivo_rejeicao) {
+      document.getElementById('rejeicaoWrap').innerHTML = `
+        <div class="rejeicao-box">
+          <strong><i class="fas fa-times-circle"></i> Relatório rejeitado pelo funcionário:</strong>
+          ${f.motivo_rejeicao}
+        </div>`;
+    }
+
+    // Resumo de horas
+    const neg = res.bancoMinutos < 0;
+    document.getElementById('horasGrid').innerHTML = `
+      <div class="hora-item">
+        <span class="hora-valor">${res.horasTrabalhadas}</span>
+        <span class="hora-label">Horas Trabalhadas</span>
+      </div>
+      <div class="hora-item">
+        <span class="hora-valor">${res.horasPrevistas}</span>
+        <span class="hora-label">Horas Previstas</span>
+      </div>
+      <div class="hora-item ${res.minutosExtra > 0 ? 'positivo' : ''}">
+        <span class="hora-valor">${res.horasExtra}</span>
+        <span class="hora-label">Horas Extras</span>
+      </div>
+      <div class="hora-item ${neg ? 'negativo' : 'positivo'}">
+        <span class="hora-valor">${res.bancoHoras}</span>
+        <span class="hora-label">Banco de Horas</span>
+      </div>
+      <div class="hora-item ${res.faltas > 0 ? 'negativo' : ''}">
+        <span class="hora-valor">${res.faltas}</span>
+        <span class="hora-label">Faltas (dias úteis)</span>
+      </div>
+      <div class="hora-item ${res.atrasos > 0 ? 'negativo' : ''}">
+        <span class="hora-valor">${res.atrasos}</span>
+        <span class="hora-label">Atrasos (após 08:15)</span>
+      </div>
+    `;
+
+    // Tabela de registros
+    const tb = document.getElementById('tblDetalhes');
+    if (!regs.length) {
+      tb.innerHTML = '<tr><td colspan="6" class="table-empty">Nenhum registro neste período.</td></tr>';
+    } else {
+      tb.innerHTML = regs.map((r, i) => `
+        <tr>
+          <td class="text-sm">${fmtDataHora(r.data_hora)}</td>
+          <td><span class="badge ${r.tipo === 'entrada' ? 'badge-success' : 'badge-danger'}">${r.tipo}</span></td>
+          <td class="text-sm">${r.dispositivo || '-'}</td>
+          <td class="text-sm">
+            ${r.latitude ? `<span style="color:var(--accent)"><i class="fas fa-map-marker-alt"></i> Sim</span>` : '-'}
+          </td>
+          <td>${temDetalhes && r.foto_registro
+            ? `<img src="${r.foto_registro}" class="selfie-sm" onclick="verRegistro(${i})" />`
+            : '-'}</td>
+          <td>
+            <button class="btn btn-xs btn-outline" onclick="verRegistro(${i})" title="Ver detalhes">
+              <i class="fas fa-eye"></i>
+            </button>
+          </td>
+        </tr>`).join('');
+    }
+  } catch (err) {
+    toast(err.data?.erro || 'Erro ao carregar detalhe.', 'error');
+  }
+}
+
+function renderWorkflow(status) {
+  const steps = [
+    { key: 'rascunho',  icon: 'fa-file', label: 'Rascunho' },
+    { key: 'enviado',   icon: 'fa-paper-plane', label: 'Enviado' },
+    { key: 'assinado',  icon: 'fa-signature', label: 'Assinado' },
+    { key: 'fechado',   icon: 'fa-lock', label: 'Fechado' },
+  ];
+  const order = ['rascunho', 'enviado', 'assinado', 'fechado'];
+  const curIdx = order.indexOf(status);
+
+  document.getElementById('workflowSteps').innerHTML = steps.map((s, i) => {
+    let cls = '';
+    if (status === 'rejeitado' && s.key === 'enviado') { cls = 'rejected'; }
+    else if (i < curIdx || status === 'fechado') { cls = 'done'; }
+    else if (s.key === status) { cls = 'active'; }
+    return `<div class="workflow-step ${cls}">
+      <i class="fas ${s.icon}"></i>${s.label}
+    </div>`;
+  }).join('') + (status === 'rejeitado' ? `
+    <div class="workflow-step rejected">
+      <i class="fas fa-times"></i>Rejeitado
+    </div>` : '');
+}
+
+function voltarLista() {
+  _fechamentoId = null;
+  _registrosCache = [];
+  if (_mapInstance) { _mapInstance.remove(); _mapInstance = null; }
+  document.getElementById('cardDetalhe').style.display = 'none';
+  document.getElementById('cardLista').style.display   = 'block';
+  listar();
+}
+
+// ── Ações de workflow ─────────────────────────────────────
+async function enviarParaAssinatura(id) {
+  const ok = await confirmDialog('Enviar este relatório para assinatura do funcionário?');
+  if (!ok) return;
+  try {
+    await API.patch(`/fechamento/${id}/enviar`, {});
+    toast('Relatório enviado ao funcionário para assinatura.', 'success');
+    if (_fechamentoId === id) await abrirDetalhe(id);
+    else await listar();
+  } catch (err) { toast(err.data?.erro || 'Erro ao enviar o relatório.', 'error'); }
+}
+
+async function fecharDefinitivo(id) {
+  const ok = await confirmDialog('Fechar definitivamente? Após essa ação não será possível alterar registros neste período.');
+  if (!ok) return;
+  try {
+    await API.patch(`/fechamento/${id}/fechar`, {});
+    toast('Folha encerrada definitivamente.', 'success');
+    if (_fechamentoId === id) await abrirDetalhe(id);
+    else await listar();
+  } catch (err) { toast(err.data?.erro || 'Erro ao fechar a folha.', 'error'); }
+}
+
+async function reabrirRascunho(id) {
+  const ok = await confirmDialog('Retornar para rascunho? As assinaturas existentes serão perdidas.');
+  if (!ok) return;
+  try {
+    await API.patch(`/fechamento/${id}/reabrir`, {});
+    toast('Relatório retornado para rascunho.', 'success');
+    if (_fechamentoId === id) await abrirDetalhe(id);
+    else await listar();
+  } catch (err) { toast(err.data?.erro || 'Erro ao reabrir o relatório.', 'error'); }
+}
+
+async function reabrirFechado(id) {
+  const ok = await confirmDialog(
+    'Reabrir um fechamento definitivo irá remover o encerramento e permitir novos registros de ponto. Deseja continuar?'
+  );
+  if (!ok) return;
+  try {
+    await API.patch(`/fechamento/${id}/reabrir`, {});
+    toast('Fechamento reaberto. O período voltou para rascunho.', 'success');
+    if (_fechamentoId === id) await abrirDetalhe(id);
+    else await listar();
+  } catch (err) { toast(err.data?.erro || 'Erro ao reabrir o fechamento.', 'error'); }
+}
+
+async function excluir(id) {
+  const ok = await confirmDialog('Excluir este fechamento? Esta ação não pode ser desfeita.');
+  if (!ok) return;
+  try {
+    await API.delete(`/fechamento/${id}`);
+    toast('Fechamento excluído com sucesso.', 'success');
+    await listar();
+  } catch (err) { toast(err.data?.erro || 'Erro ao excluir o fechamento.', 'error'); }
+}
+
+async function exportar(formato) {
+  if (!_fechamentoId) return;
+  try {
+    const res  = await API.download(`/fechamento/${_fechamentoId}/${formato}`);
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = `fechamento.${formato === 'pdf' ? 'pdf' : 'xlsx'}`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch { toast('Erro ao exportar.', 'error'); }
+}
+
+// ── Ver registro individual ───────────────────────────────
+function verRegistro(idx) {
+  const r = _registrosCache[idx];
+  if (!r) return;
+
+  document.getElementById('regSelfieWrap').style.display = 'none';
+  if (temDetalhes && r.foto_registro) {
+    document.getElementById('regSelfieImg').src = r.foto_registro;
+    document.getElementById('regSelfieWrap').style.display = 'block';
+  }
+
+  const mapEl = document.getElementById('mapFechamento');
+  if (temDetalhes && r.latitude && r.longitude) {
+    mapEl.style.display = 'block';
+    setTimeout(() => {
+      if (_mapInstance) { _mapInstance.remove(); _mapInstance = null; }
+      _mapInstance = L.map('mapFechamento').setView([r.latitude, r.longitude], 16);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap',
+      }).addTo(_mapInstance);
+      L.marker([r.latitude, r.longitude]).addTo(_mapInstance)
+        .bindPopup(`${r.tipo} — ${fmtDataHora(r.data_hora)}`).openPopup();
+      _mapInstance.invalidateSize();
+    }, 350);
+  } else {
+    mapEl.style.display = 'none';
+  }
+
+  const endEl = document.getElementById('regEndereco');
+  if (r.endereco_aprox) {
+    document.getElementById('regEnderecoTxt').textContent = r.endereco_aprox;
+    endEl.style.display = 'block';
+  } else {
+    endEl.style.display = 'none';
+  }
+
+  const campos = [
+    { label: 'Funcionário', val: r.usuario_nome || '-' },
+    { label: 'Cargo',       val: r.cargo_nome   || '-' },
+    { label: 'Tipo',        val: r.tipo },
+    { label: 'Data/Hora',   val: fmtDataHora(r.data_hora) },
+    { label: 'Dispositivo', val: r.dispositivo  || '-' },
+    { label: 'Sistema Operacional', val: r.so    || '-' },
+    { label: 'Navegador',   val: r.navegador    || '-' },
+  ];
+  if (temDetalhes) {
+    if (r.ip)        campos.push({ label: 'IP Interno',   val: r.ip });
+    if (r.ip_publico) campos.push({ label: 'IP Público',  val: r.ip_publico });
+    if (r.latitude)  campos.push({ label: 'Latitude',    val: Number(r.latitude).toFixed(6) });
+    if (r.longitude) campos.push({ label: 'Longitude',   val: Number(r.longitude).toFixed(6) });
+    if (r.precisao)  campos.push({ label: 'Precisão GPS', val: `±${Math.round(r.precisao)}m` });
+  }
+
+  document.getElementById('regGrid').innerHTML = campos.map(c =>
+    `<div class="detalhe-item"><label>${c.label}</label><span>${c.val}</span></div>`
+  ).join('');
+
+  openModal('modalRegistro');
+}
+
+document.getElementById('modalRegistro').addEventListener('click', e => {
+  if (e.target === e.currentTarget && _mapInstance) { _mapInstance.remove(); _mapInstance = null; }
+});
+
+// ── Modal Novo Fechamento ─────────────────────────────────
+function inicializarModalNovo() {
+  document.getElementById('btnNovoFechamento').addEventListener('click', () => {
+    const hoje = new Date();
+    document.getElementById('inputCompetencia').value =
+      `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}`;
+    document.getElementById('inputObs').value = '';
+    document.getElementById('chkTodos').checked = false;
+    carregarFuncionarios();
+    openModal('modalNovo');
+  });
+
+  document.getElementById('inputCompetencia').addEventListener('change', carregarFuncionarios);
+  document.getElementById('buscaFunc').addEventListener('input', filtrarFuncionarios);
+
+  document.getElementById('chkTodos').addEventListener('change', function() {
+    document.querySelectorAll('.func-checkbox:not(:disabled)').forEach(cb => {
+      cb.checked = this.checked;
+    });
+    atualizarContagem();
+  });
+
+  document.getElementById('btnCriarFechamento').addEventListener('click', criarFechamento);
+}
+
+async function carregarFuncionarios() {
+  const comp = document.getElementById('inputCompetencia').value;
+  const lista = document.getElementById('listaFuncionarios');
+  if (!comp) {
+    lista.innerHTML = '<div class="table-empty" style="padding:16px">Selecione a competência acima</div>';
+    return;
+  }
+  lista.innerHTML = '<div class="table-empty" style="padding:16px"><span class="spinner"></span></div>';
+  try {
+    const data = await API.get('/fechamento/usuarios-disponiveis', { competencia: comp });
+    _todosFuncionarios = data.usuarios;
+    renderFuncionarios(data.usuarios);
+  } catch (err) {
+    lista.innerHTML = '<div class="table-empty" style="padding:16px">Erro ao carregar funcionários.</div>';
+  }
+}
+
+function renderFuncionarios(lista) {
+  const el = document.getElementById('listaFuncionarios');
+  if (!lista.length) {
+    el.innerHTML = '<div class="table-empty" style="padding:16px">Nenhum funcionário encontrado.</div>';
+    return;
+  }
+  el.innerHTML = lista.map(u => `
+    <label class="func-check-item ${u.ja_tem_fechamento ? 'ja-tem' : ''}">
+      <input type="checkbox" class="func-checkbox" data-id="${u.id}"
+             ${u.ja_tem_fechamento ? 'disabled title="Já tem fechamento para esta competência"' : ''}
+             onchange="atualizarContagem()" />
+      <div>
+        <div class="fi-nome">${u.nome}</div>
+        <div class="fi-cargo">${u.cargo_nome || ''}${u.ja_tem_fechamento ? ' — <em>já fechado</em>' : ''}</div>
+      </div>
+    </label>`).join('');
+  document.getElementById('chkTodos').checked = false;
+  atualizarContagem();
+}
+
+function filtrarFuncionarios() {
+  const q = document.getElementById('buscaFunc').value.toLowerCase();
+  const filtrado = _todosFuncionarios.filter(u =>
+    u.nome.toLowerCase().includes(q) || (u.cargo_nome || '').toLowerCase().includes(q)
+  );
+  renderFuncionarios(filtrado);
+}
+
+function atualizarContagem() {
+  const total   = document.querySelectorAll('.func-checkbox:not(:disabled)').length;
+  const marcados = document.querySelectorAll('.func-checkbox:not(:disabled):checked').length;
+  document.getElementById('funcContagem').textContent =
+    `${marcados} de ${total} funcionário(s) selecionado(s)`;
+}
+
+async function criarFechamento() {
+  const comp = document.getElementById('inputCompetencia').value;
+  const obs  = document.getElementById('inputObs').value.trim();
+  const selecionados = [...document.querySelectorAll('.func-checkbox:checked')].map(cb => parseInt(cb.dataset.id));
+
+  if (!comp) { toast('Selecione a competência.', 'warning'); return; }
+  if (!selecionados.length) { toast('Selecione pelo menos um funcionário.', 'warning'); return; }
+
+  const btn = document.getElementById('btnCriarFechamento');
+  btn.disabled = true;
+  try {
+    const res = await API.post('/fechamento', { competencia: comp, observacao: obs || undefined, usuario_ids: selecionados });
+    closeModal('modalNovo');
+    toast(res.mensagem, 'success');
+    estado.pagina = 1;
+    await listar();
+  } catch (err) {
+    toast(err.data?.erro || 'Erro ao criar fechamento.', 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ── Assinar / Rejeitar (admin) ────────────────────────────
+let _idParaAssinar = null;
+let _idParaRejeitar = null;
+
+function abrirModalAssinar(id) {
+  _idParaAssinar = id;
+  openModal('modalAssinarAdmin');
+}
+
+function abrirModalRejeitar(id) {
+  _idParaRejeitar = id;
+  document.getElementById('motivoRejeitarAdmin').value = '';
+  openModal('modalRejeitarAdmin');
+}
+
+document.getElementById('btnConfirmarAssinarAdmin').addEventListener('click', async () => {
+  if (!_idParaAssinar) return;
+  const btn = document.getElementById('btnConfirmarAssinarAdmin');
+  btn.disabled = true;
+  try {
+    await API.patch(`/fechamento/${_idParaAssinar}/assinar`, {});
+    closeModal('modalAssinarAdmin');
+    toast('Relatório assinado com sucesso.', 'success');
+    if (window.atualizarBadgeNotificacoes) window.atualizarBadgeNotificacoes();
+    await abrirDetalhe(_idParaAssinar);
+  } catch (err) {
+    toast(err.data?.erro || 'Erro ao assinar.', 'error');
+  } finally {
+    btn.disabled = false;
+    _idParaAssinar = null;
+  }
+});
+
+document.getElementById('btnConfirmarRejeitarAdmin').addEventListener('click', async () => {
+  if (!_idParaRejeitar) return;
+  const motivo = document.getElementById('motivoRejeitarAdmin').value.trim();
+  if (!motivo) { toast('Informe o motivo da rejeição.', 'warning'); return; }
+  const btn = document.getElementById('btnConfirmarRejeitarAdmin');
+  btn.disabled = true;
+  try {
+    await API.patch(`/fechamento/${_idParaRejeitar}/rejeitar`, { motivo });
+    closeModal('modalRejeitarAdmin');
+    toast('Relatório rejeitado. Funcionário notificado.', 'success');
+    if (window.atualizarBadgeNotificacoes) window.atualizarBadgeNotificacoes();
+    await abrirDetalhe(_idParaRejeitar);
+  } catch (err) {
+    toast(err.data?.erro || 'Erro ao rejeitar.', 'error');
+  } finally {
+    btn.disabled = false;
+    _idParaRejeitar = null;
+  }
+});
+
+// ── Filtros ───────────────────────────────────────────────
+document.getElementById('btnFiltrar').addEventListener('click', () => { estado.pagina = 1; listar(); });
+document.getElementById('btnLimparFiltro').addEventListener('click', () => {
+  document.getElementById('filtroComp').value   = '';
+  document.getElementById('filtroNome').value   = '';
+  document.getElementById('filtroStatus').value = '';
+  estado.pagina = 1;
+  listar();
+});
+</script>
+</body>
+</html>
