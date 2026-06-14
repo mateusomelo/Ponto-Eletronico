@@ -29,8 +29,8 @@ async function buscarRegistros(req) {
   if (data_fim)    { where += ' AND DATE(r.data_hora) <= ?'; params.push(data_fim + ' 23:59:59'); }
 
   const [rows] = await pool.query(
-    `SELECT r.id, r.tipo, r.data_hora, r.ip, r.latitude, r.longitude,
-            r.dispositivo, r.navegador, r.observacao,
+    `SELECT r.id, r.tipo, r.data_hora, r.ip, r.ip_publico, r.latitude, r.longitude,
+            r.dispositivo, r.navegador, r.observacao, r.endereco_aprox,
             u.nome AS usuario_nome, u.email AS usuario_email, u.cpf AS usuario_cpf,
             c.nome AS cargo_nome
      FROM registros_ponto r
@@ -59,38 +59,45 @@ async function exportarPDF(req, res) {
   try {
     const rows = await buscarRegistros(req);
 
-    const doc = new PDFDocument({ margin: 50, size: 'A4' });
+    const doc = new PDFDocument({ margin: 40, size: 'A4', layout: 'landscape' });
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename="relatorio-ponto.pdf"');
     doc.pipe(res);
 
     cabecalhoPDF(doc, 'Relatório de Registro de Ponto');
 
-    const cols    = [50, 150, 240, 310, 390, 475];
-    const headers = ['Data/Hora', 'Funcionário', 'Cargo', 'Tipo', 'IP', 'Dispositivo'];
+    // A4 landscape: 841 x 595, margens 40 → área útil ≈ 761pt
+    const cols    = [40, 135, 235, 300, 345, 435, 555];
+    const headers = ['Data/Hora', 'Funcionário', 'Cargo', 'Tipo', 'IP Público', 'Endereço', 'Dispositivo'];
+    const pageW   = 801; // 841 - 40 margem direita
     doc.fontSize(9).fillColor('#fff');
-    doc.rect(50, doc.y, 495, 16).fill('#1e3a5f');
+    doc.rect(40, doc.y, pageW - 40, 16).fill('#1e3a5f');
     headers.forEach((h, i) => {
-      doc.fillColor('#fff').text(h, cols[i], doc.y - 14, { width: (cols[i + 1] || 545) - cols[i] - 4 });
+      const x = cols[i];
+      const w = (cols[i + 1] || pageW) - x - 4;
+      doc.fillColor('#fff').text(h, x, doc.y - 14, { width: w });
     });
     doc.moveDown(0.3);
 
     rows.forEach((r, idx) => {
-      if (doc.y > 720) doc.addPage();
+      if (doc.y > 530) doc.addPage();
       const bg   = idx % 2 === 0 ? '#f0f4ff' : '#ffffff';
       const yRow = doc.y;
-      doc.rect(50, yRow, 495, 14).fill(bg);
+      doc.rect(40, yRow, pageW - 40, 14).fill(bg);
       doc.fillColor('#333').fontSize(8);
       const vals = [
         new Date(r.data_hora).toLocaleString('pt-BR'),
-        r.usuario_nome,
-        r.cargo_nome,
+        r.usuario_nome    || '-',
+        r.cargo_nome      || '-',
         r.tipo.charAt(0).toUpperCase() + r.tipo.slice(1),
-        r.ip        || '-',
-        r.dispositivo || '-',
+        r.ip_publico      || r.ip || '-',
+        r.endereco_aprox  || '-',
+        r.dispositivo     || '-',
       ];
       vals.forEach((v, i) => {
-        doc.text(v, cols[i], yRow + 2, { width: (cols[i + 1] || 545) - cols[i] - 4, lineBreak: false });
+        const x = cols[i];
+        const w = (cols[i + 1] || pageW) - x - 4;
+        doc.text(v, x, yRow + 2, { width: w, lineBreak: false });
       });
       doc.moveDown(0.15);
     });
@@ -122,7 +129,7 @@ async function exportarExcel(req, res) {
       fill: { type: 'pattern', patternType: 'solid', fgColor: '#EEF2FF' },
     });
 
-    const headers = ['ID','Data/Hora','Funcionário','E-mail','CPF','Cargo','Tipo','IP','Latitude','Longitude','Dispositivo','Navegador','Observação'];
+    const headers = ['ID','Data/Hora','Funcionário','E-mail','CPF','Cargo','Tipo','IP Público','IP Interno','Endereço','Latitude','Longitude','Dispositivo','Navegador','Observação'];
     headers.forEach((h, i) => ws.cell(1, i + 1).string(h).style(headerStyle));
 
     rows.forEach((r, idx) => {
@@ -130,20 +137,22 @@ async function exportarExcel(req, res) {
       const style = idx % 2 === 0 ? altStyle : {};
       ws.cell(row,  1).number(r.id).style(style);
       ws.cell(row,  2).string(new Date(r.data_hora).toLocaleString('pt-BR')).style(style);
-      ws.cell(row,  3).string(r.usuario_nome  || '').style(style);
-      ws.cell(row,  4).string(r.usuario_email || '').style(style);
-      ws.cell(row,  5).string(r.usuario_cpf   || '').style(style);
-      ws.cell(row,  6).string(r.cargo_nome    || '').style(style);
-      ws.cell(row,  7).string(r.tipo          || '').style(style);
-      ws.cell(row,  8).string(r.ip            || '').style(style);
-      ws.cell(row,  9).string(r.latitude  ? String(r.latitude)  : '').style(style);
-      ws.cell(row, 10).string(r.longitude ? String(r.longitude) : '').style(style);
-      ws.cell(row, 11).string(r.dispositivo   || '').style(style);
-      ws.cell(row, 12).string(r.navegador     || '').style(style);
-      ws.cell(row, 13).string(r.observacao    || '').style(style);
+      ws.cell(row,  3).string(r.usuario_nome    || '').style(style);
+      ws.cell(row,  4).string(r.usuario_email   || '').style(style);
+      ws.cell(row,  5).string(r.usuario_cpf     || '').style(style);
+      ws.cell(row,  6).string(r.cargo_nome      || '').style(style);
+      ws.cell(row,  7).string(r.tipo            || '').style(style);
+      ws.cell(row,  8).string(r.ip_publico      || '').style(style);
+      ws.cell(row,  9).string(r.ip              || '').style(style);
+      ws.cell(row, 10).string(r.endereco_aprox  || '').style(style);
+      ws.cell(row, 11).string(r.latitude  ? String(r.latitude)  : '').style(style);
+      ws.cell(row, 12).string(r.longitude ? String(r.longitude) : '').style(style);
+      ws.cell(row, 13).string(r.dispositivo     || '').style(style);
+      ws.cell(row, 14).string(r.navegador       || '').style(style);
+      ws.cell(row, 15).string(r.observacao      || '').style(style);
     });
 
-    [8,20,25,28,16,18,10,16,12,12,12,12,20].forEach((w, i) => ws.column(i + 1).setWidth(w));
+    [8,20,25,28,16,18,10,16,12,40,12,12,12,12,20].forEach((w, i) => ws.column(i + 1).setWidth(w));
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', 'attachment; filename="relatorio-ponto.xlsx"');

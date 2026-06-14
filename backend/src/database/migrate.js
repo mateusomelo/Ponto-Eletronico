@@ -49,7 +49,10 @@ async function seedPermissoes(conn) {
     ['relatorios.visualizar', 'Visualizar e gerar relatórios'],
     ['relatorios.exportar',   'Exportar relatórios em PDF e Excel'],
     // Cargos
-    ['cargos.criar',          'Criar e editar cargos e permissões'],
+    ['cargos.criar',          'Criar novos cargos'],
+    ['cargos.editar',         'Editar cargos existentes'],
+    ['cargos.excluir',        'Excluir cargos'],
+    ['permissoes.gerenciar',  'Gerenciar permissões de cargos'],
     // Sistema
     ['sistema.configurar',    'Acessar e alterar configurações do sistema'],
     ['logs.visualizar',       'Visualizar logs de acesso'],

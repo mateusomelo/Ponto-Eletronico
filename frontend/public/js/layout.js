@@ -266,6 +266,9 @@ async function _carregarNotificacoes() {
 
 window.atualizarBadgeNotificacoes = _carregarNotificacoes;
 
+// Atualiza badge a cada 60s enquanto a aba estiver ativa
+setInterval(_carregarNotificacoes, 60_000);
+
 function _atualizarAvatarSidebar(avatarEl, user) {
   const inicial = (user.nome || '?')[0].toUpperCase();
   if (user.foto) {
