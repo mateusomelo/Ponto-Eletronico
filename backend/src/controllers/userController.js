@@ -225,6 +225,10 @@ async function excluir(req, res) {
       fs.unlink(oldPath, () => {});
     }
 
+    // Remove dependências para respeitar as foreign keys antes de excluir o usuário
+    await pool.query('DELETE FROM notificacoes   WHERE usuario_id = ?', [id]);
+    await pool.query('DELETE FROM registros_ponto WHERE usuario_id = ?', [id]);
+    await pool.query('UPDATE fechamentos_folha SET usuario_id = NULL WHERE usuario_id = ?', [id]);
     await pool.query('DELETE FROM usuarios WHERE id = ?', [id]);
 
     await LogAcesso.registrar({
