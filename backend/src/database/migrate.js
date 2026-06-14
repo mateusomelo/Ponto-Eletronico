@@ -36,12 +36,24 @@ async function seedCargos(conn) {
 // ── Seed: permissões padrão ──────────────────────────────────
 async function seedPermissoes(conn) {
   const permissoes = [
-    ['sistema.configurar',    'Acessar e alterar configurações do sistema'],
+    // Ponto
+    ['ponto.registrar',       'Registrar entrada e saída de ponto'],
+    ['ponto.visualizar',      'Visualizar histórico de ponto de funcionários'],
+    // Usuários
+    ['usuarios.visualizar',   'Visualizar lista de usuários'],
     ['usuarios.gerenciar',    'Criar, editar e excluir usuários'],
+    // Relatórios
+    ['relatorios.visualizar', 'Visualizar e gerar relatórios'],
     ['relatorios.exportar',   'Exportar relatórios em PDF e Excel'],
+    // Cargos
+    ['cargos.criar',          'Criar e editar cargos e permissões'],
+    // Sistema
+    ['sistema.configurar',    'Acessar e alterar configurações do sistema'],
     ['logs.visualizar',       'Visualizar logs de acesso'],
+    // Fechamento
     ['fechamento.criar',      'Criar e gerenciar fechamentos de folha'],
     ['fechamento.visualizar', 'Visualizar fechamentos de folha'],
+    // Registros
     ['registros.detalhes',    'Ver detalhes sensíveis dos registros (IP, GPS, foto)'],
   ];
   for (const [nome, descricao] of permissoes) {
@@ -59,6 +71,9 @@ async function seedPermissoes(conn) {
 
   // Supervisor (cargo_id=2): permissões operacionais
   const permsSuper = [
+    'ponto.registrar',
+    'ponto.visualizar',
+    'relatorios.visualizar',
     'relatorios.exportar',
     'fechamento.criar',
     'fechamento.visualizar',
@@ -70,6 +85,12 @@ async function seedPermissoes(conn) {
         SELECT 2, id FROM permissoes WHERE nome = ?
     `, [nome]);
   }
+
+  // Funcionário (cargo_id=3): apenas registrar ponto
+  await conn.query(`
+    INSERT IGNORE INTO cargo_permissoes (cargo_id, permissao_id)
+      SELECT 3, id FROM permissoes WHERE nome = 'ponto.registrar'
+  `);
 
   console.log('[Migration] Permissões padrão verificadas.');
 }
