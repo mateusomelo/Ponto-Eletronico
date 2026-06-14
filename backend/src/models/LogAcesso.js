@@ -16,18 +16,19 @@ async function registrar({ usuario_id, acao, descricao, ip, user_agent, dados_an
   );
 }
 
-async function listar({ pagina = 1, por_pagina = 50, usuario_id, acao, data_inicio, data_fim } = {}) {
+async function listar({ pagina = 1, por_pagina = 50, usuario_id, acao, data_inicio, data_fim, company_id } = {}) {
   const offset = (pagina - 1) * por_pagina;
   const params = [];
   let where = 'WHERE 1=1';
 
+  if (company_id)  { where += ' AND (u.company_id = ? OR l.usuario_id IS NULL)'; params.push(company_id); }
   if (usuario_id)  { where += ' AND l.usuario_id = ?'; params.push(usuario_id); }
   if (acao)        { where += ' AND l.acao LIKE ?';    params.push(`%${acao}%`); }
   if (data_inicio) { where += ' AND l.created_at >= ?'; params.push(data_inicio); }
   if (data_fim)    { where += ' AND l.created_at <= ?'; params.push(data_fim + ' 23:59:59'); }
 
   const [[{ total }]] = await pool.query(
-    `SELECT COUNT(*) AS total FROM logs_acesso l ${where}`,
+    `SELECT COUNT(*) AS total FROM logs_acesso l LEFT JOIN usuarios u ON u.id = l.usuario_id ${where}`,
     params
   );
 

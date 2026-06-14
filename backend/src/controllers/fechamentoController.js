@@ -130,10 +130,13 @@ async function notificar(usuario_id, tipo, titulo, mensagem, fechamento_id = nul
   );
 }
 
-async function notificarGestores(tipo, titulo, mensagem, fechamento_id, excluir_id = null) {
+async function notificarGestores(tipo, titulo, mensagem, fechamento_id, excluir_id = null, company_id = null) {
+  const cidFilter = company_id ? ' AND u.company_id = ?' : '';
+  const params = company_id ? [company_id] : [];
   const [gestores] = await pool.query(
     `SELECT u.id FROM usuarios u JOIN cargos c ON c.id = u.cargo_id
-     WHERE c.nivel <= 2 AND u.ativo = 1`
+     WHERE c.nivel <= 2 AND u.ativo = 1${cidFilter}`,
+    params
   );
   for (const g of gestores) {
     if (g.id !== excluir_id) await notificar(g.id, tipo, titulo, mensagem, fechamento_id);
@@ -168,8 +171,14 @@ async function listar(req, res) {
     const pp     = Math.min(100, parseInt(por_pagina) || 30);
     const offset = (pg - 1) * pp;
 
+    const cid    = req.user.company_id;
     const params = [];
     let where = 'WHERE 1=1';
+
+    if (cid) {
+      where += ' AND (f.usuario_id IN (SELECT id FROM usuarios WHERE company_id = ?) OR f.usuario_id IS NULL)';
+      params.push(cid);
+    }
 
     if (req.user.cargo_nivel >= 3) {
       // Funcionário: apenas os próprios
@@ -206,15 +215,18 @@ async function usuariosDisponiveis(req, res) {
     if (!competencia || !/^\d{4}-\d{2}$/.test(competencia)) {
       return res.status(400).json({ erro: 'Competência inválida.' });
     }
+    const cid = req.user.company_id;
+    const cidFilter = cid ? ' AND u.company_id = ?' : '';
+    const params = cid ? [competencia, cid] : [competencia];
     const [rows] = await pool.query(
       `SELECT u.id, u.nome, u.email, c.nome AS cargo_nome,
               (SELECT COUNT(*) FROM fechamentos_folha f
                WHERE f.usuario_id = u.id AND f.competencia = ?) AS ja_tem_fechamento
        FROM usuarios u
        LEFT JOIN cargos c ON c.id = u.cargo_id
-       WHERE u.ativo = 1
+       WHERE u.ativo = 1${cidFilter}
        ORDER BY u.nome ASC`,
-      [competencia]
+      params
     );
     return res.json({ usuarios: rows });
   } catch (err) {
@@ -371,7 +383,7 @@ async function assinar(req, res) {
       'relatorio_assinado',
       `${func?.nome || 'Funcionário'} assinou o relatório de ${label}`,
       'O relatório está pronto para fechamento definitivo.',
-      f.id, req.user.id
+      f.id, req.user.id, req.user.company_id
     );
 
     await LogAcesso.registrar({
@@ -418,7 +430,7 @@ async function rejeitar(req, res) {
       'relatorio_rejeitado',
       `${func?.nome || 'Funcionário'} rejeitou o relatório de ${label}`,
       `Motivo: ${motivo.trim()}`,
-      f.id, req.user.id
+      f.id, req.user.id, req.user.company_id
     );
 
     await LogAcesso.registrar({

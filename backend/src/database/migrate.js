@@ -71,6 +71,8 @@ async function seedCargos(conn) {
       [id, nome, descricao, nivel]
     );
   }
+  // Garante company_id nos cargos padrão (após Fase 2 adicionar a coluna)
+  await conn.query(`UPDATE cargos SET company_id = 1 WHERE company_id IS NULL AND id IN (1,2,3)`);
   console.log('[Migration] Cargos padrão verificados.');
 }
 
@@ -167,6 +169,8 @@ async function seedConfiguracoes(conn) {
       [chave, valor, tipo, descricao]
     );
   }
+  // Garante company_id nas configs padrão (após Fase 2 adicionar a coluna)
+  await conn.query(`UPDATE configuracoes SET company_id = 1 WHERE company_id IS NULL`);
   console.log('[Migration] Configurações padrão verificadas.');
 }
 
@@ -291,6 +295,21 @@ async function runIncrementalMigrations(conn) {
   if (!cNames.includes('descricao')) {
     await conn.query(`ALTER TABLE configuracoes ADD COLUMN descricao TEXT NULL`);
     console.log('[Migration] configuracoes: coluna descricao adicionada');
+  }
+
+  // ── Fase 2: company_id em cargos e configuracoes ──────────
+  const [crgCols] = await conn.query('SHOW COLUMNS FROM cargos');
+  const crgNames  = crgCols.map(c => c.Field);
+  if (!crgNames.includes('company_id')) {
+    await conn.query('ALTER TABLE cargos ADD COLUMN company_id INT UNSIGNED NULL AFTER id');
+    await conn.query('UPDATE cargos SET company_id = 1 WHERE company_id IS NULL');
+    console.log('[Migration] cargos: company_id adicionado');
+  }
+
+  if (!cNames.includes('company_id')) {
+    await conn.query('ALTER TABLE configuracoes ADD COLUMN company_id INT UNSIGNED NULL AFTER id');
+    await conn.query('UPDATE configuracoes SET company_id = 1 WHERE company_id IS NULL');
+    console.log('[Migration] configuracoes: company_id adicionado');
   }
 }
 

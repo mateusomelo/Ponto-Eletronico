@@ -9,50 +9,74 @@ async function resumo(req, res) {
     }
 
     // ── Dashboard Admin / Supervisor ─────────────────────────
-    const [[totUsuarios]]  = await pool.query('SELECT COUNT(*) AS v FROM usuarios WHERE ativo=1');
-    const [[totAtivos]]    = await pool.query('SELECT COUNT(*) AS v FROM usuarios WHERE ativo=1 AND bloqueado=0');
-    const [[regHoje]]      = await pool.query('SELECT COUNT(*) AS v FROM registros_ponto WHERE DATE(data_hora)=CURDATE()');
-    const [[regSemana]]    = await pool.query('SELECT COUNT(*) AS v FROM registros_ponto WHERE data_hora >= DATE_SUB(NOW(), INTERVAL 7 DAY)');
-    const [[regMes]]       = await pool.query('SELECT COUNT(*) AS v FROM registros_ponto WHERE MONTH(data_hora)=MONTH(NOW()) AND YEAR(data_hora)=YEAR(NOW())');
+    const cid = req.user.company_id;
+    const uWhere = cid ? 'WHERE ativo=1 AND company_id=?' : 'WHERE ativo=1';
+    const uParam = cid ? [cid] : [];
+    const uActiveWhere = cid ? 'WHERE ativo=1 AND bloqueado=0 AND company_id=?' : 'WHERE ativo=1 AND bloqueado=0';
 
+    // Subquery de registros da empresa (via JOIN usuarios)
+    const rJoin   = 'JOIN usuarios u ON u.id = r.usuario_id';
+    const rCidW   = cid ? ' AND u.company_id=?' : '';
+    const rCidP   = cid ? [cid] : [];
+
+    const [[totUsuarios]]  = await pool.query(`SELECT COUNT(*) AS v FROM usuarios ${uWhere}`, uParam);
+    const [[totAtivos]]    = await pool.query(`SELECT COUNT(*) AS v FROM usuarios ${uActiveWhere}`, uParam);
+    const [[regHoje]]      = await pool.query(
+      `SELECT COUNT(*) AS v FROM registros_ponto r ${rJoin} WHERE DATE(r.data_hora)=CURDATE()${rCidW}`, rCidP
+    );
+    const [[regSemana]]    = await pool.query(
+      `SELECT COUNT(*) AS v FROM registros_ponto r ${rJoin} WHERE r.data_hora >= DATE_SUB(NOW(), INTERVAL 7 DAY)${rCidW}`, rCidP
+    );
+    const [[regMes]]       = await pool.query(
+      `SELECT COUNT(*) AS v FROM registros_ponto r ${rJoin} WHERE MONTH(r.data_hora)=MONTH(NOW()) AND YEAR(r.data_hora)=YEAR(NOW())${rCidW}`, rCidP
+    );
+
+    const uAccWhere = cid ? 'AND u.ultimo_acesso IS NOT NULL AND u.company_id=?' : 'AND u.ultimo_acesso IS NOT NULL';
+    const uAccParam = cid ? [cid] : [];
     const [ultimosAcessos] = await pool.query(
       `SELECT u.id, u.nome, u.email, c.nome AS cargo, u.ultimo_acesso
        FROM usuarios u JOIN cargos c ON c.id=u.cargo_id
-       WHERE u.ultimo_acesso IS NOT NULL
-       ORDER BY u.ultimo_acesso DESC LIMIT 5`
+       WHERE 1=1 ${uAccWhere}
+       ORDER BY u.ultimo_acesso DESC LIMIT 5`,
+      uAccParam
     );
 
     const [ultimosPontos] = await pool.query(
       `SELECT r.id, r.tipo, r.data_hora, r.ip, u.nome AS usuario_nome
        FROM registros_ponto r JOIN usuarios u ON u.id=r.usuario_id
-       ORDER BY r.data_hora DESC LIMIT 10`
+       WHERE 1=1${rCidW}
+       ORDER BY r.data_hora DESC LIMIT 10`,
+      rCidP
     );
 
     const [presencaDiaria] = await pool.query(
-      `SELECT DATE(data_hora) AS dia, COUNT(DISTINCT usuario_id) AS total
-       FROM registros_ponto
-       WHERE data_hora >= DATE_SUB(NOW(), INTERVAL 7 DAY) AND tipo='entrada'
-       GROUP BY DATE(data_hora)
-       ORDER BY dia ASC`
+      `SELECT DATE(r.data_hora) AS dia, COUNT(DISTINCT r.usuario_id) AS total
+       FROM registros_ponto r ${rJoin}
+       WHERE r.data_hora >= DATE_SUB(NOW(), INTERVAL 7 DAY) AND r.tipo='entrada'${rCidW}
+       GROUP BY DATE(r.data_hora)
+       ORDER BY dia ASC`,
+      rCidP
     );
 
     const [porHora] = await pool.query(
-      `SELECT HOUR(data_hora) AS hora, COUNT(*) AS total
-       FROM registros_ponto
-       WHERE DATE(data_hora) = CURDATE()
-       GROUP BY HOUR(data_hora)
-       ORDER BY hora ASC`
+      `SELECT HOUR(r.data_hora) AS hora, COUNT(*) AS total
+       FROM registros_ponto r ${rJoin}
+       WHERE DATE(r.data_hora) = CURDATE()${rCidW}
+       GROUP BY HOUR(r.data_hora)
+       ORDER BY hora ASC`,
+      rCidP
     );
 
     const [[presentesAgora]] = await pool.query(
       `SELECT COUNT(DISTINCT usuario_id) AS v
        FROM (
-         SELECT usuario_id, tipo,
-                ROW_NUMBER() OVER (PARTITION BY usuario_id ORDER BY data_hora DESC) AS rn
-         FROM registros_ponto
-         WHERE DATE(data_hora) = CURDATE()
+         SELECT r.usuario_id, r.tipo,
+                ROW_NUMBER() OVER (PARTITION BY r.usuario_id ORDER BY r.data_hora DESC) AS rn
+         FROM registros_ponto r ${rJoin}
+         WHERE DATE(r.data_hora) = CURDATE()${rCidW}
        ) t
-       WHERE rn=1 AND tipo='entrada'`
+       WHERE rn=1 AND tipo='entrada'`,
+      rCidP
     );
 
     return res.json({

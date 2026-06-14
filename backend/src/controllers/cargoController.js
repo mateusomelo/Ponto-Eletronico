@@ -7,11 +7,16 @@ const ip = getClientIp;
 // GET /api/cargos
 async function listar(req, res) {
   try {
+    const cid = req.user.company_id;
+    const cidFilter = cid ? 'WHERE c.company_id = ?' : '';
+    const cidParam  = cid ? [cid] : [];
     const [cargos] = await pool.query(
       `SELECT c.*, COUNT(u.id) AS total_usuarios
        FROM cargos c
        LEFT JOIN usuarios u ON u.cargo_id = c.id
-       GROUP BY c.id ORDER BY c.nivel ASC, c.nome ASC`
+       ${cidFilter}
+       GROUP BY c.id ORDER BY c.nivel ASC, c.nome ASC`,
+      cidParam
     );
 
     for (const c of cargos) {
@@ -34,7 +39,10 @@ async function listar(req, res) {
 // GET /api/cargos/:id
 async function obter(req, res) {
   try {
-    const [rows] = await pool.query('SELECT * FROM cargos WHERE id = ?', [req.params.id]);
+    const cid = req.user.company_id;
+    const cidFilter = cid ? ' AND company_id = ?' : '';
+    const cidParam  = cid ? [req.params.id, cid] : [req.params.id];
+    const [rows] = await pool.query(`SELECT * FROM cargos WHERE id = ?${cidFilter}`, cidParam);
     if (!rows.length) return res.status(404).json({ erro: 'Cargo não encontrado.' });
 
     const [perms] = await pool.query(
@@ -57,9 +65,10 @@ async function criar(req, res) {
   if (nivel < 1 || nivel > 3) return res.status(400).json({ erro: 'Nível inválido (1-3).' });
 
   try {
+    const novoCid = req.user.company_id || null;
     const [result] = await pool.query(
-      'INSERT INTO cargos (nome, descricao, nivel) VALUES (?, ?, ?)',
-      [nome.trim(), descricao || null, nivel]
+      'INSERT INTO cargos (nome, descricao, nivel, company_id) VALUES (?, ?, ?, ?)',
+      [nome.trim(), descricao || null, nivel, novoCid]
     );
 
     if (Array.isArray(permissoes) && permissoes.length) {
@@ -79,10 +88,13 @@ async function criar(req, res) {
 // PUT /api/cargos/:id
 async function editar(req, res) {
   const { nome, descricao, nivel, ativo, permissoes } = req.body;
-  const id = req.params.id;
+  const id  = req.params.id;
+  const cid = req.user.company_id;
+  const cidFilter = cid ? ' AND company_id = ?' : '';
+  const cidParam  = cid ? [id, cid] : [id];
 
   try {
-    const [atual] = await pool.query('SELECT * FROM cargos WHERE id = ?', [id]);
+    const [atual] = await pool.query(`SELECT * FROM cargos WHERE id = ?${cidFilter}`, cidParam);
     if (!atual.length) return res.status(404).json({ erro: 'Cargo não encontrado.' });
 
     // Monta SET dinâmico
@@ -124,8 +136,14 @@ async function editar(req, res) {
 
 // DELETE /api/cargos/:id
 async function excluir(req, res) {
-  const id = req.params.id;
+  const id  = req.params.id;
+  const cid = req.user.company_id;
   try {
+    const cidFilter = cid ? ' AND company_id = ?' : '';
+    const cidParam  = cid ? [id, cid] : [id];
+    const [chk] = await pool.query(`SELECT id FROM cargos WHERE id = ?${cidFilter}`, cidParam);
+    if (!chk.length) return res.status(404).json({ erro: 'Cargo não encontrado.' });
+
     const [[{ n }]] = await pool.query('SELECT COUNT(*) AS n FROM usuarios WHERE cargo_id = ?', [id]);
     if (n > 0) return res.status(409).json({ erro: 'Cargo possui usuários vinculados.' });
 

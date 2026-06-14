@@ -2,9 +2,13 @@ const { pool } = require('../database/connection');
 const PDFDocument = require('pdfkit');
 const xl = require('excel4node');
 
-async function getTimezone() {
+async function getTimezone(company_id) {
   try {
-    const [rows] = await pool.query("SELECT valor FROM configuracoes WHERE chave = 'fuso_horario' LIMIT 1");
+    const cidFilter = company_id ? ' AND company_id = ?' : '';
+    const params = company_id ? ['fuso_horario', company_id] : ['fuso_horario'];
+    const [rows] = await pool.query(
+      `SELECT valor FROM configuracoes WHERE chave = ?${cidFilter} LIMIT 1`, params
+    );
     return rows[0]?.valor || 'America/Sao_Paulo';
   } catch {
     return 'America/Sao_Paulo';
@@ -33,9 +37,11 @@ function resolveUid(req) {
 async function buscarRegistros(req) {
   const { data_inicio, data_fim, tipo } = req.query;
   const usuario_id = resolveUid(req);
+  const cid = req.user.company_id;
 
   const params = [];
   let where = 'WHERE 1=1';
+  if (cid)         { where += ' AND u.company_id = ?'; params.push(cid); }
   if (usuario_id)  { where += ' AND r.usuario_id = ?'; params.push(usuario_id); }
   if (tipo)        { where += ' AND r.tipo = ?';       params.push(tipo); }
   if (data_inicio) { where += ' AND DATE(r.data_hora) >= ?'; params.push(data_inicio); }
@@ -70,7 +76,7 @@ async function dados(req, res) {
 // GET /api/relatorios/pdf
 async function exportarPDF(req, res) {
   try {
-    const [rows, tz] = await Promise.all([buscarRegistros(req), getTimezone()]);
+    const [rows, tz] = await Promise.all([buscarRegistros(req), getTimezone(req.user.company_id)]);
 
     const doc = new PDFDocument({ margin: 40, size: 'A4', layout: 'landscape' });
     res.setHeader('Content-Type', 'application/pdf');
@@ -127,7 +133,7 @@ async function exportarPDF(req, res) {
 // GET /api/relatorios/excel
 async function exportarExcel(req, res) {
   try {
-    const [rows, tz] = await Promise.all([buscarRegistros(req), getTimezone()]);
+    const [rows, tz] = await Promise.all([buscarRegistros(req), getTimezone(req.user.company_id)]);
 
     const wb = new xl.Workbook();
     const ws = wb.addWorksheet('Registros de Ponto');
@@ -187,8 +193,10 @@ async function resumoUsuario(req, res) {
     if (data_inicio) { whereReg += ' AND DATE(r.data_hora) >= ?'; params.push(data_inicio); }
     if (data_fim)    { whereReg += ' AND DATE(r.data_hora) <= ?'; params.push(data_fim + ' 23:59:59'); }
 
+    const cid = req.user.company_id;
     let whereUser = 'WHERE u.ativo = 1';
     const paramsUser = [...params];
+    if (cid)        { whereUser += ' AND u.company_id = ?'; paramsUser.push(cid); }
     if (usuario_id) { whereUser += ' AND u.id = ?'; paramsUser.push(usuario_id); }
 
     const [rows] = await pool.query(

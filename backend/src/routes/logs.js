@@ -14,6 +14,7 @@ router.get('/', async (req, res) => {
       acao:       req.query.acao       || null,
       data_inicio: req.query.data_inicio || null,
       data_fim:    req.query.data_fim    || null,
+      company_id:  req.user.company_id || null,
     });
     return res.json(resultado);
   } catch (err) {
