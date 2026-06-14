@@ -24,7 +24,7 @@ app.use(helmet({
       scriptSrc:               ["'self'", "'unsafe-inline'", 'cdn.jsdelivr.net'],
       scriptSrcAttr:           ["'unsafe-inline'"],
       styleSrc:                ["'self'", "'unsafe-inline'", 'cdn.jsdelivr.net'],
-      fontSrc:                 ["'self'"],
+      fontSrc:                 ["'self'", 'cdn.jsdelivr.net'],
       imgSrc:                  ["'self'", 'data:', 'blob:', 'https://*.tile.openstreetmap.org', 'https://nominatim.openstreetmap.org'],
       connectSrc:              ["'self'", 'https://nominatim.openstreetmap.org'],
       upgradeInsecureRequests: null,   // não forçar HTTPS — app roda em HTTP

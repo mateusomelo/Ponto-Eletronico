@@ -201,6 +201,18 @@ async function runIncrementalMigrations(conn) {
     `);
     console.log('[Migration] fechamentos_folha: status ENUM migrado de aberto→rascunho');
   }
+
+  // configuracoes: coluna tipo adicionada após schema inicial
+  const [cCols] = await conn.query('SHOW COLUMNS FROM configuracoes');
+  const cNames  = cCols.map(c => c.Field);
+  if (!cNames.includes('tipo')) {
+    await conn.query(`ALTER TABLE configuracoes ADD COLUMN tipo VARCHAR(30) NOT NULL DEFAULT 'string' AFTER valor`);
+    console.log('[Migration] configuracoes: coluna tipo adicionada');
+  }
+  if (!cNames.includes('descricao')) {
+    await conn.query(`ALTER TABLE configuracoes ADD COLUMN descricao TEXT NULL`);
+    console.log('[Migration] configuracoes: coluna descricao adicionada');
+  }
 }
 
 // ── Entry point ──────────────────────────────────────────────
