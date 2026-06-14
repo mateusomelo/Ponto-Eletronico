@@ -41,6 +41,9 @@ async function seedPermissoes(conn) {
     ['ponto.visualizar',      'Visualizar histórico de ponto de funcionários'],
     // Usuários
     ['usuarios.visualizar',   'Visualizar lista de usuários'],
+    ['usuarios.criar',        'Criar novos usuários'],
+    ['usuarios.editar',       'Editar dados e redefinir senha de usuários'],
+    ['usuarios.excluir',      'Excluir usuários'],
     ['usuarios.gerenciar',    'Criar, editar e excluir usuários'],
     // Relatórios
     ['relatorios.visualizar', 'Visualizar e gerar relatórios'],
@@ -73,6 +76,9 @@ async function seedPermissoes(conn) {
   const permsSuper = [
     'ponto.registrar',
     'ponto.visualizar',
+    'usuarios.visualizar',
+    'usuarios.criar',
+    'usuarios.editar',
     'relatorios.visualizar',
     'relatorios.exportar',
     'fechamento.criar',

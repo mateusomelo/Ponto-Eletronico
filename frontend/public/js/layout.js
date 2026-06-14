@@ -70,6 +70,9 @@ function renderLayout(pageTitle) {
           <div class="sidebar-user-name" id="sidebarUserName">Carregando...</div>
           <div class="sidebar-user-role" id="sidebarUserRole"></div>
         </div>
+        <button class="btn-icon" id="btnAlterarSenha" title="Alterar minha senha" style="flex-shrink:0;opacity:.7">
+          <i class="fas fa-key" style="font-size:.75rem"></i>
+        </button>
         <button class="sidebar-toggle" id="sidebarToggle" title="Recolher menu">
           <i class="fas fa-chevron-left"></i>
         </button>
@@ -99,6 +102,78 @@ function renderLayout(pageTitle) {
 
   document.getElementById('sidebarMount').innerHTML  = sidebar;
   document.getElementById('topbarMount').innerHTML   = topbar;
+
+  // Injeta modal de alterar senha (único no DOM)
+  if (!document.getElementById('modalAlterarSenha')) {
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `
+<div class="modal-overlay" id="modalAlterarSenha">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fas fa-key"></i> Alterar Senha</h3>
+      <button class="modal-close" onclick="closeModal('modalAlterarSenha')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Senha atual</label>
+        <input type="password" class="form-control" id="asSenhaAtual" placeholder="Sua senha atual" autocomplete="current-password" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nova senha</label>
+        <input type="password" class="form-control" id="asNovaSenha" placeholder="Mínimo 8 caracteres" autocomplete="new-password" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirmar nova senha</label>
+        <input type="password" class="form-control" id="asConfirmarSenha" placeholder="Repita a nova senha" autocomplete="new-password" />
+      </div>
+      <div id="asErro" class="alert alert-danger" style="display:none"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalAlterarSenha')">Cancelar</button>
+      <button class="btn btn-primary" id="btnConfirmarAlterarSenha"><i class="fas fa-check"></i> Salvar</button>
+    </div>
+  </div>
+</div>`;
+    document.body.appendChild(wrap.firstElementChild);
+
+    document.getElementById('btnConfirmarAlterarSenha').addEventListener('click', async () => {
+      const senhaAtual = document.getElementById('asSenhaAtual').value;
+      const novaSenha  = document.getElementById('asNovaSenha').value;
+      const confirmar  = document.getElementById('asConfirmarSenha').value;
+      const erroEl     = document.getElementById('asErro');
+      erroEl.style.display = 'none';
+
+      if (!senhaAtual || !novaSenha || !confirmar) {
+        erroEl.textContent = 'Todos os campos são obrigatórios.'; erroEl.style.display = 'block'; return;
+      }
+      if (novaSenha.length < 8) {
+        erroEl.textContent = 'A nova senha deve ter no mínimo 8 caracteres.'; erroEl.style.display = 'block'; return;
+      }
+      if (novaSenha !== confirmar) {
+        erroEl.textContent = 'As senhas não coincidem.'; erroEl.style.display = 'block'; return;
+      }
+
+      const btn = document.getElementById('btnConfirmarAlterarSenha');
+      btn.disabled = true;
+      try {
+        await API.post('/auth/alterar-senha', { senha_atual: senhaAtual, nova_senha: novaSenha });
+        closeModal('modalAlterarSenha');
+        toast('Senha alterada com sucesso!', 'success');
+      } catch (err) {
+        erroEl.textContent = err.data?.erro || 'Erro ao alterar senha.'; erroEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  }
+
+  document.getElementById('btnAlterarSenha')?.addEventListener('click', () => {
+    document.getElementById('asSenhaAtual').value   = '';
+    document.getElementById('asNovaSenha').value    = '';
+    document.getElementById('asConfirmarSenha').value = '';
+    document.getElementById('asErro').style.display = 'none';
+    openModal('modalAlterarSenha');
+  });
 
   initSidebar();
   initLogout();
