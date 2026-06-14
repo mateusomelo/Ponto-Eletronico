@@ -32,11 +32,8 @@
     }
 
     @media (max-width: 768px) {
-      /* No mobile mostra só: #, Funcionário, Data/Hora, Tipo, e botão detalhes */
-      .col-ip, .col-gps,
-      table th:nth-child(7), table td:nth-child(7),
-      table th:nth-child(8), table td:nth-child(8)
-      { display: none !important; }
+      /* No mobile mostra só: #, Funcionário, Data/Hora, Tipo e botão detalhes */
+      .col-ip, .col-gps, .col-device, .col-browser { display: none !important; }
       .detalhe-grid { grid-template-columns: 1fr; }
     }
   </style>
@@ -87,8 +84,8 @@
               <th>Tipo</th>
               <th class="col-ip">IP</th>
               <th class="col-gps">Localização</th>
-              <th>Dispositivo</th>
-              <th>Navegador</th>
+              <th class="col-device">Dispositivo</th>
+              <th class="col-browser">Navegador</th>
               <th></th>
             </tr>
           </thead>
@@ -225,8 +222,8 @@ function renderTabela(registros) {
       <td class="text-sm col-gps">
         ${r.latitude ? `<span style="color:var(--accent)"><i class="fas fa-map-marker-alt"></i> GPS</span>` : '-'}
       </td>
-      <td class="text-sm">${r.dispositivo || '-'}</td>
-      <td class="text-sm">${r.navegador || '-'}</td>
+      <td class="text-sm col-device">${r.dispositivo || '-'}</td>
+      <td class="text-sm col-browser">${r.navegador || '-'}</td>
       <td>
         <button class="btn btn-sm btn-outline" onclick="verDetalhes(${i})" title="Ver detalhes">
           <i class="fas fa-eye"></i>
@@ -253,15 +250,17 @@ function verDetalhes(idx) {
   const mapEl = document.getElementById('mapDetalhes');
   if (temDetalhes && r.latitude && r.longitude) {
     mapEl.style.display = 'block';
+    const lat = parseFloat(r.latitude);
+    const lng = parseFloat(r.longitude);
 
     // Espera modal abrir e animação concluir antes de iniciar o mapa
     setTimeout(() => {
       if (_mapInstance) { _mapInstance.remove(); _mapInstance = null; }
-      _mapInstance = L.map('mapDetalhes').setView([r.latitude, r.longitude], 16);
+      _mapInstance = L.map('mapDetalhes').setView([lat, lng], 16);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap',
       }).addTo(_mapInstance);
-      L.marker([r.latitude, r.longitude]).addTo(_mapInstance)
+      L.marker([lat, lng]).addTo(_mapInstance)
         .bindPopup(`Registro de ${r.tipo}<br>${fmtDataHora(r.data_hora)}`).openPopup();
       _mapInstance.invalidateSize();
     }, 350);
@@ -291,9 +290,9 @@ function verDetalhes(idx) {
   if (temDetalhes) {
     campos.push({ label: 'IP Interno',  val: r.ip        || '-' });
     campos.push({ label: 'IP Público',  val: r.ip_publico|| '-' });
-    if (r.latitude)  campos.push({ label: 'Latitude',   val: r.latitude.toFixed(6) });
-    if (r.longitude) campos.push({ label: 'Longitude',  val: r.longitude.toFixed(6) });
-    if (r.precisao)  campos.push({ label: 'Precisão GPS', val: `±${Math.round(r.precisao)}m` });
+    if (r.latitude)  campos.push({ label: 'Latitude',    val: parseFloat(r.latitude).toFixed(6) });
+    if (r.longitude) campos.push({ label: 'Longitude',   val: parseFloat(r.longitude).toFixed(6) });
+    if (r.precisao)  campos.push({ label: 'Precisão GPS', val: `±${Math.round(parseFloat(r.precisao))}m` });
   }
 
   document.getElementById('detalheGrid').innerHTML = campos.map(c => `
