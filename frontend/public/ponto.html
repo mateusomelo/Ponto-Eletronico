@@ -760,16 +760,20 @@ async function carregarHoje() {
       return;
     }
 
-    el.innerHTML = registros.map(r => `
+    el.innerHTML = registros.map(r => {
+      const d = new Date(r.data_hora);
+      const diaSemana = d.toLocaleDateString('pt-BR', { weekday: 'long' });
+      const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      return `
       <div class="registro-item">
         <div class="registro-dot ${r.tipo}"></div>
         <div style="flex:1">
           <div class="registro-tipo">${r.tipo}</div>
-          <div class="registro-hora">${fmtDataHora(r.data_hora)}</div>
-          ${r.endereco_aprox ? `<div class="registro-hora" style="margin-top:2px"><i class="fas fa-map-marker-alt" style="color:#3b82f6"></i> ${r.endereco_aprox.substring(0, 60)}…</div>` : ''}
+          <div class="registro-hora">${hora} &middot; <span style="text-transform:capitalize">${diaSemana}</span></div>
         </div>
-        ${r.foto_registro ? `<img src="${r.foto_registro}" alt="selfie" style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0;" />` : ''}
-      </div>`).join('');
+        ${r.foto_registro ? `<img src="${r.foto_registro}" alt="selfie" style="width:40px;height:40px;border-radius:8px;object-fit:cover;flex-shrink:0;" />` : ''}
+      </div>`;
+    }).join('');
   } catch {}
 }
 
