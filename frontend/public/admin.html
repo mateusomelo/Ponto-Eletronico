@@ -233,6 +233,21 @@
     </div>
   </div>
 
+  <!-- Seção Super Admins -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+    <h2 style="font-size:1rem;font-weight:700;margin:0;color:#1e293b">
+      <i class="fas fa-user-shield" style="color:#7c3aed;margin-right:8px"></i>Super Admins da Plataforma
+    </h2>
+    <button class="btn btn-outline btn-xs" id="btnNovoSuperAdmin" style="color:#7c3aed;border-color:#7c3aed">
+      <i class="fas fa-plus"></i> Novo Super Admin
+    </button>
+  </div>
+  <div class="card" style="margin-bottom:28px">
+    <div id="listaSuperAdmins" style="padding:4px 0">
+      <div class="page-loader"><span class="spinner"></span></div>
+    </div>
+  </div>
+
   <!-- Lista de empresas -->
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
     <h2 style="font-size:1rem;font-weight:700;margin:0;color:#1e293b">
@@ -242,6 +257,42 @@
   </div>
   <div id="listaEmpresas">
     <div class="page-loader"><span class="spinner"></span></div>
+  </div>
+</div>
+
+<!-- ── Modal super admin ──────────────────────────────────── -->
+<div class="modal-overlay" id="modalSuperAdmin">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modalSaTitulo"><i class="fas fa-user-shield"></i> Super Admin</h3>
+      <button class="modal-close" onclick="closeModal('modalSuperAdmin')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="saId" />
+      <div class="form-group">
+        <label class="form-label">Nome *</label>
+        <input type="text" class="form-control" id="saNome" placeholder="Nome completo" autocomplete="off" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">E-mail *</label>
+        <input type="email" class="form-control" id="saEmail" placeholder="email@plataforma.com" autocomplete="off" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" id="saSenhaLabel">Senha *</label>
+        <input type="password" class="form-control" id="saSenha" placeholder="Mínimo 8 caracteres" autocomplete="new-password" />
+      </div>
+      <div class="form-group" id="saConfirmarGroup">
+        <label class="form-label">Confirmar senha</label>
+        <input type="password" class="form-control" id="saConfirmar" placeholder="Repita a senha" autocomplete="new-password" />
+      </div>
+      <div id="saErro" class="alert alert-danger" style="display:none"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalSuperAdmin')">Cancelar</button>
+      <button class="btn btn-primary" id="btnSalvarSuperAdmin" style="background:#7c3aed;border-color:#7c3aed">
+        <i class="fas fa-check"></i> Salvar
+      </button>
+    </div>
   </div>
 </div>
 
@@ -799,6 +850,112 @@ async function cancelarAssinaturaEmpresa() {
     await carregarEmpresas();
   } catch (err) { toast(err.data?.erro || 'Erro ao cancelar.', 'error'); }
 }
+
+// ── Super Admins ─────────────────────────────────────────────
+let _superAdmins = [];
+
+async function carregarSuperAdmins() {
+  const el = document.getElementById('listaSuperAdmins');
+  try {
+    _superAdmins = await API.get('/superadmin/');
+    if (!_superAdmins.length) {
+      el.innerHTML = '<div style="padding:16px;color:#94a3b8;text-align:center">Nenhum super admin.</div>';
+      return;
+    }
+    el.innerHTML = _superAdmins.map(u => `
+      <div class="user-row" style="padding:12px 20px">
+        <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#a78bfa);
+                    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.9rem;flex-shrink:0">
+          ${(u.nome||'?')[0].toUpperCase()}
+        </div>
+        <div class="user-info">
+          <div class="user-nome">${u.nome}</div>
+          <div class="user-meta">${u.email}
+            ${u.ultimo_acesso ? ` · Último acesso: ${new Date(u.ultimo_acesso).toLocaleDateString('pt-BR')}` : ' · Nunca acessou'}
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="btn btn-xs btn-outline" onclick="abrirEdicaoSuperAdmin(${u.id})">
+            <i class="fas fa-edit"></i> Editar
+          </button>
+          <button class="btn btn-xs btn-outline" style="color:#dc2626;border-color:#fca5a5" onclick="excluirSuperAdmin(${u.id},'${u.nome.replace(/'/g,"\\'")}')">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>`).join('');
+  } catch (err) {
+    el.innerHTML = `<div style="padding:16px;color:#dc2626"><i class="fas fa-exclamation-circle"></i> ${err.data?.erro || 'Erro ao carregar.'}</div>`;
+  }
+}
+
+function abrirCriarSuperAdmin() {
+  document.getElementById('saId').value    = '';
+  document.getElementById('saNome').value  = '';
+  document.getElementById('saEmail').value = '';
+  document.getElementById('saSenha').value = '';
+  document.getElementById('saConfirmar').value = '';
+  document.getElementById('saSenhaLabel').textContent = 'Senha *';
+  document.getElementById('saConfirmarGroup').style.display = '';
+  document.getElementById('modalSaTitulo').innerHTML = '<i class="fas fa-user-plus"></i> Novo Super Admin';
+  document.getElementById('saErro').style.display = 'none';
+  openModal('modalSuperAdmin');
+}
+
+function abrirEdicaoSuperAdmin(id) {
+  const u = _superAdmins.find(x => x.id === id);
+  if (!u) return;
+  document.getElementById('saId').value    = u.id;
+  document.getElementById('saNome').value  = u.nome;
+  document.getElementById('saEmail').value = u.email;
+  document.getElementById('saSenha').value = '';
+  document.getElementById('saConfirmar').value = '';
+  document.getElementById('saSenhaLabel').textContent = 'Nova senha (deixe em branco para manter)';
+  document.getElementById('saConfirmarGroup').style.display = '';
+  document.getElementById('modalSaTitulo').innerHTML = '<i class="fas fa-user-edit"></i> Editar Super Admin';
+  document.getElementById('saErro').style.display = 'none';
+  openModal('modalSuperAdmin');
+}
+
+async function excluirSuperAdmin(id, nome) {
+  const ok = await confirmDialog(`Excluir o super admin <strong>${nome}</strong>?<br>Esta ação não pode ser desfeita.`);
+  if (!ok) return;
+  try {
+    await API.delete(`/superadmin/${id}`);
+    toast('Super admin excluído.', 'success');
+    await carregarSuperAdmins();
+  } catch (err) { toast(err.data?.erro || 'Erro ao excluir.', 'error'); }
+}
+
+document.getElementById('btnNovoSuperAdmin').addEventListener('click', abrirCriarSuperAdmin);
+
+document.getElementById('btnSalvarSuperAdmin').addEventListener('click', async () => {
+  const id       = document.getElementById('saId').value;
+  const nome     = document.getElementById('saNome').value.trim();
+  const email    = document.getElementById('saEmail').value.trim();
+  const senha    = document.getElementById('saSenha').value;
+  const confirmar = document.getElementById('saConfirmar').value;
+  const erroEl   = document.getElementById('saErro');
+  erroEl.style.display = 'none';
+
+  if (!nome || !email) { erroEl.textContent = 'Nome e e-mail são obrigatórios.'; erroEl.style.display = 'block'; return; }
+  if (!id && !senha)   { erroEl.textContent = 'Senha é obrigatória ao criar.'; erroEl.style.display = 'block'; return; }
+  if (senha && senha.length < 8) { erroEl.textContent = 'Senha deve ter pelo menos 8 caracteres.'; erroEl.style.display = 'block'; return; }
+  if (senha && senha !== confirmar) { erroEl.textContent = 'As senhas não coincidem.'; erroEl.style.display = 'block'; return; }
+
+  const btn = document.getElementById('btnSalvarSuperAdmin');
+  btn.disabled = true;
+  try {
+    const body = { nome, email, ...(senha ? { senha } : {}) };
+    if (id) await API.put(`/superadmin/${id}`, body);
+    else    await API.post('/superadmin/', body);
+    closeModal('modalSuperAdmin');
+    toast(id ? 'Super admin atualizado!' : 'Super admin criado!', 'success');
+    await carregarSuperAdmins();
+  } catch (err) { erroEl.textContent = err.data?.erro || 'Erro ao salvar.'; erroEl.style.display = 'block'; }
+  finally { btn.disabled = false; }
+});
+
+carregarSuperAdmins();
 </script>
 </body>
 </html>

@@ -90,6 +90,7 @@ app.use('/api/fechamento',    require('./routes/fechamento'));
 app.use('/api/notificacoes',  require('./routes/notificacoes'));
 app.use('/api/empresas',      require('./routes/empresas'));
 app.use('/api/stripe',        require('./routes/stripe'));
+app.use('/api/superadmin',    require('./routes/superadmin'));
 
 // ── Health check ─────────────────────────────────────────
 app.get('/api/health', (req, res) => {
