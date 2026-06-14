@@ -43,6 +43,14 @@ app.use(cors({
 
 app.use(compression());
 app.use(cookieParser());
+
+// Stripe webhook precisa do body raw (antes do express.json)
+app.post(
+  '/api/stripe/webhook',
+  express.raw({ type: 'application/json' }),
+  require('./controllers/stripeController').webhook
+);
+
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
@@ -81,6 +89,7 @@ app.use('/api/configuracoes',  require('./routes/configuracoes'));
 app.use('/api/fechamento',    require('./routes/fechamento'));
 app.use('/api/notificacoes',  require('./routes/notificacoes'));
 app.use('/api/empresas',      require('./routes/empresas'));
+app.use('/api/stripe',        require('./routes/stripe'));
 
 // ── Health check ─────────────────────────────────────────
 app.get('/api/health', (req, res) => {
@@ -155,6 +164,9 @@ async function initCerts() {
 
 testConnection().then(async () => {
   await runMigrations();
+
+  // Job diário: notifica usuários com pagamentos.visualizar sobre faturas próximas do vencimento
+  require('./jobs/faturasVencimento').iniciarJobFaturas();
 
   // HTTP — Railway usa apenas HTTP internamente (TLS é terminado pelo proxy da plataforma)
   http.createServer(app).listen(PORT, '0.0.0.0', () => {

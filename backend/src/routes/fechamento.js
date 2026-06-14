@@ -1,9 +1,11 @@
 const router = require('express').Router();
 const ctrl   = require('../controllers/fechamentoController');
-const { authenticate } = require('../middlewares/auth');
-const { authorize }    = require('../middlewares/permission');
+const { authenticate }  = require('../middlewares/auth');
+const { authorize }     = require('../middlewares/permission');
+const { requirePlan }   = require('../middlewares/planGuard');
 
 router.use(authenticate);
+router.use(requirePlan('profissional', 'enterprise'));
 
 // Listagem e detalhes (acesso controlado no controller)
 router.get ('/',                     ctrl.listar);

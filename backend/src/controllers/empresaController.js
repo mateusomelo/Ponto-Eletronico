@@ -28,6 +28,7 @@ async function seedEmpresaDefaults(empresaId, empresaNome, empresaCnpj) {
     'ponto.registrar','ponto.visualizar','usuarios.visualizar','usuarios.criar',
     'usuarios.editar','relatorios.visualizar','relatorios.exportar',
     'fechamento.criar','fechamento.visualizar','registros.detalhes',
+    'pagamentos.visualizar',
   ].map(n => permMap[n]).filter(Boolean);
   const permsFuncionario = ['ponto.registrar','ponto.visualizar'].map(n => permMap[n]).filter(Boolean);
 

@@ -30,3 +30,8 @@ Thumbs.db
 
 # Local Netlify folder
 .netlify
+
+# Scripts e artefatos de verificação local
+verify_local.js
+verify_site.js
+screenshots/

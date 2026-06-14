@@ -7,33 +7,133 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" />
   <link rel="stylesheet" href="css/main.css" />
   <style>
-    .admin-header {
-      background: linear-gradient(135deg, #1e3a5f 0%, #3b82f6 100%);
+    /* ── Layout ─────────────────────────────────────────────── */
+    body { background: #f1f5f9; min-height: 100vh; }
+
+    .sa-header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #3b82f6 100%);
       color: #fff;
-      padding: 24px 32px;
+      padding: 20px 32px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
       gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(0,0,0,.25);
     }
-    .admin-header h1 { font-size: 1.4rem; margin: 0; }
-    .admin-header .subtitle { font-size: .85rem; opacity: .8; margin-top: 2px; }
-    .admin-content { padding: 24px; max-width: 1100px; margin: 0 auto; }
-    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 16px; margin-bottom: 28px; }
-    .stat-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center; }
-    .stat-card .stat-num { font-size: 2rem; font-weight: 700; color: #1e3a5f; }
-    .stat-card .stat-label { font-size: .8rem; color: var(--text-muted); margin-top: 4px; }
-    .status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: .75rem; font-weight: 600; }
-    .s-active    { background: #dcfce7; color: #16a34a; }
-    .s-past_due  { background: #fef3c7; color: #d97706; }
-    .s-suspended { background: #fee2e2; color: #dc2626; }
-    .empresa-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-    .empresa-info { flex: 1; min-width: 0; }
-    .empresa-nome { font-weight: 600; font-size: .95rem; }
-    .empresa-meta { font-size: .78rem; color: var(--text-muted); margin-top: 2px; }
-    .btn-xs { padding: 4px 10px; font-size: .75rem; }
-    .actions-group { display: flex; gap: 6px; flex-wrap: wrap; }
+    .sa-header-brand { display: flex; align-items: center; gap: 12px; }
+    .sa-header-brand .logo-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: rgba(255,255,255,.15);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+    }
+    .sa-header-brand h1 { font-size: 1.1rem; margin: 0; font-weight: 700; }
+    .sa-header-brand .subtitle { font-size: .75rem; opacity: .65; margin-top: 1px; }
+    .sa-header-actions { display: flex; gap: 10px; align-items: center; }
+
+    /* ── Stats ──────────────────────────────────────────────── */
+    .sa-content { padding: 28px 32px; max-width: 1280px; margin: 0 auto; }
+    @media (max-width: 768px) { .sa-content { padding: 16px; } }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: box-shadow .2s;
+    }
+    .stat-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); }
+    .stat-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .95rem;
+    }
+    .stat-num { font-size: 2rem; font-weight: 700; line-height: 1; }
+    .stat-label { font-size: .78rem; color: #64748b; font-weight: 500; }
+
+    /* ── Empresa cards ───────────────────────────────────────── */
+    .empresa-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+      gap: 16px;
+    }
+    @media (max-width: 500px) { .empresa-grid { grid-template-columns: 1fr; } }
+
+    .emp-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      overflow: hidden;
+      transition: box-shadow .2s, transform .15s;
+    }
+    .emp-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,.09); transform: translateY(-1px); }
+
+    .emp-card-header {
+      padding: 16px 20px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .emp-nome { font-weight: 700; font-size: .95rem; margin-bottom: 2px; }
+    .emp-cnpj { font-size: .75rem; color: #64748b; }
+
+    .emp-card-body { padding: 14px 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .emp-meta-item { display: flex; flex-direction: column; gap: 2px; }
+    .emp-meta-label { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: #94a3b8; font-weight: 600; }
+    .emp-meta-val { font-size: .875rem; font-weight: 600; }
+
+    .emp-card-footer {
+      padding: 12px 20px;
+      background: #f8fafc;
+      border-top: 1px solid #f1f5f9;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    /* ── Badges ─────────────────────────────────────────────── */
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px; border-radius: 20px; font-size: .72rem; font-weight: 700;
+      white-space: nowrap;
+    }
+    .s-active    { background: #dcfce7; color: #15803d; }
+    .s-past_due  { background: #fef3c7; color: #b45309; }
+    .s-suspended { background: #fee2e2; color: #b91c1c; }
+
+    .plan-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 9px; border-radius: 8px; font-size: .72rem; font-weight: 700;
+    }
+    .pb-basico       { background: #dbeafe; color: #1d4ed8; }
+    .pb-profissional { background: #ede9fe; color: #7c3aed; }
+    .pb-enterprise   { background: #fef3c7; color: #d97706; }
+
+    .users-pill {
+      font-size: .82rem; font-weight: 700;
+      padding: 2px 8px; border-radius: 8px;
+    }
+    .up-ok   { color: #16a34a; background: #f0fdf4; }
+    .up-warn { color: #d97706; background: #fffbeb; }
+    .up-full { color: #dc2626; background: #fef2f2; }
+
+    /* ── User/role badges ─────────────────────────────────────── */
     .user-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
     .user-row:last-child { border-bottom: none; }
     .user-info { flex: 1; min-width: 0; }
@@ -42,47 +142,112 @@
     .role-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 12px; font-size: .7rem; font-weight: 600; }
     .role-company_admin { background: #dbeafe; color: #1d4ed8; }
     .role-employee      { background: #f3f4f6; color: #374151; }
+
+    /* ── Stripe status ───────────────────────────────────────── */
+    .stripe-status { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 12px; font-size: .7rem; font-weight: 600; }
+    .ss-active    { background: #dcfce7; color: #16a34a; }
+    .ss-trialing  { background: #e0f2fe; color: #0369a1; }
+    .ss-past_due  { background: #fef3c7; color: #d97706; }
+    .ss-suspended,.ss-canceled,.ss-incomplete_expired { background: #fee2e2; color: #dc2626; }
+
+    /* ── Botões pequenos ─────────────────────────────────────── */
+    .btn-xs { padding: 4px 10px; font-size: .74rem; }
+    .btn-action { padding: 5px 11px; font-size: .78rem; }
+    .footer-spacer { flex: 1; }
+
+    /* ── Status/Assinatura modal ─────────────────────────────── */
+    .modal-assinatura-body { display: grid; gap: 12px; font-size: .875rem; }
+    .modal-assinatura-body .info-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 0; border-bottom: 1px solid var(--border);
+    }
+    .modal-assinatura-body .info-row:last-child { border-bottom: none; }
+    .info-label { color: var(--text-muted); font-size: .82rem; }
+
+    /* ── Empty ───────────────────────────────────────────────── */
+    .empty-state {
+      text-align: center; padding: 64px 24px;
+      color: #94a3b8;
+    }
+    .empty-state i { font-size: 3rem; margin-bottom: 16px; display: block; opacity: .4; }
+    .empty-state p { margin: 0; font-size: .95rem; }
   </style>
 </head>
-<body style="background:#f1f5f9;min-height:100vh">
+<body>
 
-<div class="admin-header">
-  <div>
-    <h1><i class="fas fa-crown" style="margin-right:10px;color:#fbbf24"></i>Super Admin — Painel da Plataforma</h1>
-    <div class="subtitle" id="adminSubtitle">Carregando...</div>
+<!-- ── Header ─────────────────────────────────────────────── -->
+<header class="sa-header">
+  <div class="sa-header-brand">
+    <div class="logo-icon"><i class="fas fa-crown" style="color:#fbbf24"></i></div>
+    <div>
+      <h1>Super Admin — Plataforma</h1>
+      <div class="subtitle" id="adminSubtitle">Carregando...</div>
+    </div>
   </div>
-  <div style="display:flex;gap:10px;align-items:center">
-    <button class="btn btn-outline" id="btnNovaEmpresa" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)">
+  <div class="sa-header-actions">
+    <button class="btn btn-outline" id="btnNovaEmpresa"
+      style="background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.3)">
       <i class="fas fa-plus"></i> Nova Empresa
     </button>
-    <button class="btn btn-outline" id="btnLogout" style="background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.3)">
+    <button class="btn btn-outline" id="btnLogout"
+      style="background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.2)">
       <i class="fas fa-sign-out-alt"></i> Sair
     </button>
   </div>
-</div>
+</header>
 
-<div class="admin-content">
+<!-- ── Conteúdo ───────────────────────────────────────────── -->
+<div class="sa-content">
+
   <!-- Stats -->
-  <div class="stats-row" id="statsRow">
-    <div class="stat-card"><div class="stat-num" id="stTotal">-</div><div class="stat-label">Empresas Total</div></div>
-    <div class="stat-card"><div class="stat-num" id="stActive" style="color:#16a34a">-</div><div class="stat-label">Ativas</div></div>
-    <div class="stat-card"><div class="stat-num" id="stPastDue" style="color:#d97706">-</div><div class="stat-label">Em Atraso</div></div>
-    <div class="stat-card"><div class="stat-num" id="stSuspended" style="color:#dc2626">-</div><div class="stat-label">Suspensas</div></div>
-    <div class="stat-card"><div class="stat-num" id="stUsuarios">-</div><div class="stat-label">Total de Usuários</div></div>
+  <div class="stats-grid" id="statsRow">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#dbeafe"><i class="fas fa-building" style="color:#3b82f6"></i></div>
+      <div class="stat-num" id="stTotal">-</div>
+      <div class="stat-label">Empresas Total</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#dcfce7"><i class="fas fa-check-circle" style="color:#16a34a"></i></div>
+      <div class="stat-num" id="stActive" style="color:#16a34a">-</div>
+      <div class="stat-label">Ativas</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#fef3c7"><i class="fas fa-clock" style="color:#d97706"></i></div>
+      <div class="stat-num" id="stPastDue" style="color:#d97706">-</div>
+      <div class="stat-label">Em Atraso</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#fee2e2"><i class="fas fa-ban" style="color:#dc2626"></i></div>
+      <div class="stat-num" id="stSuspended" style="color:#dc2626">-</div>
+      <div class="stat-label">Suspensas</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#f3e8ff"><i class="fas fa-users" style="color:#9333ea"></i></div>
+      <div class="stat-num" id="stUsuarios">-</div>
+      <div class="stat-label">Total Usuários</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#f0fdf4"><i class="fab fa-stripe-s" style="color:#16a34a"></i></div>
+      <div class="stat-num" id="stAtivas">-</div>
+      <div class="stat-label">Com Stripe Ativo</div>
+    </div>
   </div>
 
   <!-- Lista de empresas -->
-  <div class="card">
-    <div class="card-header">
-      <span class="card-title"><i class="fas fa-building" style="color:#3b82f6"></i> Empresas Cadastradas</span>
-    </div>
-    <div id="listaEmpresas"><div class="page-loader"><span class="spinner"></span></div></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+    <h2 style="font-size:1rem;font-weight:700;margin:0;color:#1e293b">
+      <i class="fas fa-building" style="color:#3b82f6;margin-right:8px"></i>Empresas Cadastradas
+    </h2>
+    <span id="empresaCount" style="font-size:.8rem;color:#64748b"></span>
+  </div>
+  <div id="listaEmpresas">
+    <div class="page-loader"><span class="spinner"></span></div>
   </div>
 </div>
 
-<!-- Modal nova/editar empresa -->
+<!-- ── Modal nova/editar empresa ──────────────────────────── -->
 <div class="modal-overlay" id="modalEmpresa">
-  <div class="modal" style="max-width:480px">
+  <div class="modal" style="max-width:500px">
     <div class="modal-header">
       <h3 class="modal-title" id="modalEmpresaTitulo"><i class="fas fa-building"></i> Nova Empresa</h3>
       <button class="modal-close" onclick="closeModal('modalEmpresa')"><i class="fas fa-times"></i></button>
@@ -123,7 +288,7 @@
   </div>
 </div>
 
-<!-- Modal usuários da empresa -->
+<!-- ── Modal usuários da empresa ──────────────────────────── -->
 <div class="modal-overlay" id="modalUsuarios">
   <div class="modal" style="max-width:600px">
     <div class="modal-header">
@@ -140,7 +305,7 @@
   </div>
 </div>
 
-<!-- Modal criar usuário numa empresa -->
+<!-- ── Modal criar usuário ────────────────────────────────── -->
 <div class="modal-overlay" id="modalCriarUsuario">
   <div class="modal" style="max-width:440px">
     <div class="modal-header">
@@ -176,19 +341,60 @@
   </div>
 </div>
 
+<!-- ── Modal assinatura Stripe ────────────────────────────── -->
+<div class="modal-overlay" id="modalAssinatura">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modalAssinaturaTitulo"><i class="fab fa-stripe-s"></i> Assinatura Stripe</h3>
+      <button class="modal-close" onclick="closeModal('modalAssinatura')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="modalAssinaturaBody">
+      <div class="page-loader"><span class="spinner"></span></div>
+    </div>
+    <div class="modal-footer" id="modalAssinaturaFooter" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <button class="btn btn-outline" onclick="closeModal('modalAssinatura')">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <script src="js/api.js"></script>
 <script src="js/utils.js"></script>
 <script>
+// ── Constantes de plano ──────────────────────────────────────
+const PLAN_LIMITS = {
+  basico:       { employee_limit: 10,  label: 'Básico',       badgeCls: 'pb-basico' },
+  profissional: { employee_limit: 50,  label: 'Profissional', badgeCls: 'pb-profissional' },
+  enterprise:   { employee_limit: 999, label: 'Enterprise',   badgeCls: 'pb-enterprise' },
+};
+function planLimit(plano) { return (PLAN_LIMITS[plano] || PLAN_LIMITS.basico).employee_limit; }
+function planLabel(plano) { return (PLAN_LIMITS[plano] || PLAN_LIMITS.basico).label; }
+function planBadge(plano) { return (PLAN_LIMITS[plano] || PLAN_LIMITS.basico).badgeCls; }
+
+const STATUS_LABEL = { active: 'Ativa', past_due: 'Em Atraso', suspended: 'Suspensa' };
+const STRIPE_STATUS_LABEL = {
+  active: 'Ativo', trialing: 'Em teste', past_due: 'Em atraso',
+  canceled: 'Cancelado', suspended: 'Suspenso',
+};
+
+// ── Init ─────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   if (!Auth.getToken()) { window.location.href = '/index.html'; return; }
-
   const user = Auth.getUsuario();
-  if (!user || user.role !== 'super_admin') {
-    window.location.href = '/dashboard.html';
-    return;
+  if (!user || user.role !== 'super_admin') { window.location.href = '/dashboard.html'; return; }
+
+  document.getElementById('adminSubtitle').textContent = `${user.nome} · ${user.email}`;
+
+  // Feedback de checkout retornado do Stripe
+  const params = new URLSearchParams(location.search);
+  if (params.get('checkout') === 'success') {
+    toast('Pagamento iniciado! Aguardando confirmação via webhook…', 'success');
+    window.history.replaceState({}, '', '/admin.html');
+  }
+  if (params.get('checkout') === 'cancel') {
+    toast('Checkout cancelado.', 'warning');
+    window.history.replaceState({}, '', '/admin.html');
   }
 
-  document.getElementById('adminSubtitle').textContent = `Logado como ${user.nome} • ${user.email}`;
   await carregarEmpresas();
 });
 
@@ -204,48 +410,112 @@ async function carregarEmpresas() {
   }
 }
 
+// ── Stats ────────────────────────────────────────────────────
 function renderStats(list) {
   document.getElementById('stTotal').textContent     = list.length;
   document.getElementById('stActive').textContent    = list.filter(e => e.status === 'active').length;
   document.getElementById('stPastDue').textContent   = list.filter(e => e.status === 'past_due').length;
   document.getElementById('stSuspended').textContent = list.filter(e => e.status === 'suspended').length;
   document.getElementById('stUsuarios').textContent  = list.reduce((a, e) => a + (e.total_usuarios || 0), 0);
+  document.getElementById('stAtivas').textContent    = list.filter(e => e.stripe_subscription_id).length;
 }
 
-const statusLabel = { active: 'Ativa', past_due: 'Em Atraso', suspended: 'Suspensa' };
-
+// ── Renderiza cards de empresa ───────────────────────────────
 function renderEmpresas(list) {
   const el = document.getElementById('listaEmpresas');
+  document.getElementById('empresaCount').textContent = `${list.length} empresa${list.length !== 1 ? 's' : ''}`;
+
   if (!list.length) {
-    el.innerHTML = '<div class="table-empty">Nenhuma empresa cadastrada.</div>';
+    el.innerHTML = `<div class="empty-state">
+      <i class="fas fa-building"></i>
+      <p>Nenhuma empresa cadastrada.<br>Clique em "Nova Empresa" para começar.</p>
+    </div>`;
     return;
   }
-  el.innerHTML = `<div style="padding:12px 0">` + list.map(e => `
-    <div style="padding:14px 20px;border-bottom:1px solid var(--border)">
-      <div class="empresa-row">
-        <div class="empresa-info">
-          <div class="empresa-nome">${e.nome}</div>
-          <div class="empresa-meta">
-            ${e.cnpj ? `CNPJ: ${e.cnpj} &nbsp;·&nbsp;` : ''}
-            Plano: <strong>${e.plano}</strong> &nbsp;·&nbsp;
-            ${e.total_usuarios || 0} usuário(s) &nbsp;·&nbsp;
-            ${e.total_registros || 0} registros &nbsp;·&nbsp;
-            desde ${new Date(e.criado_em).toLocaleDateString('pt-BR')}
-          </div>
-        </div>
-        <span class="status-badge s-${e.status}">${statusLabel[e.status] || e.status}</span>
-        <div class="actions-group">
-          <button class="btn btn-xs btn-outline" onclick="abrirEdicao(${e.id})"><i class="fas fa-edit"></i></button>
-          ${e.status !== 'active'     ? `<button class="btn btn-xs btn-outline" style="color:#16a34a" onclick="mudarStatus(${e.id},'active')"><i class="fas fa-check"></i> Ativar</button>` : ''}
-          ${e.status !== 'past_due'   ? `<button class="btn btn-xs btn-outline" style="color:#d97706" onclick="mudarStatus(${e.id},'past_due')"><i class="fas fa-clock"></i> Atraso</button>` : ''}
-          ${e.status !== 'suspended'  ? `<button class="btn btn-xs btn-outline" style="color:#dc2626" onclick="mudarStatus(${e.id},'suspended')"><i class="fas fa-ban"></i> Suspender</button>` : ''}
-          <button class="btn btn-xs btn-outline" style="color:#6366f1" onclick="abrirUsuarios(${e.id},'${e.nome.replace(/'/g,"\\'")}')"><i class="fas fa-users"></i> Usuários</button>
-          ${e.id > 1 ? `<button class="btn btn-xs btn-danger" onclick="excluirEmpresa(${e.id},'${e.nome.replace(/'/g,"\\'")}')"><i class="fas fa-trash"></i></button>` : ''}
-        </div>
-      </div>
-    </div>`).join('') + '</div>';
+
+  el.innerHTML = `<div class="empresa-grid">${list.map(empCard).join('')}</div>`;
 }
 
+function empCard(e) {
+  const total = e.total_usuarios || 0;
+  const limit = planLimit(e.plano);
+  const pct   = total / (limit === 999 ? 9999 : limit);
+  const uCls  = pct >= 1 ? 'up-full' : pct >= .8 ? 'up-warn' : 'up-ok';
+  const uLbl  = `${total}/${limit === 999 ? '∞' : limit}`;
+  const since = new Date(e.criado_em).toLocaleDateString('pt-BR');
+  const hasSub = !!e.stripe_subscription_id;
+  const stripeStatusHtml = hasSub && e.stripe_status
+    ? `<span class="stripe-status ss-${e.stripe_status}" title="Status Stripe">${STRIPE_STATUS_LABEL[e.stripe_status] || e.stripe_status}</span>`
+    : `<span style="font-size:.72rem;color:#94a3b8">Sem assinatura</span>`;
+
+  return `
+  <div class="emp-card">
+    <div class="emp-card-header">
+      <div>
+        <div class="emp-nome">${e.nome}</div>
+        <div class="emp-cnpj">${e.cnpj ? `CNPJ: ${e.cnpj}` : `Desde ${since}`}</div>
+      </div>
+      <span class="status-badge s-${e.status}">${STATUS_LABEL[e.status] || e.status}</span>
+    </div>
+
+    <div class="emp-card-body">
+      <div class="emp-meta-item">
+        <span class="emp-meta-label">Plano</span>
+        <span class="plan-badge ${planBadge(e.plano)}">${planLabel(e.plano)}</span>
+      </div>
+      <div class="emp-meta-item">
+        <span class="emp-meta-label">Usuários</span>
+        <span class="users-pill ${uCls}">${uLbl}</span>
+      </div>
+      <div class="emp-meta-item">
+        <span class="emp-meta-label">Stripe</span>
+        ${stripeStatusHtml}
+      </div>
+      <div class="emp-meta-item">
+        <span class="emp-meta-label">Registros</span>
+        <span class="emp-meta-val">${(e.total_registros || 0).toLocaleString('pt-BR')}</span>
+      </div>
+    </div>
+
+    <div class="emp-card-footer">
+      <button class="btn btn-action btn-outline" title="Editar empresa" onclick="abrirEdicao(${e.id})">
+        <i class="fas fa-edit"></i> Editar
+      </button>
+      <button class="btn btn-action btn-outline" title="Gerenciar usuários"
+        style="color:#6366f1;border-color:#c7d2fe"
+        onclick="abrirUsuarios(${e.id},'${e.nome.replace(/'/g,"\\'")}')">
+        <i class="fas fa-users"></i> Usuários
+      </button>
+      <button class="btn btn-action btn-outline" title="Assinatura Stripe"
+        style="color:#7c3aed;border-color:#ddd6fe"
+        onclick="abrirAssinatura(${e.id},'${e.nome.replace(/'/g,"\\'")}')">
+        <i class="fab fa-stripe-s"></i> Stripe
+      </button>
+
+      <div class="footer-spacer"></div>
+
+      ${e.status !== 'active'
+        ? `<button class="btn btn-xs btn-outline" style="color:#16a34a" title="Ativar empresa"
+             onclick="mudarStatus(${e.id},'active')"><i class="fas fa-check"></i></button>`
+        : ''}
+      ${e.status !== 'suspended'
+        ? `<button class="btn btn-xs btn-outline" style="color:#dc2626" title="Suspender empresa"
+             onclick="mudarStatus(${e.id},'suspended')"><i class="fas fa-ban"></i></button>`
+        : ''}
+      ${e.status !== 'past_due'
+        ? `<button class="btn btn-xs btn-outline" style="color:#d97706" title="Marcar em atraso"
+             onclick="mudarStatus(${e.id},'past_due')"><i class="fas fa-clock"></i></button>`
+        : ''}
+      ${e.id > 1
+        ? `<button class="btn btn-xs btn-danger" title="Excluir empresa"
+             onclick="excluirEmpresa(${e.id},'${e.nome.replace(/'/g,"\\'")}')">
+             <i class="fas fa-trash"></i></button>`
+        : ''}
+    </div>
+  </div>`;
+}
+
+// ── CRUD Empresa ─────────────────────────────────────────────
 async function mudarStatus(id, status) {
   try {
     await API.patch(`/empresas/${id}/status`, { status });
@@ -255,7 +525,7 @@ async function mudarStatus(id, status) {
 }
 
 async function excluirEmpresa(id, nome) {
-  const ok = await confirmDialog(`Excluir a empresa "<strong>${nome}</strong>" e todos os seus dados? Esta ação não pode ser desfeita.`);
+  const ok = await confirmDialog(`Excluir a empresa "<strong>${nome}</strong>" e todos os seus dados?<br>Esta ação não pode ser desfeita.`);
   if (!ok) return;
   try {
     await API.delete(`/empresas/${id}`);
@@ -265,12 +535,10 @@ async function excluirEmpresa(id, nome) {
 }
 
 function abrirNova() {
-  document.getElementById('empId').value       = '';
-  document.getElementById('empNome').value     = '';
-  document.getElementById('empCnpj').value     = '';
-  document.getElementById('empEmail').value    = '';
-  document.getElementById('empTelefone').value = '';
-  document.getElementById('empPlano').value    = 'basico';
+  ['empId','empNome','empCnpj','empEmail','empTelefone'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('empPlano').value = 'basico';
   document.getElementById('modalEmpresaTitulo').innerHTML = '<i class="fas fa-plus"></i> Nova Empresa';
   openModal('modalEmpresa');
 }
@@ -318,7 +586,7 @@ document.getElementById('btnLogout').addEventListener('click', async () => {
   window.location.href = '/index.html';
 });
 
-// ── Gestão de usuários por empresa ──────────────────────────
+// ── Gestão de usuários por empresa ───────────────────────────
 let _empresaAtualId = null;
 
 async function abrirUsuarios(empresaId, empresaNome) {
@@ -334,9 +602,9 @@ async function abrirUsuarios(empresaId, empresaNome) {
 async function recarregarUsuariosEmpresa() {
   try {
     const data = await API.get(`/empresas/${_empresaAtualId}/usuarios`);
-    const el = document.getElementById('listaUsuariosEmpresa');
+    const el   = document.getElementById('listaUsuariosEmpresa');
     if (!data.usuarios.length) {
-      el.innerHTML = '<div class="table-empty" style="padding:20px">Nenhum usuário cadastrado nesta empresa.</div>';
+      el.innerHTML = '<div class="table-empty" style="padding:20px">Nenhum usuário cadastrado.</div>';
       return;
     }
     const roleLabel = { company_admin: 'Admin', employee: 'Funcionário', super_admin: 'Super Admin' };
@@ -348,33 +616,34 @@ async function recarregarUsuariosEmpresa() {
         </div>
         <span class="role-badge role-${u.role}">${roleLabel[u.role] || u.role}</span>
         <span style="font-size:.75rem;color:${u.ativo ? '#16a34a' : '#dc2626'}">${u.ativo ? 'Ativo' : 'Inativo'}</span>
-        <button class="btn btn-xs btn-danger" onclick="excluirUsuarioEmpresa(${u.id},'${u.nome.replace(/'/g,"\\'")}')">
+        <button class="btn btn-xs btn-danger"
+          onclick="excluirUsuarioEmpresa(${u.id},'${u.nome.replace(/'/g,"\\'")}')">
           <i class="fas fa-trash"></i>
         </button>
       </div>`).join('');
-  } catch (err) {
+  } catch {
     document.getElementById('listaUsuariosEmpresa').innerHTML =
       '<div class="table-empty" style="color:#dc2626;padding:20px">Erro ao carregar usuários.</div>';
   }
 }
 
 async function excluirUsuarioEmpresa(uid, nome) {
-  const ok = await confirmDialog(`Excluir o usuário <strong>${nome}</strong>? Esta ação não pode ser desfeita.`);
+  const ok = await confirmDialog(`Excluir o usuário <strong>${nome}</strong>?`);
   if (!ok) return;
   try {
     await API.delete(`/empresas/${_empresaAtualId}/usuarios/${uid}`);
     toast('Usuário excluído.', 'success');
     await recarregarUsuariosEmpresa();
     await carregarEmpresas();
-  } catch (err) { toast(err.data?.erro || 'Erro ao excluir.', 'error'); }
+  } catch (err) { toast(err.data?.erro || 'Erro.', 'error'); }
 }
 
 document.getElementById('btnNovoUsuarioEmpresa').addEventListener('click', () => {
   document.getElementById('novoUserEmpresaId').value = _empresaAtualId;
-  document.getElementById('novoUserNome').value  = '';
-  document.getElementById('novoUserEmail').value = '';
-  document.getElementById('novoUserSenha').value = '';
-  document.getElementById('novoUserRole').value  = 'company_admin';
+  ['novoUserNome','novoUserEmail','novoUserSenha'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('novoUserRole').value = 'company_admin';
   openModal('modalCriarUsuario');
 });
 
@@ -394,12 +663,142 @@ document.getElementById('btnSalvarNovoUser').addEventListener('click', async () 
   try {
     await API.post(`/empresas/${empresaId}/usuarios`, body);
     closeModal('modalCriarUsuario');
-    toast('Usuário criado com sucesso!', 'success');
+    toast('Usuário criado!', 'success');
     await recarregarUsuariosEmpresa();
     await carregarEmpresas();
-  } catch (err) { toast(err.data?.erro || 'Erro ao criar usuário.', 'error'); }
+  } catch (err) { toast(err.data?.erro || 'Erro.', 'error'); }
   finally { btn.disabled = false; }
 });
+
+// ── Stripe ───────────────────────────────────────────────────
+let _stripeEmpresaId   = null;
+let _stripeEmpresaNome = null;
+
+const stripeStatusLabel = {
+  active: 'Ativa', trialing: 'Em teste', past_due: 'Em atraso',
+  canceled: 'Cancelada', suspended: 'Suspensa', incomplete_expired: 'Expirada',
+};
+
+async function abrirAssinatura(empresaId, empresaNome) {
+  _stripeEmpresaId   = empresaId;
+  _stripeEmpresaNome = empresaNome;
+  document.getElementById('modalAssinaturaTitulo').innerHTML =
+    `<i class="fab fa-stripe-s"></i> Stripe — ${empresaNome}`;
+  document.getElementById('modalAssinaturaBody').innerHTML =
+    '<div class="page-loader"><span class="spinner"></span></div>';
+  document.getElementById('modalAssinaturaFooter').innerHTML =
+    '<button class="btn btn-outline" onclick="closeModal(\'modalAssinatura\')">Fechar</button>';
+  openModal('modalAssinatura');
+  await recarregarInfoAssinatura();
+}
+
+async function recarregarInfoAssinatura() {
+  const body   = document.getElementById('modalAssinaturaBody');
+  const footer = document.getElementById('modalAssinaturaFooter');
+  try {
+    const data = await API.get(`/stripe/empresas/${_stripeEmpresaId}/info`);
+    const emp  = _empresas.find(e => e.id === _stripeEmpresaId);
+    const plano = data.plano || emp?.plano || '—';
+
+    if (!data.assinatura) {
+      body.innerHTML = `
+        <div class="modal-assinatura-body">
+          <p style="color:var(--text-muted);margin-bottom:16px">Esta empresa não possui assinatura no Stripe.</p>
+          <div style="background:#f8fafc;border-radius:10px;padding:14px">
+            <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:4px">Plano atual</div>
+            <span class="plan-badge ${planBadge(plano)}">${planLabel(plano)}</span>
+          </div>
+        </div>`;
+      footer.innerHTML = `
+        <button class="btn btn-outline" onclick="closeModal('modalAssinatura')">Fechar</button>
+        <button class="btn btn-primary" id="btnAssinar" onclick="assinarEmpresa()">
+          <i class="fab fa-stripe-s"></i> Criar assinatura
+        </button>`;
+      return;
+    }
+
+    const sub    = data;
+    const periodoFim = sub.current_period_end
+      ? new Date(sub.current_period_end * 1000).toLocaleDateString('pt-BR') : '—';
+    const ssCls  = `ss-${sub.stripe_status || 'suspended'}`;
+    const ssLbl  = stripeStatusLabel[sub.stripe_status] || sub.stripe_status || '—';
+
+    body.innerHTML = `
+      <div class="modal-assinatura-body">
+        <div class="info-row">
+          <span class="info-label">Status Stripe</span>
+          <span class="stripe-status ${ssCls}">${ssLbl}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Plano</span>
+          <span class="plan-badge ${planBadge(plano)}">${planLabel(plano)}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Próxima cobrança</span>
+          <strong>${periodoFim}</strong>
+        </div>
+        <div class="info-row">
+          <span class="info-label">ID da assinatura</span>
+          <code style="font-size:.72rem;color:var(--text-muted)">${sub.subscription_id}</code>
+        </div>
+        ${sub.cancel_at_period_end
+          ? `<div style="background:#fef3c7;border-radius:8px;padding:10px;font-size:.8rem;color:#d97706">
+               <i class="fas fa-exclamation-triangle"></i> Cancelamento agendado para o fim do período
+             </div>`
+          : ''}
+      </div>`;
+
+    const portalBtn = sub.portal_url
+      ? `<a href="${sub.portal_url}" target="_blank" class="btn btn-outline" style="color:#7c3aed">
+           <i class="fas fa-external-link-alt"></i> Portal Stripe
+         </a>`
+      : '';
+    footer.innerHTML = `
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${portalBtn}
+        <button class="btn btn-danger btn-outline" onclick="cancelarAssinaturaEmpresa()">
+          <i class="fas fa-times-circle"></i> Cancelar
+        </button>
+      </div>
+      <button class="btn btn-outline" onclick="closeModal('modalAssinatura')">Fechar</button>`;
+  } catch (err) {
+    const msg = err.data?.erro || 'Erro ao carregar assinatura.';
+    body.innerHTML = `<div style="color:#dc2626;padding:8px"><i class="fas fa-exclamation-circle"></i> ${msg}</div>`;
+    footer.innerHTML = '<button class="btn btn-outline" onclick="closeModal(\'modalAssinatura\')">Fechar</button>';
+  }
+}
+
+async function assinarEmpresa() {
+  const btn = document.getElementById('btnAssinar');
+  if (btn) btn.disabled = true;
+  try {
+    const data = await API.post(`/stripe/empresas/${_stripeEmpresaId}/assinar`, {});
+    if (data.checkout_url) {
+      toast('Redirecionando para o Stripe Checkout…', 'success');
+      window.location.href = data.checkout_url;
+    } else {
+      toast('Assinatura criada!', 'success');
+      await recarregarInfoAssinatura();
+      await carregarEmpresas();
+    }
+  } catch (err) {
+    toast(err.data?.erro || 'Erro ao criar assinatura.', 'error');
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function cancelarAssinaturaEmpresa() {
+  const ok = await confirmDialog(
+    `Cancelar a assinatura de <strong>${_stripeEmpresaNome}</strong>?<br>O acesso será suspenso imediatamente.`
+  );
+  if (!ok) return;
+  try {
+    await API.post(`/stripe/empresas/${_stripeEmpresaId}/cancelar`, {});
+    toast('Assinatura cancelada.', 'success');
+    await recarregarInfoAssinatura();
+    await carregarEmpresas();
+  } catch (err) { toast(err.data?.erro || 'Erro ao cancelar.', 'error'); }
+}
 </script>
 </body>
 </html>

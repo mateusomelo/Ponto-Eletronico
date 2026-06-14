@@ -1,9 +1,10 @@
 const router    = require('express').Router();
 const LogAcesso = require('../models/LogAcesso');
-const { authenticate } = require('../middlewares/auth');
-const { isAdmin }      = require('../middlewares/permission');
+const { authenticate }  = require('../middlewares/auth');
+const { isAdmin }       = require('../middlewares/permission');
+const { requirePlan }   = require('../middlewares/planGuard');
 
-router.use(authenticate, isAdmin);
+router.use(authenticate, isAdmin, requirePlan('enterprise'));
 
 router.get('/', async (req, res) => {
   try {
