@@ -6,11 +6,16 @@ const ctrl = require('../controllers/empresaController');
 router.use(authenticate);
 router.use(requireSuperAdmin);
 
-router.get('/',              ctrl.listar);
-router.get('/:id',           ctrl.obter);
-router.post('/',             ctrl.criar);
-router.put('/:id',           ctrl.editar);
-router.patch('/:id/status',  ctrl.alterarStatus);
-router.delete('/:id',        ctrl.excluir);
+router.get('/',                       ctrl.listar);
+router.get('/:id',                    ctrl.obter);
+router.post('/',                      ctrl.criar);
+router.put('/:id',                    ctrl.editar);
+router.patch('/:id/status',           ctrl.alterarStatus);
+router.delete('/:id',                 ctrl.excluir);
+
+// Gestão de usuários por empresa
+router.get('/:id/usuarios',           ctrl.listarUsuarios);
+router.post('/:id/usuarios',          ctrl.criarUsuario);
+router.delete('/:id/usuarios/:uid',   ctrl.excluirUsuario);
 
 module.exports = router;

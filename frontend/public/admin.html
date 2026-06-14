@@ -34,6 +34,14 @@
     .empresa-meta { font-size: .78rem; color: var(--text-muted); margin-top: 2px; }
     .btn-xs { padding: 4px 10px; font-size: .75rem; }
     .actions-group { display: flex; gap: 6px; flex-wrap: wrap; }
+    .user-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .user-row:last-child { border-bottom: none; }
+    .user-info { flex: 1; min-width: 0; }
+    .user-nome { font-weight: 600; font-size: .88rem; }
+    .user-meta { font-size: .75rem; color: var(--text-muted); margin-top: 2px; }
+    .role-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 12px; font-size: .7rem; font-weight: 600; }
+    .role-company_admin { background: #dbeafe; color: #1d4ed8; }
+    .role-employee      { background: #f3f4f6; color: #374151; }
   </style>
 </head>
 <body style="background:#f1f5f9;min-height:100vh">
@@ -115,6 +123,59 @@
   </div>
 </div>
 
+<!-- Modal usuários da empresa -->
+<div class="modal-overlay" id="modalUsuarios">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modalUsuariosTitulo"><i class="fas fa-users"></i> Usuários</h3>
+      <button class="modal-close" onclick="closeModal('modalUsuarios')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" style="max-height:60vh;overflow-y:auto">
+      <div id="listaUsuariosEmpresa"><div class="page-loader"><span class="spinner"></span></div></div>
+    </div>
+    <div class="modal-footer" style="justify-content:space-between">
+      <button class="btn btn-primary" id="btnNovoUsuarioEmpresa"><i class="fas fa-plus"></i> Novo Usuário</button>
+      <button class="btn btn-outline" onclick="closeModal('modalUsuarios')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal criar usuário numa empresa -->
+<div class="modal-overlay" id="modalCriarUsuario">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fas fa-user-plus"></i> Novo Usuário</h3>
+      <button class="modal-close" onclick="closeModal('modalCriarUsuario')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="novoUserEmpresaId" />
+      <div class="form-group">
+        <label class="form-label">Nome *</label>
+        <input type="text" class="form-control" id="novoUserNome" placeholder="Nome completo" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">E-mail *</label>
+        <input type="email" class="form-control" id="novoUserEmail" placeholder="email@empresa.com" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Senha *</label>
+        <input type="password" class="form-control" id="novoUserSenha" placeholder="Mínimo 8 caracteres" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Perfil</label>
+        <select class="form-control" id="novoUserRole">
+          <option value="company_admin">Administrador da empresa</option>
+          <option value="employee">Funcionário</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalCriarUsuario')">Cancelar</button>
+      <button class="btn btn-primary" id="btnSalvarNovoUser"><i class="fas fa-save"></i> Criar</button>
+    </div>
+  </div>
+</div>
+
 <script src="js/api.js"></script>
 <script src="js/utils.js"></script>
 <script>
@@ -178,6 +239,7 @@ function renderEmpresas(list) {
           ${e.status !== 'active'     ? `<button class="btn btn-xs btn-outline" style="color:#16a34a" onclick="mudarStatus(${e.id},'active')"><i class="fas fa-check"></i> Ativar</button>` : ''}
           ${e.status !== 'past_due'   ? `<button class="btn btn-xs btn-outline" style="color:#d97706" onclick="mudarStatus(${e.id},'past_due')"><i class="fas fa-clock"></i> Atraso</button>` : ''}
           ${e.status !== 'suspended'  ? `<button class="btn btn-xs btn-outline" style="color:#dc2626" onclick="mudarStatus(${e.id},'suspended')"><i class="fas fa-ban"></i> Suspender</button>` : ''}
+          <button class="btn btn-xs btn-outline" style="color:#6366f1" onclick="abrirUsuarios(${e.id},'${e.nome.replace(/'/g,"\\'")}')"><i class="fas fa-users"></i> Usuários</button>
           ${e.id > 1 ? `<button class="btn btn-xs btn-danger" onclick="excluirEmpresa(${e.id},'${e.nome.replace(/'/g,"\\'")}')"><i class="fas fa-trash"></i></button>` : ''}
         </div>
       </div>
@@ -254,6 +316,89 @@ document.getElementById('btnLogout').addEventListener('click', async () => {
   try { await API.post('/auth/logout'); } catch {}
   Auth.clearToken();
   window.location.href = '/index.html';
+});
+
+// ── Gestão de usuários por empresa ──────────────────────────
+let _empresaAtualId = null;
+
+async function abrirUsuarios(empresaId, empresaNome) {
+  _empresaAtualId = empresaId;
+  document.getElementById('modalUsuariosTitulo').innerHTML =
+    `<i class="fas fa-users"></i> Usuários — ${empresaNome}`;
+  document.getElementById('listaUsuariosEmpresa').innerHTML =
+    '<div class="page-loader"><span class="spinner"></span></div>';
+  openModal('modalUsuarios');
+  await recarregarUsuariosEmpresa();
+}
+
+async function recarregarUsuariosEmpresa() {
+  try {
+    const data = await API.get(`/empresas/${_empresaAtualId}/usuarios`);
+    const el = document.getElementById('listaUsuariosEmpresa');
+    if (!data.usuarios.length) {
+      el.innerHTML = '<div class="table-empty" style="padding:20px">Nenhum usuário cadastrado nesta empresa.</div>';
+      return;
+    }
+    const roleLabel = { company_admin: 'Admin', employee: 'Funcionário', super_admin: 'Super Admin' };
+    el.innerHTML = data.usuarios.map(u => `
+      <div class="user-row">
+        <div class="user-info">
+          <div class="user-nome">${u.nome}</div>
+          <div class="user-meta">${u.email} &nbsp;·&nbsp; ${u.cargo_nome || '-'}</div>
+        </div>
+        <span class="role-badge role-${u.role}">${roleLabel[u.role] || u.role}</span>
+        <span style="font-size:.75rem;color:${u.ativo ? '#16a34a' : '#dc2626'}">${u.ativo ? 'Ativo' : 'Inativo'}</span>
+        <button class="btn btn-xs btn-danger" onclick="excluirUsuarioEmpresa(${u.id},'${u.nome.replace(/'/g,"\\'")}')">
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>`).join('');
+  } catch (err) {
+    document.getElementById('listaUsuariosEmpresa').innerHTML =
+      '<div class="table-empty" style="color:#dc2626;padding:20px">Erro ao carregar usuários.</div>';
+  }
+}
+
+async function excluirUsuarioEmpresa(uid, nome) {
+  const ok = await confirmDialog(`Excluir o usuário <strong>${nome}</strong>? Esta ação não pode ser desfeita.`);
+  if (!ok) return;
+  try {
+    await API.delete(`/empresas/${_empresaAtualId}/usuarios/${uid}`);
+    toast('Usuário excluído.', 'success');
+    await recarregarUsuariosEmpresa();
+    await carregarEmpresas();
+  } catch (err) { toast(err.data?.erro || 'Erro ao excluir.', 'error'); }
+}
+
+document.getElementById('btnNovoUsuarioEmpresa').addEventListener('click', () => {
+  document.getElementById('novoUserEmpresaId').value = _empresaAtualId;
+  document.getElementById('novoUserNome').value  = '';
+  document.getElementById('novoUserEmail').value = '';
+  document.getElementById('novoUserSenha').value = '';
+  document.getElementById('novoUserRole').value  = 'company_admin';
+  openModal('modalCriarUsuario');
+});
+
+document.getElementById('btnSalvarNovoUser').addEventListener('click', async () => {
+  const empresaId = document.getElementById('novoUserEmpresaId').value;
+  const body = {
+    nome:  document.getElementById('novoUserNome').value.trim(),
+    email: document.getElementById('novoUserEmail').value.trim(),
+    senha: document.getElementById('novoUserSenha').value,
+    role:  document.getElementById('novoUserRole').value,
+  };
+  if (!body.nome || !body.email || !body.senha) {
+    toast('Preencha todos os campos obrigatórios.', 'error'); return;
+  }
+  const btn = document.getElementById('btnSalvarNovoUser');
+  btn.disabled = true;
+  try {
+    await API.post(`/empresas/${empresaId}/usuarios`, body);
+    closeModal('modalCriarUsuario');
+    toast('Usuário criado com sucesso!', 'success');
+    await recarregarUsuariosEmpresa();
+    await carregarEmpresas();
+  } catch (err) { toast(err.data?.erro || 'Erro ao criar usuário.', 'error'); }
+  finally { btn.disabled = false; }
 });
 </script>
 </body>

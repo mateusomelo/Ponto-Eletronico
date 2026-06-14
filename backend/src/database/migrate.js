@@ -311,6 +311,26 @@ async function runIncrementalMigrations(conn) {
     await conn.query('UPDATE configuracoes SET company_id = 1 WHERE company_id IS NULL');
     console.log('[Migration] configuracoes: company_id adicionado');
   }
+
+  // ── Fase 3: UNIQUE constraints compostos (nome+company_id, chave+company_id) ──
+  // Tenta remover índices antigos (single-column) — ignora se já não existirem
+  try { await conn.query('ALTER TABLE cargos DROP INDEX uq_cargo_nome'); } catch {}
+  try { await conn.query('ALTER TABLE cargos DROP INDEX nome'); } catch {}
+  try { await conn.query('ALTER TABLE configuracoes DROP INDEX uq_config_chave'); } catch {}
+  try { await conn.query('ALTER TABLE configuracoes DROP INDEX chave'); } catch {}
+
+  // Adiciona índices compostos se ainda não existirem
+  const [crgIdx2] = await conn.query('SHOW INDEX FROM cargos');
+  if (!crgIdx2.some(i => i.Key_name === 'uq_cargo_nome_company')) {
+    await conn.query('ALTER TABLE cargos ADD UNIQUE KEY uq_cargo_nome_company (nome, company_id)');
+    console.log('[Migration] cargos: UNIQUE(nome, company_id) criado');
+  }
+
+  const [cfgIdx2] = await conn.query('SHOW INDEX FROM configuracoes');
+  if (!cfgIdx2.some(i => i.Key_name === 'uq_config_chave_company')) {
+    await conn.query('ALTER TABLE configuracoes ADD UNIQUE KEY uq_config_chave_company (chave, company_id)');
+    console.log('[Migration] configuracoes: UNIQUE(chave, company_id) criado');
+  }
 }
 
 // ── Entry point ──────────────────────────────────────────────
