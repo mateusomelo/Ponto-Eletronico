@@ -33,15 +33,63 @@
 <script>
 let cfgData = {};
 
+const FUSOS = [
+  // Brasil
+  ['America/Sao_Paulo',           '🇧🇷 Brasil — Brasília / São Paulo / Rio (UTC-3)'],
+  ['America/Belem',               '🇧🇷 Brasil — Belém / Fortaleza (UTC-3)'],
+  ['America/Fortaleza',           '🇧🇷 Brasil — Fortaleza (UTC-3)'],
+  ['America/Recife',              '🇧🇷 Brasil — Recife / Maceió (UTC-3)'],
+  ['America/Bahia',               '🇧🇷 Brasil — Salvador (UTC-3)'],
+  ['America/Manaus',              '🇧🇷 Brasil — Manaus (UTC-4)'],
+  ['America/Porto_Velho',         '🇧🇷 Brasil — Porto Velho (UTC-4)'],
+  ['America/Cuiaba',              '🇧🇷 Brasil — Cuiabá (UTC-4)'],
+  ['America/Campo_Grande',        '🇧🇷 Brasil — Campo Grande (UTC-4)'],
+  ['America/Boa_Vista',           '🇧🇷 Brasil — Boa Vista (UTC-4)'],
+  ['America/Rio_Branco',          '🇧🇷 Brasil — Rio Branco / Acre (UTC-5)'],
+  ['America/Noronha',             '🇧🇷 Brasil — Fernando de Noronha (UTC-2)'],
+  // América
+  ['America/Buenos_Aires',        'América — Buenos Aires (UTC-3)'],
+  ['America/Santiago',            'América — Santiago (UTC-4/-3)'],
+  ['America/Lima',                'América — Lima (UTC-5)'],
+  ['America/Bogota',              'América — Bogotá (UTC-5)'],
+  ['America/Caracas',             'América — Caracas (UTC-4)'],
+  ['America/Mexico_City',         'América — Cidade do México (UTC-6/-5)'],
+  ['America/New_York',            'América — Nova York (UTC-5/-4)'],
+  ['America/Chicago',             'América — Chicago (UTC-6/-5)'],
+  ['America/Denver',              'América — Denver (UTC-7/-6)'],
+  ['America/Los_Angeles',         'América — Los Angeles (UTC-8/-7)'],
+  ['America/Toronto',             'América — Toronto (UTC-5/-4)'],
+  ['America/Vancouver',           'América — Vancouver (UTC-8/-7)'],
+  // Europa / África
+  ['UTC',                         'UTC (UTC+0)'],
+  ['Europe/Lisbon',               'Europa — Lisboa (UTC+0/+1)'],
+  ['Europe/London',               'Europa — Londres (UTC+0/+1)'],
+  ['Europe/Paris',                'Europa — Paris (UTC+1/+2)'],
+  ['Europe/Berlin',               'Europa — Berlim (UTC+1/+2)'],
+  ['Europe/Madrid',               'Europa — Madrid (UTC+1/+2)'],
+  ['Europe/Rome',                 'Europa — Roma (UTC+1/+2)'],
+  ['Europe/Moscow',               'Europa — Moscou (UTC+3)'],
+  ['Africa/Luanda',               'África — Luanda / Angola (UTC+1)'],
+  // Ásia / Oceania
+  ['Asia/Dubai',                  'Ásia — Dubai (UTC+4)'],
+  ['Asia/Kolkata',                'Ásia — Nova Delhi (UTC+5:30)'],
+  ['Asia/Singapore',              'Ásia — Singapura (UTC+8)'],
+  ['Asia/Shanghai',               'Ásia — Xangai (UTC+8)'],
+  ['Asia/Tokyo',                  'Ásia — Tóquio (UTC+9)'],
+  ['Australia/Sydney',            'Oceania — Sydney (UTC+10/+11)'],
+  ['Pacific/Auckland',            'Oceania — Auckland (UTC+12/+13)'],
+];
+
 const labels = {
   empresa_nome:         { label: 'Nome da empresa',               tipo: 'text'   },
   empresa_cnpj:         { label: 'CNPJ',                          tipo: 'text'   },
-  jornada_horas_dia:    { label: 'Horas por dia',                 tipo: 'number' },
-  intervalo_minutos:    { label: 'Intervalo mínimo (minutos)',     tipo: 'number' },
-  fuso_horario:         { label: 'Fuso horário',                  tipo: 'text'   },
-  geolocalizacao:       { label: 'Exigir geolocalização',         tipo: 'select', opts: [['1','Sim'],['0','Não']] },
-  max_tentativas_login: { label: 'Máx. tentativas de login',      tipo: 'number' },
-  session_expira_horas: { label: 'Expiração da sessão (horas)',   tipo: 'number' },
+  fuso_horario:         { label: 'Fuso horário do sistema',       tipo: 'select', opts: FUSOS },
+  gps_obrigatorio:      { label: 'Exigir GPS no ponto',           tipo: 'select', opts: [['true','Sim'],['false','Não']] },
+  foto_obrigatoria_mobile: { label: 'Exigir foto (mobile)',       tipo: 'select', opts: [['true','Sim'],['false','Não']] },
+  horario_entrada:      { label: 'Horário padrão de entrada',      tipo: 'text'   },
+  horario_saida:        { label: 'Horário padrão de saída',        tipo: 'text'   },
+  tolerancia_minutos:   { label: 'Tolerância atraso (minutos)',   tipo: 'number' },
+  max_raio_metros:      { label: 'Raio máximo GPS (metros)',      tipo: 'number' },
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -50,7 +98,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (!Auth.hasPermission('sistema.configurar')) {
     document.querySelector('.page-content').innerHTML =
-      '<div class="alert alert-danger"><i class="fas fa-ban"></i> Você não possui permissão para acessar este recurso.</div>';
+      '<div class="card" style="text-align:center;padding:48px 24px">' +
+      '<i class="fas fa-ban" style="font-size:3rem;color:#ef4444;margin-bottom:16px;display:block"></i>' +
+      '<h2 style="color:#ef4444;margin-bottom:8px">Acesso Negado</h2>' +
+      '<p class="text-muted">Você não possui permissão para acessar esta área.<br>Esta seção é restrita a administradores.</p>' +
+      '<a href="dashboard.html" class="btn btn-primary" style="margin-top:20px"><i class="fas fa-home"></i> Voltar ao Dashboard</a>' +
+      '</div>';
     return;
   }
 

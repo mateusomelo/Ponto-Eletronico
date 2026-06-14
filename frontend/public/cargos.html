@@ -122,11 +122,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!Auth.requireAuth()) return;
   renderLayout('Cargos & Permissões');
 
-  if (window.innerWidth < 900) document.getElementById('mainGrid').style.gridTemplateColumns = '1fr';
-
   if (!Auth.isAdmin()) {
-    document.getElementById('btnNovoCargo').style.display = 'none';
+    document.querySelector('.page-content').innerHTML =
+      '<div class="card" style="text-align:center;padding:48px 24px">' +
+      '<i class="fas fa-ban" style="font-size:3rem;color:#ef4444;margin-bottom:16px;display:block"></i>' +
+      '<h2 style="color:#ef4444;margin-bottom:8px">Acesso Negado</h2>' +
+      '<p class="text-muted">Você não possui permissão para acessar esta área.<br>Esta seção é restrita a administradores.</p>' +
+      '<a href="dashboard.html" class="btn btn-primary" style="margin-top:20px"><i class="fas fa-home"></i> Voltar ao Dashboard</a>' +
+      '</div>';
+    return;
   }
+
+  if (window.innerWidth < 900) document.getElementById('mainGrid').style.gridTemplateColumns = '1fr';
 
   [allPerms, cargos] = await Promise.all([
     API.get('/cargos/permissoes').catch(() => []),

@@ -2,6 +2,19 @@ const { pool } = require('../database/connection');
 const PDFDocument = require('pdfkit');
 const xl = require('excel4node');
 
+async function getTimezone() {
+  try {
+    const [rows] = await pool.query("SELECT valor FROM configuracoes WHERE chave = 'fuso_horario' LIMIT 1");
+    return rows[0]?.valor || 'America/Sao_Paulo';
+  } catch {
+    return 'America/Sao_Paulo';
+  }
+}
+
+function fmtDataHora(dt, tz) {
+  return new Date(dt).toLocaleString('pt-BR', { timeZone: tz });
+}
+
 function cabecalhoPDF(doc, titulo, empresa = 'Empresa S.A.') {
   doc.fontSize(18).fillColor('#1e3a5f').text(empresa, { align: 'center' });
   doc.fontSize(13).fillColor('#333').text(titulo, { align: 'center' });
@@ -57,7 +70,7 @@ async function dados(req, res) {
 // GET /api/relatorios/pdf
 async function exportarPDF(req, res) {
   try {
-    const rows = await buscarRegistros(req);
+    const [rows, tz] = await Promise.all([buscarRegistros(req), getTimezone()]);
 
     const doc = new PDFDocument({ margin: 40, size: 'A4', layout: 'landscape' });
     res.setHeader('Content-Type', 'application/pdf');
@@ -86,7 +99,7 @@ async function exportarPDF(req, res) {
       doc.rect(40, yRow, pageW - 40, 14).fill(bg);
       doc.fillColor('#333').fontSize(8);
       const vals = [
-        new Date(r.data_hora).toLocaleString('pt-BR'),
+        fmtDataHora(r.data_hora, tz),
         r.usuario_nome    || '-',
         r.cargo_nome      || '-',
         r.tipo.charAt(0).toUpperCase() + r.tipo.slice(1),
@@ -114,7 +127,7 @@ async function exportarPDF(req, res) {
 // GET /api/relatorios/excel
 async function exportarExcel(req, res) {
   try {
-    const rows = await buscarRegistros(req);
+    const [rows, tz] = await Promise.all([buscarRegistros(req), getTimezone()]);
 
     const wb = new xl.Workbook();
     const ws = wb.addWorksheet('Registros de Ponto');
@@ -136,7 +149,7 @@ async function exportarExcel(req, res) {
       const row   = idx + 2;
       const style = idx % 2 === 0 ? altStyle : {};
       ws.cell(row,  1).number(r.id).style(style);
-      ws.cell(row,  2).string(new Date(r.data_hora).toLocaleString('pt-BR')).style(style);
+      ws.cell(row,  2).string(fmtDataHora(r.data_hora, tz)).style(style);
       ws.cell(row,  3).string(r.usuario_nome    || '').style(style);
       ws.cell(row,  4).string(r.usuario_email   || '').style(style);
       ws.cell(row,  5).string(r.usuario_cpf     || '').style(style);

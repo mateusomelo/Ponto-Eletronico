@@ -95,11 +95,14 @@ async function seedPermissoes(conn) {
     `, [nome]);
   }
 
-  // Funcionário (cargo_id=3): apenas registrar ponto
-  await conn.query(`
-    INSERT IGNORE INTO cargo_permissoes (cargo_id, permissao_id)
-      SELECT 3, id FROM permissoes WHERE nome = 'ponto.registrar'
-  `);
+  // Funcionário (cargo_id=3): registrar e visualizar próprio histórico
+  const permsFuncionario = ['ponto.registrar', 'ponto.visualizar'];
+  for (const nome of permsFuncionario) {
+    await conn.query(`
+      INSERT IGNORE INTO cargo_permissoes (cargo_id, permissao_id)
+        SELECT 3, id FROM permissoes WHERE nome = ?
+    `, [nome]);
+  }
 
   console.log('[Migration] Permissões padrão verificadas.');
 }
@@ -115,6 +118,7 @@ async function seedConfiguracoes(conn) {
     ['gps_obrigatorio',       'true',          'boolean', 'Exigir GPS no registro de ponto'],
     ['foto_obrigatoria_mobile','true',         'boolean', 'Exigir foto em dispositivos móveis'],
     ['max_raio_metros',       '500',           'number',  'Raio máximo em metros para registro'],
+    ['fuso_horario',          'America/Sao_Paulo', 'string', 'Fuso horário do sistema (ex: America/Sao_Paulo)'],
   ];
   for (const [chave, valor, tipo, descricao] of configs) {
     await conn.query(
