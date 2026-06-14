@@ -1,0 +1,6 @@
+# Garante que scripts shell mantenham finais de linha LF no Linux (Netlify/Railway)
+*.sh text eol=lf
+Procfile text eol=lf
+
+# Demais arquivos de texto: Git normaliza automaticamente
+* text=auto
