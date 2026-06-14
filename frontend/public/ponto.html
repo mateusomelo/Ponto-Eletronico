@@ -65,29 +65,32 @@
 
     /* ── Painel de permissões ───────────────────────── */
     .perms-panel {
-      background: #f8faff;
-      border: 1px solid var(--border);
+      background: #fef2f2;
+      border: 1px solid #fecaca;
       border-radius: 10px;
       padding: 10px 14px;
       margin-bottom: 20px;
-      display: flex;
+      display: none;         /* oculto por padrão; JS mostra só quando há erro */
       flex-direction: column;
       gap: 7px;
       text-align: left;
     }
 
-    .perm-item {
-      display: flex;
+    /* Mensagens de status GPS/câmera: só exibe erros que bloqueiam o registro */
+    .perm-item      { display: none !important; }
+    .perm-item.perm-err {
+      display: flex !important;
       align-items: center;
       gap: 8px;
       font-size: .78rem;
       font-weight: 500;
+      color: #dc2626;
+      padding: 8px 12px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
     }
-    .perm-item i   { width: 14px; text-align: center; flex-shrink: 0; }
-    .perm-ok       { color: #16a34a; }
-    .perm-err      { color: #dc2626; }
-    .perm-warn     { color: #d97706; }
-    .perm-info     { color: var(--text-muted); }
+    .perm-item.perm-err i { width: 14px; text-align: center; flex-shrink: 0; }
 
     /* ── Botões de ponto ────────────────────────────── */
     .ponto-btns { display: flex; gap: 14px; justify-content: center; margin-bottom: 20px; }
@@ -384,6 +387,11 @@ function setPerm(id, tipo, texto, icone) {
   if (!el) return;
   el.className = `perm-item perm-${tipo}`;
   el.innerHTML = `<i class="${icone}"></i><span>${texto}</span>`;
+  // Mostra o painel de avisos apenas quando há erro bloqueante
+  if (tipo === 'err') {
+    const panel = document.querySelector('.perms-panel');
+    if (panel) panel.style.display = 'flex';
+  }
 }
 
 // ── Inicializar permissões ────────────────────────────────
