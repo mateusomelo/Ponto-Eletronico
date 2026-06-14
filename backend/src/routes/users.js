@@ -1,14 +1,15 @@
 const router = require('express').Router();
 const ctrl   = require('../controllers/userController');
-const { authenticate }      = require('../middlewares/auth');
-const { authorize }         = require('../middlewares/permission');
-const { avatarUpload }      = require('../middlewares/upload');
+const { authenticate }       = require('../middlewares/auth');
+const { authorize }          = require('../middlewares/permission');
+const { avatarUpload }       = require('../middlewares/upload');
+const { checkEmployeeLimit } = require('../middlewares/planGuard');
 
 router.use(authenticate);
 
 router.get ('/',              authorize('usuarios.visualizar'), ctrl.listar);
 router.get ('/:id',           authorize('usuarios.visualizar'), ctrl.obter);
-router.post('/',              authorize('usuarios.criar'),      ctrl.criar);
+router.post('/',              authorize('usuarios.criar'), checkEmployeeLimit, ctrl.criar);
 router.put ('/:id',           authorize('usuarios.editar'),     ctrl.editar);
 router.delete('/:id',         authorize('usuarios.excluir'),    ctrl.excluir);
 router.post('/:id/bloquear',  authorize('usuarios.editar'),     ctrl.bloquear);

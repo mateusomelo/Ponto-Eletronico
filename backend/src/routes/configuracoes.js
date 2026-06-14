@@ -7,7 +7,12 @@ router.use(authenticate);
 
 router.get('/', authorize('sistema.configurar'), async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT chave, valor, descricao FROM configuracoes ORDER BY chave');
+    const cid = req.user.company_id;
+    const cidFilter = cid ? ' WHERE company_id = ?' : '';
+    const cidParam  = cid ? [cid] : [];
+    const [rows] = await pool.query(
+      `SELECT chave, valor, descricao FROM configuracoes${cidFilter} ORDER BY chave`, cidParam
+    );
     const cfg = {};
     rows.forEach(r => { cfg[r.chave] = { valor: r.valor, descricao: r.descricao }; });
     return res.json(cfg);
@@ -22,10 +27,12 @@ router.put('/', authorize('sistema.configurar'), async (req, res) => {
     return res.status(400).json({ erro: 'Body inválido.' });
   }
   try {
+    const cid = req.user.company_id;
+    const cidFilter = cid ? ' AND company_id = ?' : '';
     for (const [chave, valor] of Object.entries(updates)) {
+      const params = cid ? [String(valor), chave, cid] : [String(valor), chave];
       await pool.query(
-        'UPDATE configuracoes SET valor = ? WHERE chave = ?',
-        [String(valor), chave]
+        `UPDATE configuracoes SET valor = ? WHERE chave = ?${cidFilter}`, params
       );
     }
     return res.json({ mensagem: 'Configurações salvas.' });

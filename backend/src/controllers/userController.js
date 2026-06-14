@@ -10,9 +10,11 @@ async function listar(req, res) {
   try {
     const { busca, cargo_id, ativo, pagina = 1, por_pagina = 20 } = req.query;
     const offset = (parseInt(pagina) - 1) * parseInt(por_pagina);
+    const cid    = req.user.company_id;
     const params = [];
     let where = 'WHERE 1=1';
 
+    if (cid)    { where += ' AND u.company_id = ?'; params.push(cid); }
     if (busca) {
       where += ' AND (u.nome LIKE ? OR u.email LIKE ? OR u.cpf LIKE ?)';
       params.push(`%${busca}%`, `%${busca}%`, `%${busca}%`);
@@ -46,14 +48,17 @@ async function listar(req, res) {
 // GET /api/usuarios/:id
 async function obter(req, res) {
   try {
+    const cid = req.user.company_id;
+    const extraWhere = cid ? ' AND u.company_id = ?' : '';
+    const extraParam = cid ? [req.params.id, cid] : [req.params.id];
     const [rows] = await pool.query(
       `SELECT u.id, u.nome, u.email, u.cpf, u.telefone, u.foto,
               u.salario_mensal, u.carga_horaria_semanal,
               u.cargo_id, u.ativo, u.bloqueado, u.ultimo_acesso, u.created_at, u.updated_at,
               c.nome AS cargo_nome, c.nivel AS cargo_nivel
        FROM usuarios u JOIN cargos c ON c.id = u.cargo_id
-       WHERE u.id = ?`,
-      [req.params.id]
+       WHERE u.id = ?${extraWhere}`,
+      extraParam
     );
     if (!rows.length) return res.status(404).json({ erro: 'Usuário não encontrado.' });
     return res.json(rows[0]);
@@ -87,14 +92,16 @@ async function criar(req, res) {
     }
 
     const hash = await bcrypt.hash(senha, parseInt(process.env.BCRYPT_ROUNDS || '12'));
+    const novoCid = req.user.company_id || null;
 
     const [result] = await pool.query(
-      `INSERT INTO usuarios (nome, email, cpf, telefone, senha_hash, cargo_id, salario_mensal, carga_horaria_semanal)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO usuarios (nome, email, cpf, telefone, senha_hash, cargo_id, salario_mensal, carga_horaria_semanal, company_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         nome.trim(), email.toLowerCase().trim(), cpf, telefone || null, hash, cargo_id,
         salario_mensal ? parseFloat(salario_mensal) : null,
         carga_horaria_semanal ? parseFloat(carga_horaria_semanal) : 40,
+        novoCid,
       ]
     );
 
@@ -116,11 +123,14 @@ async function criar(req, res) {
 // PUT /api/usuarios/:id
 async function editar(req, res) {
   const { nome, email, cpf, telefone, cargo_id, ativo, salario_mensal, carga_horaria_semanal } = req.body;
-  const id = req.params.id;
+  const id  = req.params.id;
+  const cid = req.user.company_id;
+  const cidFilter = cid ? ' AND company_id = ?' : '';
+  const cidParam  = cid ? [id, cid] : [id];
 
   try {
     const [atual] = await pool.query(
-      'SELECT id, nome, email, cpf, cargo_id, ativo FROM usuarios WHERE id = ?', [id]
+      `SELECT id, nome, email, cpf, cargo_id, ativo FROM usuarios WHERE id = ?${cidFilter}`, cidParam
     );
     if (!atual.length) return res.status(404).json({ erro: 'Usuário não encontrado.' });
 
@@ -212,12 +222,15 @@ async function uploadFoto(req, res) {
 
 // DELETE /api/usuarios/:id
 async function excluir(req, res) {
-  const id = req.params.id;
+  const id  = req.params.id;
+  const cid = req.user.company_id;
   if (parseInt(id) === req.user.id) {
     return res.status(400).json({ erro: 'Não é possível excluir o próprio usuário.' });
   }
   try {
-    const [rows] = await pool.query('SELECT id, nome, email, foto FROM usuarios WHERE id = ?', [id]);
+    const cidFilter = cid ? ' AND company_id = ?' : '';
+    const cidParam  = cid ? [id, cid] : [id];
+    const [rows] = await pool.query(`SELECT id, nome, email, foto FROM usuarios WHERE id = ?${cidFilter}`, cidParam);
     if (!rows.length) return res.status(404).json({ erro: 'Usuário não encontrado.' });
 
     if (rows[0].foto) {
@@ -247,11 +260,16 @@ async function excluir(req, res) {
 
 // POST /api/usuarios/:id/bloquear
 async function bloquear(req, res) {
-  const id = req.params.id;
+  const id  = req.params.id;
+  const cid = req.user.company_id;
   if (parseInt(id) === req.user.id) {
     return res.status(400).json({ erro: 'Não é possível bloquear o próprio usuário.' });
   }
   try {
+    const cidFilter = cid ? ' AND company_id = ?' : '';
+    const cidParam  = cid ? [id, cid] : [id];
+    const [chk] = await pool.query(`SELECT id FROM usuarios WHERE id = ?${cidFilter}`, cidParam);
+    if (!chk.length) return res.status(404).json({ erro: 'Usuário não encontrado.' });
     await pool.query('UPDATE usuarios SET bloqueado = NOT bloqueado WHERE id = ?', [id]);
     const [rows] = await pool.query('SELECT bloqueado FROM usuarios WHERE id = ?', [id]);
     const estado = rows[0].bloqueado ? 'bloqueado' : 'desbloqueado';
@@ -264,12 +282,17 @@ async function bloquear(req, res) {
 
 // POST /api/usuarios/:id/resetar-senha
 async function resetarSenha(req, res) {
-  const id = req.params.id;
+  const id  = req.params.id;
+  const cid = req.user.company_id;
   const { nova_senha } = req.body;
   if (!nova_senha || nova_senha.length < 8) {
     return res.status(400).json({ erro: 'Nova senha deve ter no mínimo 8 caracteres.' });
   }
   try {
+    const cidFilter = cid ? ' AND company_id = ?' : '';
+    const cidParam  = cid ? [id, cid] : [id];
+    const [chk] = await pool.query(`SELECT id FROM usuarios WHERE id = ?${cidFilter}`, cidParam);
+    if (!chk.length) return res.status(404).json({ erro: 'Usuário não encontrado.' });
     const hash = await bcrypt.hash(nova_senha, parseInt(process.env.BCRYPT_ROUNDS || '12'));
     await pool.query('UPDATE usuarios SET senha_hash = ? WHERE id = ?', [hash, id]);
     await LogAcesso.registrar({ usuario_id: req.user.id, acao: 'senha.resetada', descricao: `Senha resetada para id=${id}`, ip: getClientIp(req) });

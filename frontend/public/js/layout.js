@@ -53,6 +53,10 @@ function renderLayout(pageTitle) {
       </a>
 
       <div class="nav-group-label" data-admin>Sistema</div>
+      <a class="nav-item" href="pagamentos.html" data-perm="pagamentos.visualizar">
+        <i class="fas fa-credit-card nav-icon"></i>
+        <span class="nav-label">Pagamentos</span>
+      </a>
       <a class="nav-item" href="logs.html" data-admin>
         <i class="fas fa-shield-alt nav-icon"></i>
         <span class="nav-label">Logs de Auditoria</span>
@@ -102,6 +106,43 @@ function renderLayout(pageTitle) {
 
   document.getElementById('sidebarMount').innerHTML  = sidebar;
   document.getElementById('topbarMount').innerHTML   = topbar;
+
+  // Banner de fatura em atraso — visível para usuários de empresa com pagamento pendente
+  (function injetarBannerPastDue() {
+    const _u = Auth.getUsuario();
+    if (!_u || _u.role === 'super_admin') return;
+
+    function _mostrarBanner(fatura) {
+      if (document.getElementById('pastDueBanner')) return;
+      const banner = document.createElement('div');
+      banner.id = 'pastDueBanner';
+      banner.style.cssText = 'background:#fef3c7;border-bottom:2px solid #fbbf24;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:.875rem;position:relative;z-index:5;';
+      const hasPagPerm = Auth.hasPermission && Auth.hasPermission('pagamentos.visualizar');
+      const linkPagar  = fatura?.hosted_invoice_url
+        ? `<a href="${fatura.hosted_invoice_url}" target="_blank" class="btn btn-outline" style="color:#d97706;border-color:#fbbf24;white-space:nowrap;font-size:.8rem;padding:4px 12px;flex-shrink:0"><i class="fas fa-credit-card"></i> Pagar boleto/cartão</a>`
+        : hasPagPerm
+          ? `<a href="pagamentos.html" class="btn btn-outline" style="color:#d97706;border-color:#fbbf24;white-space:nowrap;font-size:.8rem;padding:4px 12px;flex-shrink:0"><i class="fas fa-file-invoice-dollar"></i> Ver fatura</a>`
+          : '<span style="color:#92400e;font-size:.8rem">Contate o administrador da conta.</span>';
+      banner.innerHTML = `
+        <span>
+          <i class="fas fa-exclamation-triangle" style="color:#d97706;margin-right:8px"></i>
+          <strong>Fatura em atraso:</strong> Sua assinatura está com pagamento pendente. Regularize para evitar suspensão do acesso.
+        </span>
+        ${linkPagar}`;
+      const topbarEl = document.getElementById('topbarMount');
+      if (topbarEl && topbarEl.parentNode) {
+        topbarEl.parentNode.insertBefore(banner, topbarEl.nextSibling);
+      }
+    }
+
+    // Exibe imediatamente se o status em cache já indica atraso
+    if (_u.company_status === 'past_due') _mostrarBanner(null);
+
+    // Verifica em tempo real (silencioso — não bloqueia o render)
+    API.get('/stripe/alerta-fatura').then(data => {
+      if (data?.fatura) _mostrarBanner(data.fatura);
+    }).catch(() => {});
+  })();
 
   // Injeta modal de alterar senha (único no DOM)
   if (!document.getElementById('modalAlterarSenha')) {

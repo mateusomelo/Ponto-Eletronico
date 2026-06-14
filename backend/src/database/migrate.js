@@ -71,6 +71,8 @@ async function seedCargos(conn) {
       [id, nome, descricao, nivel]
     );
   }
+  // Garante company_id nos cargos padrão (após Fase 2 adicionar a coluna)
+  await conn.query(`UPDATE cargos SET company_id = 1 WHERE company_id IS NULL AND id IN (1,2,3)`);
   console.log('[Migration] Cargos padrão verificados.');
 }
 
@@ -102,6 +104,8 @@ async function seedPermissoes(conn) {
     ['fechamento.visualizar', 'Visualizar fechamentos de folha'],
     // Registros
     ['registros.detalhes',    'Ver detalhes sensíveis dos registros (IP, GPS, foto)'],
+    // Pagamentos
+    ['pagamentos.visualizar', 'Visualizar informações de assinatura e faturas da empresa'],
   ];
   for (const [nome, descricao] of permissoes) {
     await conn.query(
@@ -115,6 +119,18 @@ async function seedPermissoes(conn) {
     INSERT IGNORE INTO cargo_permissoes (cargo_id, permissao_id)
       SELECT 1, id FROM permissoes
   `);
+
+  // Backfill: garante pagamentos.visualizar para todos os cargos nivel <= 2
+  // (cobre empresas criadas antes dessa permissão existir)
+  const [[payPerm]] = await conn.query(
+    "SELECT id FROM permissoes WHERE nome = 'pagamentos.visualizar' LIMIT 1"
+  );
+  if (payPerm) {
+    await conn.query(`
+      INSERT IGNORE INTO cargo_permissoes (cargo_id, permissao_id)
+      SELECT c.id, ? FROM cargos c WHERE c.nivel <= 2
+    `, [payPerm.id]);
+  }
 
   // Supervisor (cargo_id=2): permissões operacionais
   const permsSuper = [
@@ -163,10 +179,18 @@ async function seedConfiguracoes(conn) {
   ];
   for (const [chave, valor, tipo, descricao] of configs) {
     await conn.query(
-      `INSERT IGNORE INTO configuracoes (chave, valor, tipo, descricao) VALUES (?, ?, ?, ?)`,
+      `INSERT IGNORE INTO configuracoes (chave, valor, tipo, descricao, company_id) VALUES (?, ?, ?, ?, 1)`,
       [chave, valor, tipo, descricao]
     );
   }
+  // Remove configs com company_id=NULL que já têm equivalente para company_id=1
+  await conn.query(`
+    DELETE c1 FROM configuracoes c1
+    INNER JOIN configuracoes c2 ON c1.chave = c2.chave AND c2.company_id = 1
+    WHERE c1.company_id IS NULL
+  `);
+  // Migra eventuais configs antigas sem company_id
+  await conn.query(`UPDATE configuracoes SET company_id = 1 WHERE company_id IS NULL`);
   console.log('[Migration] Configurações padrão verificadas.');
 }
 
@@ -292,6 +316,54 @@ async function runIncrementalMigrations(conn) {
     await conn.query(`ALTER TABLE configuracoes ADD COLUMN descricao TEXT NULL`);
     console.log('[Migration] configuracoes: coluna descricao adicionada');
   }
+
+  // ── Fase 2: company_id em cargos e configuracoes ──────────
+  const [crgCols] = await conn.query('SHOW COLUMNS FROM cargos');
+  const crgNames  = crgCols.map(c => c.Field);
+  if (!crgNames.includes('company_id')) {
+    await conn.query('ALTER TABLE cargos ADD COLUMN company_id INT UNSIGNED NULL AFTER id');
+    await conn.query('UPDATE cargos SET company_id = 1 WHERE company_id IS NULL');
+    console.log('[Migration] cargos: company_id adicionado');
+  }
+
+  if (!cNames.includes('company_id')) {
+    await conn.query('ALTER TABLE configuracoes ADD COLUMN company_id INT UNSIGNED NULL AFTER id');
+    await conn.query('UPDATE configuracoes SET company_id = 1 WHERE company_id IS NULL');
+    console.log('[Migration] configuracoes: company_id adicionado');
+  }
+
+  // ── Fase 4: campos Stripe na tabela empresas ─────────────
+  const [empCols] = await conn.query('SHOW COLUMNS FROM empresas');
+  const empNames  = empCols.map(c => c.Field);
+  const empAlter  = [];
+  if (!empNames.includes('stripe_customer_id'))     empAlter.push('ADD COLUMN stripe_customer_id     VARCHAR(100) NULL');
+  if (!empNames.includes('stripe_subscription_id')) empAlter.push('ADD COLUMN stripe_subscription_id VARCHAR(100) NULL');
+  if (!empNames.includes('stripe_status'))          empAlter.push("ADD COLUMN stripe_status          VARCHAR(50)  NULL COMMENT 'status direto do Stripe'");
+  if (empAlter.length) {
+    await conn.query(`ALTER TABLE empresas ${empAlter.join(', ')}`);
+    console.log('[Migration] empresas: campos Stripe adicionados');
+  }
+
+  // ── Fase 3: UNIQUE constraints compostos (nome+company_id, chave+company_id) ──
+  // Tenta remover índices antigos (single-column) — ignora se já não existirem
+  try { await conn.query('ALTER TABLE cargos DROP INDEX uq_cargo_nome'); } catch {}
+  try { await conn.query('ALTER TABLE cargos DROP INDEX nome'); } catch {}
+  try { await conn.query('ALTER TABLE configuracoes DROP INDEX uq_config_chave'); } catch {}
+  try { await conn.query('ALTER TABLE configuracoes DROP INDEX chave'); } catch {}
+
+  // Adiciona índices compostos se ainda não existirem
+  const [crgIdx2] = await conn.query('SHOW INDEX FROM cargos');
+  if (!crgIdx2.some(i => i.Key_name === 'uq_cargo_nome_company')) {
+    await conn.query('ALTER TABLE cargos ADD UNIQUE KEY uq_cargo_nome_company (nome, company_id)');
+    console.log('[Migration] cargos: UNIQUE(nome, company_id) criado');
+  }
+
+  const [cfgIdx2] = await conn.query('SHOW INDEX FROM configuracoes');
+  if (!cfgIdx2.some(i => i.Key_name === 'uq_config_chave_company')) {
+    await conn.query('ALTER TABLE configuracoes ADD UNIQUE KEY uq_config_chave_company (chave, company_id)');
+    console.log('[Migration] configuracoes: UNIQUE(chave, company_id) criado');
+  }
+
 }
 
 // ── Entry point ──────────────────────────────────────────────

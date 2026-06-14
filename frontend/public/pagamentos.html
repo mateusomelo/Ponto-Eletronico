@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pagamentos — Ponto Eletrônico</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <style>
+    .pay-hero {
+      background: linear-gradient(135deg, #1e3a5f 0%, #3b82f6 100%);
+      border-radius: 16px;
+      padding: 32px;
+      color: #fff;
+      margin-bottom: 24px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 600px) { .pay-hero { grid-template-columns: 1fr; } }
+    .pay-plan-name { font-size: 1.6rem; font-weight: 700; margin-bottom: 8px; }
+    .pay-status-pill {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 5px 14px; border-radius: 20px; font-size: .8rem; font-weight: 600; margin-bottom: 16px;
+    }
+    .ps-active    { background: rgba(34,197,94,.25); color: #86efac; }
+    .ps-trialing  { background: rgba(59,130,246,.25); color: #93c5fd; }
+    .ps-past_due  { background: rgba(251,191,36,.25); color: #fde68a; }
+    .ps-canceled, .ps-suspended { background: rgba(239,68,68,.25); color: #fca5a5; }
+    .pay-meta { font-size: .875rem; opacity: .85; line-height: 2; }
+    .pay-meta i { width: 20px; }
+    .plan-features { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 6px; }
+    .plan-features li { display: flex; align-items: center; gap: 8px; font-size: .875rem; }
+    .plan-features li i { color: #86efac; font-size: .75rem; }
+    .inv-table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+    .inv-table th {
+      text-align: left; padding: 10px 16px; border-bottom: 2px solid var(--border);
+      font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
+      color: var(--text-muted); background: #f8fafc;
+    }
+    .inv-table td { padding: 13px 16px; border-bottom: 1px solid var(--border); }
+    .inv-table tr:last-child td { border-bottom: none; }
+    .inv-table tr:hover td { background: #f8fafc; }
+    .inv-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 10px; border-radius: 12px; font-size: .75rem; font-weight: 600;
+    }
+    .ib-paid    { background: #dcfce7; color: #16a34a; }
+    .ib-open    { background: #fef3c7; color: #d97706; }
+    .ib-void    { background: #f3f4f6; color: #6b7280; }
+    .ib-uncollectible { background: #fee2e2; color: #dc2626; }
+  </style>
+</head>
+<body>
+<div id="sidebarMount"></div>
+<div class="main" id="main">
+  <div id="topbarMount"></div>
+  <div class="page-content">
+    <div id="payContent">
+      <div class="page-loader"><span class="spinner"></span></div>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/layout.js"></script>
+<script>
+const PLAN_INFO = {
+  basico:       { label: 'Básico',       icon: 'fas fa-cube',  cor: '#60a5fa',
+                  features: ['Até 10 funcionários','Registro de ponto com GPS','Histórico de ponto','1 administrador'] },
+  profissional: { label: 'Profissional', icon: 'fas fa-star',  cor: '#a78bfa',
+                  features: ['Até 50 funcionários','Tudo do Básico','Relatórios completos','Fechamento de folha','Exportação PDF/Excel','Notificações automáticas'] },
+  enterprise:   { label: 'Enterprise',   icon: 'fas fa-crown', cor: '#fbbf24',
+                  features: ['Funcionários ilimitados','Tudo do Profissional','Logs de auditoria','Múltiplas filiais','Suporte prioritário'] },
+};
+
+const STATUS_LABEL = {
+  active: 'Ativa', trialing: 'Em teste', past_due: 'Em atraso',
+  canceled: 'Cancelada', suspended: 'Suspensa', incomplete: 'Incompleta',
+};
+
+function fmtMoeda(centavos) {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(centavos / 100);
+}
+function fmtData(ts) {
+  return new Date(ts * 1000).toLocaleDateString('pt-BR');
+}
+function invLabel(s) {
+  return { paid: 'Paga', open: 'Em aberto', void: 'Cancelada', uncollectible: 'Irrecuperável', draft: 'Rascunho' }[s] || s;
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.requireAuth()) return;
+  renderLayout('Pagamentos');
+
+  const user = Auth.getUsuario();
+  if (user?.role === 'super_admin') { window.location.href = '/admin.html'; return; }
+
+  const el = document.getElementById('payContent');
+  try {
+    const data = await API.get('/stripe/minha-assinatura');
+    renderPagamentos(el, data);
+  } catch (err) {
+    el.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> ${err.data?.erro || 'Erro ao carregar dados de pagamento.'}</div>`;
+  }
+});
+
+function renderPagamentos(el, data) {
+  const info = PLAN_INFO[data.plano] || PLAN_INFO.basico;
+
+  if (!data.assinatura) {
+    el.innerHTML = `
+      <div style="max-width:560px;margin:0 auto">
+        <div class="card" style="text-align:center;padding:48px 32px">
+          <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#1e3a5f,#3b82f6);display:flex;align-items:center;justify-content:center;margin:0 auto 20px">
+            <i class="${info.icon}" style="font-size:1.8rem;color:#fff"></i>
+          </div>
+          <h2 style="margin-bottom:6px">Plano ${info.label}</h2>
+          <p style="color:var(--text-muted);margin-bottom:28px">Sua empresa ainda não possui uma assinatura ativa.<br>Entre em contato com o suporte para ativar.</p>
+          <ul class="plan-features" style="text-align:left;max-width:280px;margin:0 auto">
+            ${info.features.map(f => `<li><i class="fas fa-check"></i> ${f}</li>`).join('')}
+          </ul>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const sub    = data.assinatura;
+  const ssCls  = `ps-${sub.status}`;
+  const ssLbl  = STATUS_LABEL[sub.status] || sub.status;
+
+  // Alerta para faturas em aberto
+  const faturasAbertas = data.faturas.filter(f => f.status === 'open');
+  const totalAberto    = faturasAbertas.reduce((s, f) => s + f.amount_due, 0);
+  const alertaAberto   = faturasAbertas.length > 0 ? `
+    <div style="background:#fef3c7;border:2px solid #fbbf24;border-radius:12px;padding:20px 24px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+      <div style="flex:1;min-width:200px">
+        <div style="font-weight:700;color:#92400e;font-size:1rem;margin-bottom:4px">
+          <i class="fas fa-exclamation-triangle"></i>
+          Fatura${faturasAbertas.length > 1 ? 's' : ''} em aberto
+        </div>
+        <div style="color:#78350f;font-size:.875rem">
+          ${faturasAbertas.length} fatura${faturasAbertas.length > 1 ? 's' : ''} pendente${faturasAbertas.length > 1 ? 's' : ''}
+          totalizando <strong>${fmtMoeda(totalAberto)}</strong>.
+          Regularize antes que o acesso seja suspenso.
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+        ${faturasAbertas[0].hosted_invoice_url
+          ? `<a href="${faturasAbertas[0].hosted_invoice_url}" target="_blank"
+                class="btn btn-primary" style="background:#d97706;border-color:#d97706;white-space:nowrap">
+               <i class="fas fa-credit-card"></i> Pagar com cartão ou boleto
+             </a>`
+          : ''}
+        ${data.portal_url
+          ? `<a href="${data.portal_url}" target="_blank"
+                class="btn btn-outline" style="color:#d97706;border-color:#fbbf24;white-space:nowrap;font-size:.8rem">
+               <i class="fab fa-stripe-s"></i> Gerenciar no portal Stripe
+             </a>`
+          : ''}
+      </div>
+    </div>` : '';
+
+  const faturasHtml = !data.faturas.length
+    ? '<div class="table-empty" style="padding:24px">Nenhuma fatura encontrada.</div>'
+    : `<div style="overflow-x:auto"><table class="inv-table">
+        <thead><tr>
+          <th>Nº Fatura</th><th>Data</th><th>Valor</th><th>Status</th><th style="text-align:right">Ações</th>
+        </tr></thead>
+        <tbody>
+          ${data.faturas.map(inv => `
+            <tr>
+              <td style="font-weight:600;font-family:monospace">${inv.number || inv.id.slice(-12)}</td>
+              <td>${fmtData(inv.created)}</td>
+              <td>${fmtMoeda(inv.amount_due)}</td>
+              <td><span class="inv-badge ib-${inv.status}">${invLabel(inv.status)}</span></td>
+              <td style="text-align:right;white-space:nowrap">
+                ${inv.hosted_invoice_url ? `<a href="${inv.hosted_invoice_url}" target="_blank" class="btn btn-xs btn-outline"><i class="fas fa-external-link-alt"></i> Ver</a> ` : ''}
+                ${inv.invoice_pdf ? `<a href="${inv.invoice_pdf}" target="_blank" class="btn btn-xs btn-outline"><i class="fas fa-file-pdf"></i> PDF</a>` : ''}
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table></div>`;
+
+  el.innerHTML = alertaAberto + `
+    <div class="pay-hero">
+      <div>
+        <div style="font-size:.75rem;opacity:.6;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Sua assinatura</div>
+        <div class="pay-plan-name"><i class="${info.icon}" style="margin-right:10px"></i>${info.label}</div>
+        <div class="pay-status-pill ${ssCls}">
+          <span style="width:8px;height:8px;border-radius:50%;background:currentColor"></span>
+          ${ssLbl}
+        </div>
+        <div class="pay-meta">
+          ${sub.current_period_end  ? `<div><i class="fas fa-calendar-check"></i> Próxima cobrança: <strong>${fmtData(sub.current_period_end)}</strong></div>` : ''}
+          ${sub.current_period_start ? `<div><i class="fas fa-calendar-alt"></i> Período atual desde: ${fmtData(sub.current_period_start)}</div>` : ''}
+          <div><i class="fas fa-building"></i> Empresa: <strong>${data.empresa}</strong></div>
+          ${sub.cancel_at_period_end ? `<div style="color:#fde68a"><i class="fas fa-exclamation-triangle"></i> Cancelamento agendado para o fim do período</div>` : ''}
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end">
+        ${data.portal_url
+          ? `<a href="${data.portal_url}" target="_blank" class="btn btn-primary" style="white-space:nowrap">
+               <i class="fab fa-stripe-s"></i> Gerenciar assinatura
+             </a>
+             <p style="font-size:.75rem;opacity:.6;text-align:right;margin:0">Atualizar plano, cartão, histórico</p>`
+          : '<p style="font-size:.8rem;opacity:.6;text-align:right">Portal não configurado.<br>Entre em contato com o suporte.</p>'
+        }
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fas fa-file-invoice-dollar" style="color:#3b82f6"></i> Histórico de Faturas</span>
+      </div>
+      ${faturasHtml}
+    </div>`;
+}
+</script>
+</body>
+</html>

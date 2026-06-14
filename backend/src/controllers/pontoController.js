@@ -169,9 +169,11 @@ async function historico(req, res) {
     const uid    = (req.user.cargo_nivel >= 3) ? req.user.id : (usuario_id || null);
     const temDetalhes = req.user.cargo_nivel <= 2 || req.user.permissoes.includes('registros.detalhes');
 
+    const cid    = req.user.company_id;
     const params = [];
     let where = 'WHERE 1=1';
 
+    if (cid)         { where += ' AND u.company_id = ?'; params.push(cid); }
     if (uid)         { where += ' AND r.usuario_id = ?'; params.push(uid); }
     if (tipo)        { where += ' AND r.tipo = ?';       params.push(tipo); }
     if (data_inicio) { where += ' AND DATE(r.data_hora) >= ?'; params.push(data_inicio); }
