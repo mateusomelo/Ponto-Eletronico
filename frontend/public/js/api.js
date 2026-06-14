@@ -56,6 +56,20 @@ async function request(method, path, body = null, options = {}) {
       return;
     }
 
+    // Empresa suspensa → redireciona para página de bloqueio
+    if (res.status === 403) {
+      const ct2 = res.headers.get('content-type') || '';
+      if (ct2.includes('application/json')) {
+        const errData = await res.json();
+        if (errData.code === 'COMPANY_SUSPENDED') {
+          clearToken();
+          window.location.href = '/empresa-suspensa.html';
+          return;
+        }
+        throw { status: 403, data: errData };
+      }
+    }
+
     const ct = res.headers.get('content-type') || '';
     if (ct.includes('application/json')) {
       const data = await res.json();
@@ -117,5 +131,10 @@ function isSupervisor() {
   return user && user.cargo_nivel <= 2;
 }
 
+function isSuperAdmin() {
+  const user = getUsuario();
+  return user && user.role === 'super_admin';
+}
+
 window.API   = API;
-window.Auth  = { getToken, setToken, clearToken, setUsuario, getUsuario, requireAuth, hasPermission, isAdmin, isSupervisor };
+window.Auth  = { getToken, setToken, clearToken, setUsuario, getUsuario, requireAuth, hasPermission, isAdmin, isSupervisor, isSuperAdmin };

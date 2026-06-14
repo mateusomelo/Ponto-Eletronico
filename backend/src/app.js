@@ -80,6 +80,7 @@ app.use('/api/logs',          require('./routes/logs'));
 app.use('/api/configuracoes',  require('./routes/configuracoes'));
 app.use('/api/fechamento',    require('./routes/fechamento'));
 app.use('/api/notificacoes',  require('./routes/notificacoes'));
+app.use('/api/empresas',      require('./routes/empresas'));
 
 // ── Health check ─────────────────────────────────────────
 app.get('/api/health', (req, res) => {

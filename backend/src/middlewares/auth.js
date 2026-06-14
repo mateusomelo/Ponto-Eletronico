@@ -14,6 +14,7 @@ async function authenticate(req, res, next) {
 
     const [rows] = await pool.query(
       `SELECT u.id, u.nome, u.email, u.cargo_id, u.ativo, u.bloqueado,
+              u.role, u.company_id,
               c.nome AS cargo_nome, c.nivel AS cargo_nivel
        FROM usuarios u
        JOIN cargos c ON c.id = u.cargo_id
@@ -34,6 +35,23 @@ async function authenticate(req, res, next) {
       return res.status(403).json({ erro: 'Conta bloqueada. Contate o administrador.' });
     }
 
+    // ── Verificação de status da empresa (skip para super_admin) ──
+    let company_status = null;
+    if (user.role !== 'super_admin' && user.company_id) {
+      const [empRows] = await pool.query(
+        'SELECT status FROM empresas WHERE id = ?',
+        [user.company_id]
+      );
+      const empresa = empRows[0];
+      if (!empresa || empresa.status === 'suspended') {
+        return res.status(403).json({
+          erro:  'Acesso suspenso. Contate o suporte da plataforma.',
+          code:  'COMPANY_SUSPENDED',
+        });
+      }
+      company_status = empresa.status; // 'active' | 'past_due'
+    }
+
     // Carregar permissões
     const [perms] = await pool.query(
       `SELECT p.nome FROM permissoes p
@@ -43,13 +61,16 @@ async function authenticate(req, res, next) {
     );
 
     req.user = {
-      id:          user.id,
-      nome:        user.nome,
-      email:       user.email,
-      cargo_id:    user.cargo_id,
-      cargo_nome:  user.cargo_nome,
-      cargo_nivel: user.cargo_nivel,
-      permissoes:  perms.map(p => p.nome),
+      id:             user.id,
+      nome:           user.nome,
+      email:          user.email,
+      cargo_id:       user.cargo_id,
+      cargo_nome:     user.cargo_nome,
+      cargo_nivel:    user.cargo_nivel,
+      role:           user.role,
+      company_id:     user.company_id,
+      company_status: company_status,
+      permissoes:     perms.map(p => p.nome),
     };
 
     next();
