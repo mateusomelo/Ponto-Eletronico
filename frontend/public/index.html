@@ -99,9 +99,12 @@
 <script src="js/api.js"></script>
 <script src="js/utils.js"></script>
 <script>
-  // Redirecionar se já logado
+  // Redirecionar se já logado (respeitando o role)
   (function () {
-    if (Auth.getToken()) window.location.href = '/dashboard.html';
+    if (!Auth.getToken()) return;
+    const user = Auth.getUsuario();
+    if (user && user.role === 'super_admin') window.location.href = '/admin.html';
+    else window.location.href = '/dashboard.html';
   })();
 
   // Toggle senha
@@ -138,7 +141,8 @@
       Auth.setUsuario({ ...res.usuario, ...me }, lembrar);
 
       toast('Bem-vindo, ' + res.usuario.nome.split(' ')[0] + '!', 'success');
-      setTimeout(() => { window.location.href = '/dashboard.html'; }, 500);
+      const destino = me.role === 'super_admin' ? '/admin.html' : '/dashboard.html';
+      setTimeout(() => { window.location.href = destino; }, 500);
     } catch (err) {
       showError(err.data?.erro || 'Erro ao realizar login.');
       setLoading(false);

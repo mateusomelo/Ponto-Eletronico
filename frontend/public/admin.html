@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Super Admin — Ponto Eletrônico</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <style>
+    .admin-header {
+      background: linear-gradient(135deg, #1e3a5f 0%, #3b82f6 100%);
+      color: #fff;
+      padding: 24px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .admin-header h1 { font-size: 1.4rem; margin: 0; }
+    .admin-header .subtitle { font-size: .85rem; opacity: .8; margin-top: 2px; }
+    .admin-content { padding: 24px; max-width: 1100px; margin: 0 auto; }
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 16px; margin-bottom: 28px; }
+    .stat-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center; }
+    .stat-card .stat-num { font-size: 2rem; font-weight: 700; color: #1e3a5f; }
+    .stat-card .stat-label { font-size: .8rem; color: var(--text-muted); margin-top: 4px; }
+    .status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: .75rem; font-weight: 600; }
+    .s-active    { background: #dcfce7; color: #16a34a; }
+    .s-past_due  { background: #fef3c7; color: #d97706; }
+    .s-suspended { background: #fee2e2; color: #dc2626; }
+    .empresa-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .empresa-info { flex: 1; min-width: 0; }
+    .empresa-nome { font-weight: 600; font-size: .95rem; }
+    .empresa-meta { font-size: .78rem; color: var(--text-muted); margin-top: 2px; }
+    .btn-xs { padding: 4px 10px; font-size: .75rem; }
+    .actions-group { display: flex; gap: 6px; flex-wrap: wrap; }
+  </style>
+</head>
+<body style="background:#f1f5f9;min-height:100vh">
+
+<div class="admin-header">
+  <div>
+    <h1><i class="fas fa-crown" style="margin-right:10px;color:#fbbf24"></i>Super Admin — Painel da Plataforma</h1>
+    <div class="subtitle" id="adminSubtitle">Carregando...</div>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center">
+    <button class="btn btn-outline" id="btnNovaEmpresa" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)">
+      <i class="fas fa-plus"></i> Nova Empresa
+    </button>
+    <button class="btn btn-outline" id="btnLogout" style="background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.3)">
+      <i class="fas fa-sign-out-alt"></i> Sair
+    </button>
+  </div>
+</div>
+
+<div class="admin-content">
+  <!-- Stats -->
+  <div class="stats-row" id="statsRow">
+    <div class="stat-card"><div class="stat-num" id="stTotal">-</div><div class="stat-label">Empresas Total</div></div>
+    <div class="stat-card"><div class="stat-num" id="stActive" style="color:#16a34a">-</div><div class="stat-label">Ativas</div></div>
+    <div class="stat-card"><div class="stat-num" id="stPastDue" style="color:#d97706">-</div><div class="stat-label">Em Atraso</div></div>
+    <div class="stat-card"><div class="stat-num" id="stSuspended" style="color:#dc2626">-</div><div class="stat-label">Suspensas</div></div>
+    <div class="stat-card"><div class="stat-num" id="stUsuarios">-</div><div class="stat-label">Total de Usuários</div></div>
+  </div>
+
+  <!-- Lista de empresas -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="fas fa-building" style="color:#3b82f6"></i> Empresas Cadastradas</span>
+    </div>
+    <div id="listaEmpresas"><div class="page-loader"><span class="spinner"></span></div></div>
+  </div>
+</div>
+
+<!-- Modal nova/editar empresa -->
+<div class="modal-overlay" id="modalEmpresa">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modalEmpresaTitulo"><i class="fas fa-building"></i> Nova Empresa</h3>
+      <button class="modal-close" onclick="closeModal('modalEmpresa')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="empId" />
+      <div class="form-group">
+        <label class="form-label">Nome da Empresa *</label>
+        <input type="text" class="form-control" id="empNome" placeholder="Ex: Acme Ltda" />
+      </div>
+      <div class="form-row" style="grid-template-columns:1fr 1fr">
+        <div class="form-group">
+          <label class="form-label">CNPJ</label>
+          <input type="text" class="form-control" id="empCnpj" placeholder="00.000.000/0001-00" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Plano</label>
+          <select class="form-control" id="empPlano">
+            <option value="basico">Básico</option>
+            <option value="profissional">Profissional</option>
+            <option value="enterprise">Enterprise</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">E-mail de contato</label>
+        <input type="email" class="form-control" id="empEmail" placeholder="contato@empresa.com" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Telefone</label>
+        <input type="text" class="form-control" id="empTelefone" placeholder="(11) 99999-9999" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalEmpresa')">Cancelar</button>
+      <button class="btn btn-primary" id="btnSalvarEmpresa"><i class="fas fa-save"></i> Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.getToken()) { window.location.href = '/index.html'; return; }
+
+  const user = Auth.getUsuario();
+  if (!user || user.role !== 'super_admin') {
+    window.location.href = '/dashboard.html';
+    return;
+  }
+
+  document.getElementById('adminSubtitle').textContent = `Logado como ${user.nome} • ${user.email}`;
+  await carregarEmpresas();
+});
+
+let _empresas = [];
+
+async function carregarEmpresas() {
+  try {
+    _empresas = await API.get('/empresas');
+    renderStats(_empresas);
+    renderEmpresas(_empresas);
+  } catch (err) {
+    toast(err.data?.erro || 'Erro ao carregar empresas.', 'error');
+  }
+}
+
+function renderStats(list) {
+  document.getElementById('stTotal').textContent     = list.length;
+  document.getElementById('stActive').textContent    = list.filter(e => e.status === 'active').length;
+  document.getElementById('stPastDue').textContent   = list.filter(e => e.status === 'past_due').length;
+  document.getElementById('stSuspended').textContent = list.filter(e => e.status === 'suspended').length;
+  document.getElementById('stUsuarios').textContent  = list.reduce((a, e) => a + (e.total_usuarios || 0), 0);
+}
+
+const statusLabel = { active: 'Ativa', past_due: 'Em Atraso', suspended: 'Suspensa' };
+
+function renderEmpresas(list) {
+  const el = document.getElementById('listaEmpresas');
+  if (!list.length) {
+    el.innerHTML = '<div class="table-empty">Nenhuma empresa cadastrada.</div>';
+    return;
+  }
+  el.innerHTML = `<div style="padding:12px 0">` + list.map(e => `
+    <div style="padding:14px 20px;border-bottom:1px solid var(--border)">
+      <div class="empresa-row">
+        <div class="empresa-info">
+          <div class="empresa-nome">${e.nome}</div>
+          <div class="empresa-meta">
+            ${e.cnpj ? `CNPJ: ${e.cnpj} &nbsp;·&nbsp;` : ''}
+            Plano: <strong>${e.plano}</strong> &nbsp;·&nbsp;
+            ${e.total_usuarios || 0} usuário(s) &nbsp;·&nbsp;
+            ${e.total_registros || 0} registros &nbsp;·&nbsp;
+            desde ${new Date(e.criado_em).toLocaleDateString('pt-BR')}
+          </div>
+        </div>
+        <span class="status-badge s-${e.status}">${statusLabel[e.status] || e.status}</span>
+        <div class="actions-group">
+          <button class="btn btn-xs btn-outline" onclick="abrirEdicao(${e.id})"><i class="fas fa-edit"></i></button>
+          ${e.status !== 'active'     ? `<button class="btn btn-xs btn-outline" style="color:#16a34a" onclick="mudarStatus(${e.id},'active')"><i class="fas fa-check"></i> Ativar</button>` : ''}
+          ${e.status !== 'past_due'   ? `<button class="btn btn-xs btn-outline" style="color:#d97706" onclick="mudarStatus(${e.id},'past_due')"><i class="fas fa-clock"></i> Atraso</button>` : ''}
+          ${e.status !== 'suspended'  ? `<button class="btn btn-xs btn-outline" style="color:#dc2626" onclick="mudarStatus(${e.id},'suspended')"><i class="fas fa-ban"></i> Suspender</button>` : ''}
+          ${e.id > 1 ? `<button class="btn btn-xs btn-danger" onclick="excluirEmpresa(${e.id},'${e.nome.replace(/'/g,"\\'")}')"><i class="fas fa-trash"></i></button>` : ''}
+        </div>
+      </div>
+    </div>`).join('') + '</div>';
+}
+
+async function mudarStatus(id, status) {
+  try {
+    await API.patch(`/empresas/${id}/status`, { status });
+    toast('Status alterado!', 'success');
+    await carregarEmpresas();
+  } catch (err) { toast(err.data?.erro || 'Erro.', 'error'); }
+}
+
+async function excluirEmpresa(id, nome) {
+  const ok = await confirmDialog(`Excluir a empresa "<strong>${nome}</strong>" e todos os seus dados? Esta ação não pode ser desfeita.`);
+  if (!ok) return;
+  try {
+    await API.delete(`/empresas/${id}`);
+    toast('Empresa excluída.', 'success');
+    await carregarEmpresas();
+  } catch (err) { toast(err.data?.erro || 'Erro.', 'error'); }
+}
+
+function abrirNova() {
+  document.getElementById('empId').value       = '';
+  document.getElementById('empNome').value     = '';
+  document.getElementById('empCnpj').value     = '';
+  document.getElementById('empEmail').value    = '';
+  document.getElementById('empTelefone').value = '';
+  document.getElementById('empPlano').value    = 'basico';
+  document.getElementById('modalEmpresaTitulo').innerHTML = '<i class="fas fa-plus"></i> Nova Empresa';
+  openModal('modalEmpresa');
+}
+
+function abrirEdicao(id) {
+  const e = _empresas.find(x => x.id === id);
+  if (!e) return;
+  document.getElementById('empId').value       = e.id;
+  document.getElementById('empNome').value     = e.nome;
+  document.getElementById('empCnpj').value     = e.cnpj || '';
+  document.getElementById('empEmail').value    = e.email || '';
+  document.getElementById('empTelefone').value = e.telefone || '';
+  document.getElementById('empPlano').value    = e.plano || 'basico';
+  document.getElementById('modalEmpresaTitulo').innerHTML = '<i class="fas fa-edit"></i> Editar Empresa';
+  openModal('modalEmpresa');
+}
+
+document.getElementById('btnNovaEmpresa').addEventListener('click', abrirNova);
+
+document.getElementById('btnSalvarEmpresa').addEventListener('click', async () => {
+  const id   = document.getElementById('empId').value;
+  const body = {
+    nome:     document.getElementById('empNome').value.trim(),
+    cnpj:     document.getElementById('empCnpj').value.trim(),
+    email:    document.getElementById('empEmail').value.trim(),
+    telefone: document.getElementById('empTelefone').value.trim(),
+    plano:    document.getElementById('empPlano').value,
+  };
+  if (!body.nome) { toast('Nome é obrigatório.', 'error'); return; }
+  const btn = document.getElementById('btnSalvarEmpresa');
+  btn.disabled = true;
+  try {
+    if (id) await API.put(`/empresas/${id}`, body);
+    else    await API.post('/empresas', body);
+    closeModal('modalEmpresa');
+    toast(id ? 'Empresa atualizada!' : 'Empresa criada!', 'success');
+    await carregarEmpresas();
+  } catch (err) { toast(err.data?.erro || 'Erro ao salvar.', 'error'); }
+  finally { btn.disabled = false; }
+});
+
+document.getElementById('btnLogout').addEventListener('click', async () => {
+  try { await API.post('/auth/logout'); } catch {}
+  Auth.clearToken();
+  window.location.href = '/index.html';
+});
+</script>
+</body>
+</html>

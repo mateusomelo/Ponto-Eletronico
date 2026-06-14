@@ -17,6 +17,47 @@ async function executarSchema(conn, sql) {
   }
 }
 
+// ── Seed: empresa padrão (tenant inicial) ───────────────────
+async function seedEmpresaPadrao(conn) {
+  await conn.query(`
+    INSERT IGNORE INTO empresas (id, nome, status, plano)
+    VALUES (1, 'Empresa Padrão', 'active', 'basico')
+  `);
+
+  // Garante que todos os usuários existentes pertencem à empresa 1
+  await conn.query(`
+    UPDATE usuarios SET company_id = 1 WHERE company_id IS NULL AND role != 'super_admin'
+  `);
+
+  // Promove company_admin baseado no cargo_nivel (somente quem ainda está como 'employee')
+  await conn.query(`
+    UPDATE usuarios u
+    JOIN cargos c ON c.id = u.cargo_id
+    SET u.role = 'company_admin'
+    WHERE u.role = 'employee' AND c.nivel <= 2
+  `);
+
+  console.log('[Migration] Empresa padrão e roles verificados.');
+}
+
+// ── Seed: super admin da plataforma ─────────────────────────
+async function seedSuperAdmin(conn) {
+  const [rows] = await conn.query(
+    "SELECT id FROM usuarios WHERE role = 'super_admin' LIMIT 1"
+  );
+  if (rows.length) return;
+
+  const bcrypt = require('bcrypt');
+  const hash   = await bcrypt.hash('SuperAdmin@123', 12);
+  await conn.query(
+    `INSERT INTO usuarios (nome, email, cpf, senha_hash, cargo_id, company_id, role, ativo)
+     VALUES ('Super Admin', 'super@sistema.com', '000.000.000-01', ?, 1, NULL, 'super_admin', 1)`,
+    [hash]
+  );
+  console.log('[Migration] Super Admin criado → super@sistema.com / SuperAdmin@123');
+  console.log('[Migration] ⚠️  Altere a senha do super admin imediatamente!');
+}
+
 // ── Seed: cargos padrão ──────────────────────────────────────
 async function seedCargos(conn) {
   const cargos = [
@@ -148,6 +189,31 @@ async function seedAdmin(conn) {
 
 // ── Migrações incrementais (schema já existente) ─────────────
 async function runIncrementalMigrations(conn) {
+  // ── empresas (tabela SaaS multi-tenant) ──────────────────
+  await conn.query(`
+    CREATE TABLE IF NOT EXISTS empresas (
+      id        INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      nome      VARCHAR(200) NOT NULL,
+      cnpj      VARCHAR(20)  NULL,
+      email     VARCHAR(150) NULL,
+      telefone  VARCHAR(30)  NULL,
+      status    ENUM('active','past_due','suspended') NOT NULL DEFAULT 'active',
+      plano     VARCHAR(50)  NOT NULL DEFAULT 'basico',
+      criado_em DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+
+  // ── usuarios: colunas SaaS ────────────────────────────────
+  const [uCols] = await conn.query('SHOW COLUMNS FROM usuarios');
+  const uNames  = uCols.map(c => c.Field);
+  const uAlter  = [];
+  if (!uNames.includes('company_id')) uAlter.push('ADD COLUMN company_id INT UNSIGNED NULL AFTER id');
+  if (!uNames.includes('role'))       uAlter.push("ADD COLUMN role ENUM('super_admin','company_admin','employee') NOT NULL DEFAULT 'employee' AFTER company_id");
+  if (uAlter.length) {
+    await conn.query(`ALTER TABLE usuarios ${uAlter.join(', ')}`);
+    console.log('[Migration] usuarios: colunas SaaS adicionadas →', uAlter.length);
+  }
   // registros_ponto: colunas adicionadas após schema inicial
   const [rCols] = await conn.query('SHOW COLUMNS FROM registros_ponto');
   const rNames  = rCols.map(c => c.Field);
@@ -253,14 +319,18 @@ async function runMigrations() {
       await seedPermissoes(conn);
       await seedConfiguracoes(conn);
       await seedAdmin(conn);
+      await seedEmpresaPadrao(conn);
+      await seedSuperAdmin(conn);
     } else {
       // ── Deploy subsequente: aplica migrações incrementais ────
       console.log('[Migration] Schema existente — aplicando migrações incrementais...');
       await runIncrementalMigrations(conn);
 
-      // Garante que permissões e configurações novas existam
+      // Garante que permissões, configurações e dados SaaS existam
       await seedPermissoes(conn);
       await seedConfiguracoes(conn);
+      await seedEmpresaPadrao(conn);
+      await seedSuperAdmin(conn);
     }
 
     console.log('[Migration] OK — todas as migrações aplicadas.');

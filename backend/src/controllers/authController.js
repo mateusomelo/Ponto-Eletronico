@@ -32,6 +32,18 @@ async function login(req, res) {
       [email.toLowerCase().trim()]
     );
 
+    // Verificar status da empresa (antes de validar senha para retornar erro claro)
+    if (rows.length && rows[0].role !== 'super_admin' && rows[0].company_id) {
+      const [empRows] = await pool.query('SELECT status FROM empresas WHERE id = ?', [rows[0].company_id]);
+      const emp = empRows[0];
+      if (!emp || emp.status === 'suspended') {
+        return res.status(403).json({
+          erro: 'Acesso suspenso. Contate o suporte da plataforma.',
+          code: 'COMPANY_SUSPENDED',
+        });
+      }
+    }
+
     const ip = getClientIp(req);
     const ua = req.headers['user-agent'] || '';
 
@@ -69,13 +81,15 @@ async function login(req, res) {
     return res.json({
       token,
       usuario: {
-        id:          user.id,
-        nome:        user.nome,
-        email:       user.email,
-        foto:        user.foto || null,
-        cargo_id:    user.cargo_id,
-        cargo_nome:  user.cargo_nome,
-        cargo_nivel: user.cargo_nivel,
+        id:           user.id,
+        nome:         user.nome,
+        email:        user.email,
+        foto:         user.foto || null,
+        cargo_id:     user.cargo_id,
+        cargo_nome:   user.cargo_nome,
+        cargo_nivel:  user.cargo_nivel,
+        role:         user.role,
+        company_id:   user.company_id,
       },
     });
   } catch (err) {
@@ -103,6 +117,7 @@ async function me(req, res) {
   try {
     const [rows] = await pool.query(
       `SELECT u.id, u.nome, u.email, u.cpf, u.telefone, u.foto, u.cargo_id, u.ativo, u.ultimo_acesso,
+              u.role, u.company_id,
               c.nome AS cargo_nome, c.nivel AS cargo_nivel
        FROM usuarios u JOIN cargos c ON c.id = u.cargo_id
        WHERE u.id = ?`,
@@ -110,14 +125,29 @@ async function me(req, res) {
     );
     if (!rows.length) return res.status(404).json({ erro: 'Usuário não encontrado.' });
 
+    const u = rows[0];
+
     const [perms] = await pool.query(
       `SELECT p.nome FROM permissoes p
        JOIN cargo_permissoes cp ON cp.permissao_id = p.id
        WHERE cp.cargo_id = ?`,
-      [rows[0].cargo_id]
+      [u.cargo_id]
     );
 
-    return res.json({ ...rows[0], permissoes: perms.map(p => p.nome) });
+    // Busca status da empresa se aplicável
+    let company_status = null;
+    let company_nome   = null;
+    if (u.role !== 'super_admin' && u.company_id) {
+      const [empR] = await pool.query('SELECT nome, status FROM empresas WHERE id = ?', [u.company_id]);
+      if (empR[0]) { company_status = empR[0].status; company_nome = empR[0].nome; }
+    }
+
+    return res.json({
+      ...u,
+      permissoes:     perms.map(p => p.nome),
+      company_status: company_status,
+      company_nome:   company_nome,
+    });
   } catch (err) {
     console.error('[Auth] me:', err);
     return res.status(500).json({ erro: 'Erro interno.' });
