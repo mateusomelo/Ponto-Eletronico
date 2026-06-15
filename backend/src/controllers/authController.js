@@ -6,6 +6,7 @@ const fs      = require('fs');
 const { pool }      = require('../database/connection');
 const LogAcesso     = require('../models/LogAcesso');
 const { getClientIp } = require('../utils/ip');
+const emailService  = require('../services/emailService');
 
 function gerarToken(user) {
   return jwt.sign(
@@ -190,6 +191,12 @@ async function alterarSenha(req, res) {
       ip:         getClientIp(req),
     });
 
+    // Notifica o usuário por e-mail (silencioso se SMTP não configurado)
+    const [uRow] = await pool.query('SELECT nome, email FROM usuarios WHERE id = ?', [req.user.id]);
+    if (uRow.length) {
+      emailService.enviarAlteracaoSenha(uRow[0].email, uRow[0].nome).catch(() => {});
+    }
+
     return res.json({ mensagem: 'Senha alterada com sucesso.' });
   } catch (err) {
     console.error('[Auth] alterarSenha:', err);
@@ -220,8 +227,10 @@ async function solicitarReset(req, res) {
 
     await LogAcesso.registrar({ usuario_id: rows[0].id, acao: 'senha.reset_solicitado', ip: getClientIp(req) });
 
-    // Em produção enviar email com o token
-    console.log(`[Auth] Reset token para ${email}: ${token}`);
+    // Envia e-mail de reset (silencioso se SMTP não configurado)
+    emailService.enviarResetSenha(email.toLowerCase().trim(), rows[0].nome, token)
+      .then(ok => { if (!ok) console.log(`[Auth] Reset token (SMTP indisponível) para ${email}: ${token}`); })
+      .catch(() => {});
 
     return res.json({ mensagem: 'Se o e-mail existir, você receberá as instruções.' });
   } catch (err) {

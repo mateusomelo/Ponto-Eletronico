@@ -169,6 +169,9 @@ testConnection().then(async () => {
   // Job diário: notifica usuários com pagamentos.visualizar sobre faturas próximas do vencimento
   require('./jobs/faturasVencimento').iniciarJobFaturas();
 
+  // Job diário: suspende empresas inadimplentes e encerra trials expirados
+  require('./jobs/suspensaoAutomatica').iniciarJobSuspensao();
+
   // HTTP — Railway usa apenas HTTP internamente (TLS é terminado pelo proxy da plataforma)
   http.createServer(app).listen(PORT, '0.0.0.0', () => {
     console.log(`\n🚀 HTTP:  http://localhost:${PORT}`);

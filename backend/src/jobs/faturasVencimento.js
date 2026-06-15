@@ -1,4 +1,5 @@
-const { pool } = require('../database/connection');
+const { pool }       = require('../database/connection');
+const emailService   = require('../services/emailService');
 
 // Avisa quando faltam 7, 3 ou 1 dia(s) para vencer
 const DIAS_AVISO = [7, 3, 1];
@@ -46,12 +47,11 @@ async function verificarFaturasVencimento() {
           const mensagem = `A fatura ${inv.number || inv.id.slice(-8)} de ${valor} vence em ${dataVencStr}. `
             + `Acesse Pagamentos para pagar via cartão ou boleto.`;
 
-          // Usuários da empresa com permissão pagamentos.visualizar
+          // Usuários da empresa com permissão pagamentos.visualizar (ou cargo_nivel <= 2)
           const [usuarios] = await pool.query(
-            `SELECT u.id FROM usuarios u
-             JOIN cargo_permissoes cp ON cp.cargo_id = u.cargo_id
-             JOIN permissoes p        ON p.id = cp.permissao_id
-             WHERE u.company_id = ? AND u.ativo = 1 AND p.nome = 'pagamentos.visualizar'`,
+            `SELECT u.id, u.email, u.nome FROM usuarios u
+             JOIN cargos c ON c.id = u.cargo_id
+             WHERE u.company_id = ? AND u.ativo = 1 AND c.nivel <= 2`,
             [empresa.id]
           );
 
@@ -69,6 +69,9 @@ async function verificarFaturasVencimento() {
               `INSERT INTO notificacoes (usuario_id, tipo, titulo, mensagem) VALUES (?, 'fatura_vencimento', ?, ?)`,
               [u.id, titulo, mensagem]
             );
+
+            // E-mail de alerta (silencioso se SMTP não configurado)
+            emailService.enviarAlertaFatura(u.email, u.nome, valor, dataVencStr, diasRestantes).catch(() => {});
           }
         }
       } catch (err) {

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Redefinir Senha — Ponto Eletrônico</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕐</text></svg>" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/auth.css" />
+</head>
+<body>
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-icon"><i class="fas fa-key"></i></div>
+      <h1>Redefinir Senha</h1>
+      <p>Defina uma nova senha para sua conta</p>
+    </div>
+
+    <div class="auth-error" id="authError">
+      <i class="fas fa-exclamation-circle"></i>
+      <span id="authErrorMsg"></span>
+    </div>
+
+    <div id="successMsg" style="display:none;margin-bottom:16px">
+      <div class="alert alert-success" style="display:flex;align-items:center;gap:10px;border-radius:10px;padding:14px 16px;background:#dcfce7;color:#15803d;border:1px solid #86efac">
+        <i class="fas fa-check-circle" style="font-size:1.1rem"></i>
+        <div>
+          <div style="font-weight:700">Senha redefinida com sucesso!</div>
+          <div style="font-size:.85rem;margin-top:2px">Você será redirecionado para o login em instantes...</div>
+        </div>
+      </div>
+    </div>
+
+    <form class="auth-form" id="resetForm" novalidate>
+      <div class="form-group">
+        <label class="form-label">Nova Senha</label>
+        <div class="input-group">
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" class="form-control" id="novaSenha"
+                 placeholder="Mínimo 8 caracteres" autocomplete="new-password" required />
+          <button type="button" class="password-toggle" id="toggleNovaSenha">
+            <i class="fas fa-eye" id="toggleNovaSenhaIcon"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Confirmar Nova Senha</label>
+        <div class="input-group">
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" class="form-control" id="confirmarSenha"
+                 placeholder="Repita a nova senha" autocomplete="new-password" required />
+        </div>
+      </div>
+
+      <button type="submit" class="btn-login" id="btnRedefinir">
+        <span id="btnRedefinirText" style="display:flex;align-items:center;justify-content:center;gap:8px">
+          <i class="fas fa-check"></i> Redefinir Senha
+        </span>
+        <span id="btnRedefinirLoader" style="display:none;align-items:center;justify-content:center;gap:8px">
+          <span class="spinner" style="width:18px;height:18px;border-width:2px;border-color:rgba(255,255,255,.4);border-top-color:#fff"></span>
+          Salvando...
+        </span>
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      <p><a href="/index.html" style="color:#3b82f6;text-decoration:none">
+        <i class="fas fa-arrow-left" style="margin-right:4px"></i>Voltar ao login
+      </a></p>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script>
+  const params = new URLSearchParams(location.search);
+  const token  = params.get('token');
+
+  if (!token) {
+    document.getElementById('authErrorMsg').textContent =
+      'Link inválido ou expirado. Solicite uma nova recuperação de senha na tela de login.';
+    document.getElementById('authError').classList.add('show');
+    document.getElementById('resetForm').style.display = 'none';
+  }
+
+  document.getElementById('toggleNovaSenha').addEventListener('click', () => {
+    const input = document.getElementById('novaSenha');
+    const icon  = document.getElementById('toggleNovaSenhaIcon');
+    const show  = input.type === 'password';
+    input.type      = show ? 'text' : 'password';
+    icon.className  = show ? 'fas fa-eye-slash' : 'fas fa-eye';
+  });
+
+  document.getElementById('resetForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    hideError();
+
+    const novaSenha  = document.getElementById('novaSenha').value;
+    const confirmar  = document.getElementById('confirmarSenha').value;
+
+    if (novaSenha.length < 8) {
+      showError('A senha deve ter no mínimo 8 caracteres.');
+      return;
+    }
+    if (novaSenha !== confirmar) {
+      showError('As senhas não coincidem.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await API.post('/auth/redefinir-senha', { token, nova_senha: novaSenha });
+      document.getElementById('resetForm').style.display = 'none';
+      document.getElementById('successMsg').style.display = 'block';
+      setTimeout(() => { window.location.href = '/index.html'; }, 2500);
+    } catch (err) {
+      showError(err.data?.erro || 'Token inválido ou expirado. Solicite um novo link de recuperação.');
+      setLoading(false);
+    }
+  });
+
+  function setLoading(v) {
+    document.getElementById('btnRedefinirText').style.display  = v ? 'none' : 'flex';
+    document.getElementById('btnRedefinirLoader').style.display = v ? 'flex' : 'none';
+    document.getElementById('btnRedefinir').disabled = v;
+  }
+
+  function showError(msg) {
+    document.getElementById('authErrorMsg').textContent = msg;
+    document.getElementById('authError').classList.add('show');
+  }
+
+  function hideError() {
+    document.getElementById('authError').classList.remove('show');
+  }
+</script>
+</body>
+</html>

@@ -1,5 +1,11 @@
 const bcrypt = require('bcrypt');
+const path   = require('path');
+const fs     = require('fs');
 const { pool } = require('../database/connection');
+
+const UPLOADS_ROOT = process.env.UPLOADS_PATH
+  ? path.resolve(process.env.UPLOADS_PATH)
+  : path.join(__dirname, '../../../uploads');
 
 // ── Seed de cargos e configs padrão para uma empresa nova ───
 async function seedEmpresaDefaults(empresaId, empresaNome, empresaCnpj) {
@@ -23,8 +29,8 @@ async function seedEmpresaDefaults(empresaId, empresaNome, empresaCnpj) {
   const permMap = {};
   perms.forEach(p => { permMap[p.nome] = p.id; });
 
-  const todasPerms = perms.map(p => p.id);
-  const permsSuper = [
+  const todasPerms    = perms.map(p => p.id);
+  const permsSuper    = [
     'ponto.registrar','ponto.visualizar','usuarios.visualizar','usuarios.criar',
     'usuarios.editar','relatorios.visualizar','relatorios.exportar',
     'fechamento.criar','fechamento.visualizar','registros.detalhes',
@@ -71,7 +77,7 @@ async function listar(req, res) {
   try {
     const [rows] = await pool.query(`
       SELECT e.*,
-             COUNT(DISTINCT u.id) AS total_usuarios,
+             COUNT(DISTINCT u.id)  AS total_usuarios,
              COUNT(DISTINCT rp.id) AS total_registros
       FROM empresas e
       LEFT JOIN usuarios u  ON u.company_id = e.id AND u.role != 'super_admin'
@@ -99,17 +105,40 @@ async function obter(req, res) {
 
 // POST /api/empresas
 async function criar(req, res) {
-  const { nome, cnpj, email, telefone, plano } = req.body;
+  const { nome, nome_fantasia, razao_social, documento, tipo_documento, cnpj, email, telefone, plano, trial_dias } = req.body;
   if (!nome) return res.status(400).json({ erro: 'Nome é obrigatório.' });
   try {
+    // Calcula data de término do trial (padrão 14 dias se trial_dias não informado)
+    const dias = parseInt(trial_dias) || 0;
+    let trialEndsAt = null;
+    let initialStatus = 'active';
+    if (dias > 0) {
+      const d = new Date();
+      d.setDate(d.getDate() + dias);
+      trialEndsAt = d.toISOString().slice(0, 19).replace('T', ' ');
+      initialStatus = 'trial';
+    }
+
+    const docFinal  = documento || cnpj || null;
+    const tipoDoc   = tipo_documento || (docFinal && docFinal.replace(/\D/g,'').length <= 11 ? 'cpf' : 'cnpj');
+
     const [result] = await pool.query(
-      'INSERT INTO empresas (nome, cnpj, email, telefone, plano) VALUES (?, ?, ?, ?, ?)',
-      [nome, cnpj || null, email || null, telefone || null, plano || 'basico']
+      `INSERT INTO empresas
+         (nome, nome_fantasia, razao_social, documento, tipo_documento, cnpj, email, telefone, plano, status, trial_ends_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [nome, nome_fantasia||null, razao_social||null, docFinal, tipoDoc, cnpj||null,
+       email||null, telefone||null, plano||'basico', initialStatus, trialEndsAt]
     );
     const empresaId = result.insertId;
 
-    // Seed cargos + configs padrão para a nova empresa
-    await seedEmpresaDefaults(empresaId, nome, cnpj);
+    await seedEmpresaDefaults(empresaId, nome, cnpj || documento);
+
+    // Registra plano inicial no histórico
+    await pool.query(
+      `INSERT INTO plano_historico (empresa_id, plano_antes, plano_depois, alterado_por, motivo)
+       VALUES (?, 'nenhum', ?, ?, 'Empresa criada')`,
+      [empresaId, plano || 'basico', req.user?.id || null]
+    );
 
     const [rows] = await pool.query('SELECT * FROM empresas WHERE id = ?', [empresaId]);
     return res.status(201).json(rows[0]);
@@ -121,30 +150,44 @@ async function criar(req, res) {
 
 // PUT /api/empresas/:id
 async function editar(req, res) {
-  const { nome, cnpj, email, telefone, plano } = req.body;
+  const { nome, nome_fantasia, razao_social, documento, tipo_documento, cnpj, email, telefone, plano, tolerancia_dias } = req.body;
   if (!nome) return res.status(400).json({ erro: 'Nome é obrigatório.' });
+  const id = req.params.id;
   try {
-    const [check] = await pool.query('SELECT id FROM empresas WHERE id = ?', [req.params.id]);
+    const [check] = await pool.query('SELECT id, plano FROM empresas WHERE id = ?', [id]);
     if (!check.length) return res.status(404).json({ erro: 'Empresa não encontrada.' });
 
-    await pool.query(
-      'UPDATE empresas SET nome=?, cnpj=?, email=?, telefone=?, plano=? WHERE id=?',
-      [nome, cnpj || null, email || null, telefone || null, plano || 'basico', req.params.id]
-    );
+    const planoAtual = check[0].plano;
+    const planoNovo  = plano || planoAtual;
+    const docFinal   = documento || cnpj || null;
+    const tipoDoc    = tipo_documento || (docFinal && docFinal.replace(/\D/g,'').length <= 11 ? 'cpf' : 'cnpj');
+    const tolDias    = tolerancia_dias !== undefined ? parseInt(tolerancia_dias) : null;
 
-    // Sincroniza empresa_nome e empresa_cnpj nas configs da empresa
-    await pool.query(
-      "UPDATE configuracoes SET valor=? WHERE chave='empresa_nome' AND company_id=?",
-      [nome, req.params.id]
-    );
-    if (cnpj) {
+    const updateQuery = tolDias !== null
+      ? 'UPDATE empresas SET nome=?,nome_fantasia=?,razao_social=?,documento=?,tipo_documento=?,cnpj=?,email=?,telefone=?,plano=?,tolerancia_dias=? WHERE id=?'
+      : 'UPDATE empresas SET nome=?,nome_fantasia=?,razao_social=?,documento=?,tipo_documento=?,cnpj=?,email=?,telefone=?,plano=? WHERE id=?';
+    const updateParams = tolDias !== null
+      ? [nome, nome_fantasia||null, razao_social||null, docFinal, tipoDoc, cnpj||null, email||null, telefone||null, planoNovo, tolDias, id]
+      : [nome, nome_fantasia||null, razao_social||null, docFinal, tipoDoc, cnpj||null, email||null, telefone||null, planoNovo, id];
+
+    await pool.query(updateQuery, updateParams);
+
+    // Registra mudança de plano
+    if (planoNovo !== planoAtual) {
       await pool.query(
-        "UPDATE configuracoes SET valor=? WHERE chave='empresa_cnpj' AND company_id=?",
-        [cnpj, req.params.id]
+        `INSERT INTO plano_historico (empresa_id, plano_antes, plano_depois, alterado_por, motivo)
+         VALUES (?, ?, ?, ?, 'Alterado via painel admin')`,
+        [id, planoAtual, planoNovo, req.user?.id || null]
       );
     }
 
-    const [rows] = await pool.query('SELECT * FROM empresas WHERE id = ?', [req.params.id]);
+    // Sincroniza configurações
+    await pool.query("UPDATE configuracoes SET valor=? WHERE chave='empresa_nome' AND company_id=?", [nome, id]);
+    if (cnpj || documento) {
+      await pool.query("UPDATE configuracoes SET valor=? WHERE chave='empresa_cnpj' AND company_id=?", [cnpj || documento, id]);
+    }
+
+    const [rows] = await pool.query('SELECT * FROM empresas WHERE id = ?', [id]);
     return res.json(rows[0]);
   } catch (err) {
     console.error('[Empresa] editar:', err);
@@ -155,17 +198,76 @@ async function editar(req, res) {
 // PATCH /api/empresas/:id/status
 async function alterarStatus(req, res) {
   const { status } = req.body;
-  if (!['active', 'past_due', 'suspended'].includes(status)) {
-    return res.status(400).json({ erro: 'Status inválido. Use: active, past_due ou suspended.' });
+  const validStatuses = ['trial', 'active', 'past_due', 'suspended'];
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({ erro: `Status inválido. Use: ${validStatuses.join(', ')}.` });
   }
+  const id = req.params.id;
   try {
-    const [check] = await pool.query('SELECT id, nome FROM empresas WHERE id = ?', [req.params.id]);
+    const [check] = await pool.query('SELECT id, nome, status AS status_atual FROM empresas WHERE id = ?', [id]);
     if (!check.length) return res.status(404).json({ erro: 'Empresa não encontrada.' });
 
-    await pool.query('UPDATE empresas SET status = ? WHERE id = ?', [status, req.params.id]);
+    const extra = {};
+    if (status === 'past_due' && check[0].status_atual !== 'past_due') {
+      // Marca quando entrou em inadimplência
+      extra.inadimplente_desde = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    }
+    if (status === 'active') {
+      extra.inadimplente_desde = null;
+    }
+
+    if (Object.keys(extra).length > 0) {
+      const sets = Object.keys(extra).map(k => `${k} = ?`).join(', ');
+      await pool.query(`UPDATE empresas SET status = ?, ${sets} WHERE id = ?`,
+        [status, ...Object.values(extra), id]);
+    } else {
+      await pool.query('UPDATE empresas SET status = ? WHERE id = ?', [status, id]);
+    }
+
     return res.json({ mensagem: `Status da empresa "${check[0].nome}" alterado para "${status}".` });
   } catch (err) {
     console.error('[Empresa] alterarStatus:', err);
+    return res.status(500).json({ erro: 'Erro interno.' });
+  }
+}
+
+// POST /api/empresas/:id/logo
+async function uploadLogo(req, res) {
+  if (!req.file) return res.status(400).json({ erro: 'Nenhuma imagem enviada.' });
+  const id     = req.params.id;
+  const logoUrl = `/uploads/logos/${req.file.filename}`;
+
+  try {
+    // Remove logo antiga do disco
+    const [rows] = await pool.query('SELECT logo FROM empresas WHERE id = ?', [id]);
+    if (rows.length && rows[0].logo) {
+      const oldPath = path.join(UPLOADS_ROOT, rows[0].logo.replace('/uploads/', ''));
+      fs.unlink(oldPath, () => {});
+    }
+
+    await pool.query('UPDATE empresas SET logo = ? WHERE id = ?', [logoUrl, id]);
+    return res.json({ mensagem: 'Logo atualizada.', logo: logoUrl });
+  } catch (err) {
+    fs.unlink(req.file.path, () => {});
+    console.error('[Empresa] uploadLogo:', err);
+    return res.status(500).json({ erro: 'Erro interno.' });
+  }
+}
+
+// GET /api/empresas/:id/historico-plano
+async function historicoPLano(req, res) {
+  try {
+    const [rows] = await pool.query(
+      `SELECT ph.*, u.nome AS alterado_por_nome
+       FROM plano_historico ph
+       LEFT JOIN usuarios u ON u.id = ph.alterado_por
+       WHERE ph.empresa_id = ?
+       ORDER BY ph.created_at DESC
+       LIMIT 50`,
+      [req.params.id]
+    );
+    return res.json(rows);
+  } catch (err) {
     return res.status(500).json({ erro: 'Erro interno.' });
   }
 }
@@ -180,7 +282,6 @@ async function excluir(req, res) {
     const [check] = await pool.query('SELECT id FROM empresas WHERE id = ?', [id]);
     if (!check.length) return res.status(404).json({ erro: 'Empresa não encontrada.' });
 
-    // Cascata: remove dados dos usuários da empresa
     const [users] = await pool.query('SELECT id FROM usuarios WHERE company_id = ?', [id]);
     for (const u of users) {
       await pool.query('DELETE FROM notificacoes    WHERE usuario_id = ?', [u.id]);
@@ -189,14 +290,14 @@ async function excluir(req, res) {
     }
     await pool.query('DELETE FROM usuarios      WHERE company_id = ?', [id]);
 
-    // Remove cargos e configurações da empresa
     const [cargosEmp] = await pool.query('SELECT id FROM cargos WHERE company_id = ?', [id]);
     for (const c of cargosEmp) {
       await pool.query('DELETE FROM cargo_permissoes WHERE cargo_id = ?', [c.id]);
     }
-    await pool.query('DELETE FROM cargos        WHERE company_id = ?', [id]);
-    await pool.query('DELETE FROM configuracoes  WHERE company_id = ?', [id]);
-    await pool.query('DELETE FROM empresas       WHERE id = ?', [id]);
+    await pool.query('DELETE FROM cargos          WHERE company_id = ?', [id]);
+    await pool.query('DELETE FROM configuracoes    WHERE company_id = ?', [id]);
+    await pool.query('DELETE FROM plano_historico  WHERE empresa_id = ?', [id]);
+    await pool.query('DELETE FROM empresas         WHERE id = ?', [id]);
 
     return res.json({ mensagem: 'Empresa e todos os seus dados foram excluídos.' });
   } catch (err) {
@@ -228,7 +329,7 @@ async function listarUsuarios(req, res) {
   }
 }
 
-// POST /api/empresas/:id/usuarios  — cria usuário admin para a empresa
+// POST /api/empresas/:id/usuarios
 async function criarUsuario(req, res) {
   const empresaId = req.params.id;
   const { nome, email, senha, role = 'company_admin' } = req.body;
@@ -247,14 +348,13 @@ async function criarUsuario(req, res) {
     const [dup] = await pool.query('SELECT id FROM usuarios WHERE email = ?', [email.toLowerCase().trim()]);
     if (dup.length) return res.status(409).json({ erro: 'E-mail já cadastrado.' });
 
-    // Busca o cargo admin (nivel=1) da empresa
     const nivelCargo = role === 'company_admin' ? 1 : 3;
     const [cargos] = await pool.query(
       'SELECT id FROM cargos WHERE company_id = ? AND nivel = ? LIMIT 1',
       [empresaId, nivelCargo]
     );
     if (!cargos.length) {
-      return res.status(422).json({ erro: 'Empresa sem cargos configurados. Verifique o setup.' });
+      return res.status(422).json({ erro: 'Empresa sem cargos configurados.' });
     }
 
     const hash = await bcrypt.hash(senha, 12);
@@ -298,4 +398,7 @@ async function excluirUsuario(req, res) {
   }
 }
 
-module.exports = { listar, obter, criar, editar, alterarStatus, excluir, listarUsuarios, criarUsuario, excluirUsuario };
+module.exports = {
+  listar, obter, criar, editar, alterarStatus, uploadLogo, historicoPLano,
+  excluir, listarUsuarios, criarUsuario, excluirUsuario,
+};

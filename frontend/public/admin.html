@@ -7,90 +7,83 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" />
   <link rel="stylesheet" href="css/main.css" />
   <style>
-    /* ── Layout ─────────────────────────────────────────────── */
     body { background: #f1f5f9; min-height: 100vh; }
 
     .sa-header {
       background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #3b82f6 100%);
-      color: #fff;
-      padding: 20px 32px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      color: #fff; padding: 20px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px;
+      position: sticky; top: 0; z-index: 100;
       box-shadow: 0 2px 12px rgba(0,0,0,.25);
     }
     .sa-header-brand { display: flex; align-items: center; gap: 12px; }
     .sa-header-brand .logo-icon {
       width: 40px; height: 40px; border-radius: 10px;
       background: rgba(255,255,255,.15);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.1rem;
+      display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
     }
     .sa-header-brand h1 { font-size: 1.1rem; margin: 0; font-weight: 700; }
     .sa-header-brand .subtitle { font-size: .75rem; opacity: .65; margin-top: 1px; }
     .sa-header-actions { display: flex; gap: 10px; align-items: center; }
 
-    /* ── Stats ──────────────────────────────────────────────── */
     .sa-content { padding: 28px 32px; max-width: 1280px; margin: 0 auto; }
     @media (max-width: 768px) { .sa-content { padding: 16px; } }
 
+    /* ── Stats ── */
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 16px;
-      margin-bottom: 28px;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 14px; margin-bottom: 16px;
     }
     .stat-card {
-      background: #fff;
-      border: 1px solid #e2e8f0;
-      border-radius: 14px;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
+      padding: 18px; display: flex; flex-direction: column; gap: 8px;
       transition: box-shadow .2s;
     }
     .stat-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); }
-    .stat-icon {
-      width: 40px; height: 40px; border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: .95rem;
-    }
-    .stat-num { font-size: 2rem; font-weight: 700; line-height: 1; }
-    .stat-label { font-size: .78rem; color: #64748b; font-weight: 500; }
+    .stat-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: .9rem; }
+    .stat-num { font-size: 1.8rem; font-weight: 700; line-height: 1; }
+    .stat-label { font-size: .75rem; color: #64748b; font-weight: 500; }
 
-    /* ── Empresa cards ───────────────────────────────────────── */
+    /* ── Financeiro ── */
+    .financeiro-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 14px; margin-bottom: 28px;
+    }
+    .fin-card {
+      border-radius: 14px; padding: 20px 22px; color: #fff;
+      background: linear-gradient(135deg, #1e3a5f 0%, #3b82f6 100%);
+    }
+    .fin-card.fin-warning { background: linear-gradient(135deg, #92400e, #d97706); }
+    .fin-card.fin-success { background: linear-gradient(135deg, #065f46, #10b981); }
+    .fin-label { font-size: .72rem; opacity: .75; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+    .fin-val { font-size: 1.5rem; font-weight: 800; margin-top: 6px; line-height: 1; }
+    .fin-sub { font-size: .72rem; opacity: .6; margin-top: 4px; }
+
+    /* ── Empresa cards ── */
     .empresa-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
       gap: 16px;
     }
     @media (max-width: 500px) { .empresa-grid { grid-template-columns: 1fr; } }
 
     .emp-card {
-      background: #fff;
-      border: 1px solid #e2e8f0;
-      border-radius: 14px;
-      overflow: hidden;
-      transition: box-shadow .2s, transform .15s;
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
+      overflow: hidden; transition: box-shadow .2s, transform .15s;
     }
     .emp-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,.09); transform: translateY(-1px); }
 
     .emp-card-header {
-      padding: 16px 20px;
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 12px;
-      border-bottom: 1px solid #f1f5f9;
+      padding: 16px 20px; display: flex; align-items: flex-start;
+      justify-content: space-between; gap: 12px; border-bottom: 1px solid #f1f5f9;
     }
+    .emp-logo { width: 42px; height: 42px; border-radius: 8px; object-fit: cover; border: 1px solid #e2e8f0; flex-shrink: 0; }
     .emp-nome { font-weight: 700; font-size: .95rem; margin-bottom: 2px; }
     .emp-cnpj { font-size: .75rem; color: #64748b; }
+    .emp-fantasia { font-size: .78rem; color: #64748b; font-style: italic; }
 
     .emp-card-body { padding: 14px 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .emp-meta-item { display: flex; flex-direction: column; gap: 2px; }
@@ -98,22 +91,17 @@
     .emp-meta-val { font-size: .875rem; font-weight: 600; }
 
     .emp-card-footer {
-      padding: 12px 20px;
-      background: #f8fafc;
-      border-top: 1px solid #f1f5f9;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      align-items: center;
+      padding: 12px 20px; background: #f8fafc; border-top: 1px solid #f1f5f9;
+      display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
     }
 
-    /* ── Badges ─────────────────────────────────────────────── */
+    /* ── Badges ── */
     .status-badge {
       display: inline-flex; align-items: center; gap: 5px;
-      padding: 3px 10px; border-radius: 20px; font-size: .72rem; font-weight: 700;
-      white-space: nowrap;
+      padding: 3px 10px; border-radius: 20px; font-size: .72rem; font-weight: 700; white-space: nowrap;
     }
     .s-active    { background: #dcfce7; color: #15803d; }
+    .s-trial     { background: #dbeafe; color: #1d4ed8; }
     .s-past_due  { background: #fef3c7; color: #b45309; }
     .s-suspended { background: #fee2e2; color: #b91c1c; }
 
@@ -125,15 +113,22 @@
     .pb-profissional { background: #ede9fe; color: #7c3aed; }
     .pb-enterprise   { background: #fef3c7; color: #d97706; }
 
-    .users-pill {
-      font-size: .82rem; font-weight: 700;
-      padding: 2px 8px; border-radius: 8px;
-    }
+    .users-pill { font-size: .82rem; font-weight: 700; padding: 2px 8px; border-radius: 8px; }
     .up-ok   { color: #16a34a; background: #f0fdf4; }
     .up-warn { color: #d97706; background: #fffbeb; }
     .up-full { color: #dc2626; background: #fef2f2; }
 
-    /* ── User/role badges ─────────────────────────────────────── */
+    /* ── Filter tabs ── */
+    .filter-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+    .filter-tab {
+      padding: 6px 14px; border-radius: 20px; border: 1px solid #e2e8f0;
+      background: #fff; font-size: .78rem; font-weight: 600; cursor: pointer;
+      color: #64748b; transition: all .15s;
+    }
+    .filter-tab.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+    .filter-tab:hover:not(.active) { border-color: #3b82f6; color: #3b82f6; }
+
+    /* ── User rows ── */
     .user-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
     .user-row:last-child { border-bottom: none; }
     .user-info { flex: 1; min-width: 0; }
@@ -143,19 +138,18 @@
     .role-company_admin { background: #dbeafe; color: #1d4ed8; }
     .role-employee      { background: #f3f4f6; color: #374151; }
 
-    /* ── Stripe status ───────────────────────────────────────── */
+    /* ── Stripe status ── */
     .stripe-status { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 12px; font-size: .7rem; font-weight: 600; }
     .ss-active    { background: #dcfce7; color: #16a34a; }
     .ss-trialing  { background: #e0f2fe; color: #0369a1; }
     .ss-past_due  { background: #fef3c7; color: #d97706; }
     .ss-suspended,.ss-canceled,.ss-incomplete_expired { background: #fee2e2; color: #dc2626; }
 
-    /* ── Botões pequenos ─────────────────────────────────────── */
     .btn-xs { padding: 4px 10px; font-size: .74rem; }
     .btn-action { padding: 5px 11px; font-size: .78rem; }
     .footer-spacer { flex: 1; }
 
-    /* ── Status/Assinatura modal ─────────────────────────────── */
+    /* ── Assinatura modal ── */
     .modal-assinatura-body { display: grid; gap: 12px; font-size: .875rem; }
     .modal-assinatura-body .info-row {
       display: flex; justify-content: space-between; align-items: center;
@@ -164,18 +158,37 @@
     .modal-assinatura-body .info-row:last-child { border-bottom: none; }
     .info-label { color: var(--text-muted); font-size: .82rem; }
 
-    /* ── Empty ───────────────────────────────────────────────── */
-    .empty-state {
-      text-align: center; padding: 64px 24px;
-      color: #94a3b8;
+    /* ── Histórico plano ── */
+    .hist-entry {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      padding: 10px 0; border-bottom: 1px solid var(--border); gap: 12px; font-size: .83rem;
     }
+    .hist-entry:last-child { border-bottom: none; }
+    .hist-planos { font-weight: 600; }
+    .hist-meta { font-size: .75rem; color: #64748b; }
+
+    /* ── Logo preview ── */
+    .logo-preview-wrap { margin-bottom: 10px; }
+    .logo-preview { width: 80px; height: 80px; border-radius: 10px; border: 2px solid #e2e8f0; object-fit: cover; display: none; }
+
+    /* ── Trial countdown ── */
+    .trial-countdown { font-size: .72rem; color: #1d4ed8; margin-top: 2px; }
+
+    /* ── Empty ── */
+    .empty-state { text-align: center; padding: 64px 24px; color: #94a3b8; }
     .empty-state i { font-size: 3rem; margin-bottom: 16px; display: block; opacity: .4; }
     .empty-state p { margin: 0; font-size: .95rem; }
+
+    /* ── Impersonation banner ── */
+    .sa-banner {
+      background: #1e3a5f; color: #fff; padding: 8px 20px;
+      font-size: .82rem; display: flex; align-items: center; justify-content: center; gap: 12px;
+    }
   </style>
 </head>
 <body>
 
-<!-- ── Header ─────────────────────────────────────────────── -->
+<!-- ── Header ── -->
 <header class="sa-header">
   <div class="sa-header-brand">
     <div class="logo-icon"><i class="fas fa-crown" style="color:#fbbf24"></i></div>
@@ -196,10 +209,10 @@
   </div>
 </header>
 
-<!-- ── Conteúdo ───────────────────────────────────────────── -->
+<!-- ── Conteúdo ── -->
 <div class="sa-content">
 
-  <!-- Stats -->
+  <!-- Stats básicos -->
   <div class="stats-grid" id="statsRow">
     <div class="stat-card">
       <div class="stat-icon" style="background:#dbeafe"><i class="fas fa-building" style="color:#3b82f6"></i></div>
@@ -210,6 +223,11 @@
       <div class="stat-icon" style="background:#dcfce7"><i class="fas fa-check-circle" style="color:#16a34a"></i></div>
       <div class="stat-num" id="stActive" style="color:#16a34a">-</div>
       <div class="stat-label">Ativas</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#dbeafe"><i class="fas fa-flask" style="color:#1d4ed8"></i></div>
+      <div class="stat-num" id="stTrial" style="color:#1d4ed8">-</div>
+      <div class="stat-label">Em Teste</div>
     </div>
     <div class="stat-card">
       <div class="stat-icon" style="background:#fef3c7"><i class="fas fa-clock" style="color:#d97706"></i></div>
@@ -226,10 +244,29 @@
       <div class="stat-num" id="stUsuarios">-</div>
       <div class="stat-label">Total Usuários</div>
     </div>
-    <div class="stat-card">
-      <div class="stat-icon" style="background:#f0fdf4"><i class="fab fa-stripe-s" style="color:#16a34a"></i></div>
-      <div class="stat-num" id="stAtivas">-</div>
-      <div class="stat-label">Com Stripe Ativo</div>
+  </div>
+
+  <!-- Métricas financeiras -->
+  <div class="financeiro-row" id="finRow" style="display:none">
+    <div class="fin-card">
+      <div class="fin-label">MRR</div>
+      <div class="fin-val" id="finMrr">R$ -</div>
+      <div class="fin-sub">Receita mensal recorrente</div>
+    </div>
+    <div class="fin-card">
+      <div class="fin-label">ARR</div>
+      <div class="fin-val" id="finArr">R$ -</div>
+      <div class="fin-sub">Receita anual recorrente</div>
+    </div>
+    <div class="fin-card fin-warning">
+      <div class="fin-label">Inadimplentes</div>
+      <div class="fin-val" id="finInadimplentes">-</div>
+      <div class="fin-sub">Empresas em atraso</div>
+    </div>
+    <div class="fin-card fin-success">
+      <div class="fin-label">Registros Hoje</div>
+      <div class="fin-val" id="finPontosHoje">-</div>
+      <div class="fin-sub">Pontos registrados</div>
     </div>
   </div>
 
@@ -249,18 +286,28 @@
   </div>
 
   <!-- Lista de empresas -->
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
     <h2 style="font-size:1rem;font-weight:700;margin:0;color:#1e293b">
       <i class="fas fa-building" style="color:#3b82f6;margin-right:8px"></i>Empresas Cadastradas
     </h2>
     <span id="empresaCount" style="font-size:.8rem;color:#64748b"></span>
   </div>
+
+  <!-- Filtros de status -->
+  <div class="filter-tabs" id="filterTabs">
+    <button class="filter-tab active" data-filter="all">Todas</button>
+    <button class="filter-tab" data-filter="active">Ativas</button>
+    <button class="filter-tab" data-filter="trial">Em Teste</button>
+    <button class="filter-tab" data-filter="past_due">Em Atraso</button>
+    <button class="filter-tab" data-filter="suspended">Suspensas</button>
+  </div>
+
   <div id="listaEmpresas">
     <div class="page-loader"><span class="spinner"></span></div>
   </div>
 </div>
 
-<!-- ── Modal super admin ──────────────────────────────────── -->
+<!-- ── Modal super admin ── -->
 <div class="modal-overlay" id="modalSuperAdmin">
   <div class="modal" style="max-width:420px">
     <div class="modal-header">
@@ -296,24 +343,60 @@
   </div>
 </div>
 
-<!-- ── Modal nova/editar empresa ──────────────────────────── -->
+<!-- ── Modal nova/editar empresa ── -->
 <div class="modal-overlay" id="modalEmpresa">
-  <div class="modal" style="max-width:500px">
+  <div class="modal" style="max-width:560px">
     <div class="modal-header">
       <h3 class="modal-title" id="modalEmpresaTitulo"><i class="fas fa-building"></i> Nova Empresa</h3>
       <button class="modal-close" onclick="closeModal('modalEmpresa')"><i class="fas fa-times"></i></button>
     </div>
-    <div class="modal-body">
+    <div class="modal-body" style="max-height:70vh;overflow-y:auto">
       <input type="hidden" id="empId" />
+
+      <!-- Logo atual (só na edição) -->
+      <div class="logo-preview-wrap" id="logoWrap" style="display:none">
+        <div class="emp-meta-label" style="margin-bottom:6px">Logo atual</div>
+        <img id="empLogoPreview" class="logo-preview" alt="Logo" />
+      </div>
+
       <div class="form-group">
         <label class="form-label">Nome da Empresa *</label>
         <input type="text" class="form-control" id="empNome" placeholder="Ex: Acme Ltda" />
       </div>
       <div class="form-row" style="grid-template-columns:1fr 1fr">
         <div class="form-group">
-          <label class="form-label">CNPJ</label>
-          <input type="text" class="form-control" id="empCnpj" placeholder="00.000.000/0001-00" />
+          <label class="form-label">Nome Fantasia</label>
+          <input type="text" class="form-control" id="empNomeFantasia" placeholder="Nome comercial" />
         </div>
+        <div class="form-group">
+          <label class="form-label">Razão Social</label>
+          <input type="text" class="form-control" id="empRazaoSocial" placeholder="Razão Social" />
+        </div>
+      </div>
+      <div class="form-row" style="grid-template-columns:auto 1fr">
+        <div class="form-group">
+          <label class="form-label">Tipo</label>
+          <select class="form-control" id="empTipoDocumento">
+            <option value="cnpj">CNPJ</option>
+            <option value="cpf">CPF</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" id="empDocLabel">CNPJ</label>
+          <input type="text" class="form-control" id="empDocumento" placeholder="00.000.000/0001-00" />
+        </div>
+      </div>
+      <div class="form-row" style="grid-template-columns:1fr 1fr">
+        <div class="form-group">
+          <label class="form-label">E-mail de contato</label>
+          <input type="email" class="form-control" id="empEmail" placeholder="contato@empresa.com" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Telefone</label>
+          <input type="text" class="form-control" id="empTelefone" placeholder="(11) 99999-9999" />
+        </div>
+      </div>
+      <div class="form-row" style="grid-template-columns:1fr 1fr">
         <div class="form-group">
           <label class="form-label">Plano</label>
           <select class="form-control" id="empPlano">
@@ -322,24 +405,34 @@
             <option value="enterprise">Enterprise</option>
           </select>
         </div>
+        <div class="form-group" id="empToleranciaGroup">
+          <label class="form-label">Tolerância (dias atraso)</label>
+          <input type="number" class="form-control" id="empToleranciaDias" min="0" max="30" value="3" placeholder="3" />
+        </div>
       </div>
+      <!-- Trial só na criação -->
+      <div class="form-group" id="empTrialGroup">
+        <label class="form-label">Período de teste (dias) <span style="color:#64748b;font-weight:400">(0 = sem trial)</span></label>
+        <input type="number" class="form-control" id="empTrialDias" min="0" max="90" value="0" placeholder="Ex: 14" />
+      </div>
+      <!-- Logo upload -->
       <div class="form-group">
-        <label class="form-label">E-mail de contato</label>
-        <input type="email" class="form-control" id="empEmail" placeholder="contato@empresa.com" />
+        <label class="form-label">Logo <span style="color:#64748b;font-weight:400">(JPG/PNG, máx. 3 MB)</span></label>
+        <input type="file" class="form-control" id="empLogoFile" accept="image/jpeg,image/png,image/webp" />
       </div>
-      <div class="form-group">
-        <label class="form-label">Telefone</label>
-        <input type="text" class="form-control" id="empTelefone" placeholder="(11) 99999-9999" />
-      </div>
+      <!-- Campo legado oculto para compatibilidade com CNPJ antigo -->
+      <input type="hidden" id="empCnpj" />
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modalEmpresa')">Cancelar</button>
+      <button class="btn btn-outline" id="btnVerHistorico" style="display:none;color:#7c3aed;border-color:#ddd6fe"
+        onclick="abrirHistorico()"><i class="fas fa-history"></i> Histórico</button>
       <button class="btn btn-primary" id="btnSalvarEmpresa"><i class="fas fa-save"></i> Salvar</button>
     </div>
   </div>
 </div>
 
-<!-- ── Modal usuários da empresa ──────────────────────────── -->
+<!-- ── Modal usuários da empresa ── -->
 <div class="modal-overlay" id="modalUsuarios">
   <div class="modal" style="max-width:600px">
     <div class="modal-header">
@@ -356,7 +449,7 @@
   </div>
 </div>
 
-<!-- ── Modal criar usuário ────────────────────────────────── -->
+<!-- ── Modal criar usuário ── -->
 <div class="modal-overlay" id="modalCriarUsuario">
   <div class="modal" style="max-width:440px">
     <div class="modal-header">
@@ -392,7 +485,7 @@
   </div>
 </div>
 
-<!-- ── Modal assinatura Stripe ────────────────────────────── -->
+<!-- ── Modal assinatura Stripe ── -->
 <div class="modal-overlay" id="modalAssinatura">
   <div class="modal" style="max-width:520px">
     <div class="modal-header">
@@ -408,10 +501,26 @@
   </div>
 </div>
 
+<!-- ── Modal histórico de plano ── -->
+<div class="modal-overlay" id="modalHistorico">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modalHistoricoTitulo"><i class="fas fa-history"></i> Histórico de Plano</h3>
+      <button class="modal-close" onclick="closeModal('modalHistorico')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" style="max-height:55vh;overflow-y:auto" id="modalHistoricoBody">
+      <div class="page-loader"><span class="spinner"></span></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalHistorico')">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <script src="js/api.js"></script>
 <script src="js/utils.js"></script>
 <script>
-// ── Constantes de plano ──────────────────────────────────────
+// ── Constantes ──
 const PLAN_LIMITS = {
   basico:       { employee_limit: 10,  label: 'Básico',       badgeCls: 'pb-basico' },
   profissional: { employee_limit: 50,  label: 'Profissional', badgeCls: 'pb-profissional' },
@@ -421,21 +530,34 @@ function planLimit(plano) { return (PLAN_LIMITS[plano] || PLAN_LIMITS.basico).em
 function planLabel(plano) { return (PLAN_LIMITS[plano] || PLAN_LIMITS.basico).label; }
 function planBadge(plano) { return (PLAN_LIMITS[plano] || PLAN_LIMITS.basico).badgeCls; }
 
-const STATUS_LABEL = { active: 'Ativa', past_due: 'Em Atraso', suspended: 'Suspensa' };
+const STATUS_LABEL = { active: 'Ativa', trial: 'Em Teste', past_due: 'Em Atraso', suspended: 'Suspensa' };
 const STRIPE_STATUS_LABEL = {
   active: 'Ativo', trialing: 'Em teste', past_due: 'Em atraso',
   canceled: 'Cancelado', suspended: 'Suspenso',
 };
 
-// ── Init ─────────────────────────────────────────────────────
+const fmtBRL = v => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
+
+// ── Init ──
 document.addEventListener('DOMContentLoaded', async () => {
+  // Restaura sessão do super admin se voltando de uma impersonação
+  const saToken = sessionStorage.getItem('_sa_token');
+  if (saToken) {
+    const saUser = sessionStorage.getItem('_sa_user');
+    localStorage.removeItem('token');   sessionStorage.removeItem('token');
+    localStorage.removeItem('usuario'); sessionStorage.removeItem('usuario');
+    Auth.setToken(saToken, false);
+    if (saUser) { try { Auth.setUsuario(JSON.parse(saUser), false); } catch {} }
+    sessionStorage.removeItem('_sa_token');
+    sessionStorage.removeItem('_sa_user');
+  }
+
   if (!Auth.getToken()) { window.location.href = '/index.html'; return; }
   const user = Auth.getUsuario();
   if (!user || user.role !== 'super_admin') { window.location.href = '/dashboard.html'; return; }
 
   document.getElementById('adminSubtitle').textContent = `${user.nome} · ${user.email}`;
 
-  // Feedback de checkout retornado do Stripe
   const params = new URLSearchParams(location.search);
   if (params.get('checkout') === 'success') {
     toast('Pagamento iniciado! Aguardando confirmação via webhook…', 'success');
@@ -446,10 +568,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.history.replaceState({}, '', '/admin.html');
   }
 
+  // Filtros
+  document.querySelectorAll('.filter-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      _filtroStatus = btn.dataset.filter;
+      renderEmpresas(_empresas);
+    });
+  });
+
+  // Tipo de documento label dinâmico
+  document.getElementById('empTipoDocumento').addEventListener('change', e => {
+    document.getElementById('empDocLabel').textContent = e.target.value === 'cpf' ? 'CPF' : 'CNPJ';
+    document.getElementById('empDocumento').placeholder = e.target.value === 'cpf' ? '000.000.000-00' : '00.000.000/0001-00';
+  });
+
   await carregarEmpresas();
+  carregarMetricas();
 });
 
-let _empresas = [];
+let _empresas    = [];
+let _filtroStatus = 'all';
 
 async function carregarEmpresas() {
   try {
@@ -461,30 +601,51 @@ async function carregarEmpresas() {
   }
 }
 
-// ── Stats ────────────────────────────────────────────────────
+// ── Métricas financeiras ──
+async function carregarMetricas() {
+  try {
+    const m = await API.get('/superadmin/metricas');
+    document.getElementById('finMrr').textContent            = fmtBRL(m.financeiro.mrr);
+    document.getElementById('finArr').textContent            = fmtBRL(m.financeiro.arr);
+    document.getElementById('finInadimplentes').textContent  = m.empresas.inadimplentes;
+    document.getElementById('finPontosHoje').textContent     = m.pontos_hoje;
+    if (m.financeiro.mrr > 0 || m.empresas.inadimplentes > 0 || m.pontos_hoje > 0) {
+      document.getElementById('finRow').style.display = 'grid';
+    }
+  } catch { /* silencioso — métricas são complementares */ }
+}
+
+// ── Stats ──
 function renderStats(list) {
   document.getElementById('stTotal').textContent     = list.length;
   document.getElementById('stActive').textContent    = list.filter(e => e.status === 'active').length;
+  document.getElementById('stTrial').textContent     = list.filter(e => e.status === 'trial').length;
   document.getElementById('stPastDue').textContent   = list.filter(e => e.status === 'past_due').length;
   document.getElementById('stSuspended').textContent = list.filter(e => e.status === 'suspended').length;
   document.getElementById('stUsuarios').textContent  = list.reduce((a, e) => a + (e.total_usuarios || 0), 0);
-  document.getElementById('stAtivas').textContent    = list.filter(e => e.stripe_subscription_id).length;
 }
 
-// ── Renderiza cards de empresa ───────────────────────────────
+// ── Renderiza cards ──
 function renderEmpresas(list) {
   const el = document.getElementById('listaEmpresas');
-  document.getElementById('empresaCount').textContent = `${list.length} empresa${list.length !== 1 ? 's' : ''}`;
+  const filtered = _filtroStatus === 'all' ? list : list.filter(e => e.status === _filtroStatus);
+  document.getElementById('empresaCount').textContent = `${filtered.length} de ${list.length} empresa${list.length !== 1 ? 's' : ''}`;
 
-  if (!list.length) {
+  if (!filtered.length) {
     el.innerHTML = `<div class="empty-state">
       <i class="fas fa-building"></i>
-      <p>Nenhuma empresa cadastrada.<br>Clique em "Nova Empresa" para começar.</p>
+      <p>${list.length ? 'Nenhuma empresa nesse status.' : 'Nenhuma empresa cadastrada.<br>Clique em "Nova Empresa" para começar.'}</p>
     </div>`;
     return;
   }
 
-  el.innerHTML = `<div class="empresa-grid">${list.map(empCard).join('')}</div>`;
+  el.innerHTML = `<div class="empresa-grid">${filtered.map(empCard).join('')}</div>`;
+}
+
+function trialDiasRestantes(e) {
+  if (e.status !== 'trial' || !e.trial_ends_at) return null;
+  const diff = Math.ceil((new Date(e.trial_ends_at) - Date.now()) / 86_400_000);
+  return diff;
 }
 
 function empCard(e) {
@@ -494,17 +655,32 @@ function empCard(e) {
   const uCls  = pct >= 1 ? 'up-full' : pct >= .8 ? 'up-warn' : 'up-ok';
   const uLbl  = `${total}/${limit === 999 ? '∞' : limit}`;
   const since = new Date(e.criado_em).toLocaleDateString('pt-BR');
-  const hasSub = !!e.stripe_subscription_id;
-  const stripeStatusHtml = hasSub && e.stripe_status
-    ? `<span class="stripe-status ss-${e.stripe_status}" title="Status Stripe">${STRIPE_STATUS_LABEL[e.stripe_status] || e.stripe_status}</span>`
-    : `<span style="font-size:.72rem;color:#94a3b8">Sem assinatura</span>`;
+  const diasTrial = trialDiasRestantes(e);
+
+  const logoHtml = e.logo
+    ? `<img src="${e.logo}" class="emp-logo" alt="Logo" />`
+    : `<div class="emp-logo" style="background:#f1f5f9;display:flex;align-items:center;justify-content:center;color:#94a3b8">
+         <i class="fas fa-building" style="font-size:.9rem"></i></div>`;
+
+  const trialBadgeHtml = diasTrial !== null
+    ? `<div class="trial-countdown"><i class="fas fa-flask"></i> ${diasTrial > 0 ? `${diasTrial} dia${diasTrial > 1 ? 's' : ''} restantes` : 'Trial expirou'}</div>`
+    : '';
+
+  const subDoc = e.documento
+    ? `${e.tipo_documento?.toUpperCase() || 'CNPJ'}: ${e.documento}`
+    : (e.cnpj ? `CNPJ: ${e.cnpj}` : `Desde ${since}`);
 
   return `
   <div class="emp-card">
     <div class="emp-card-header">
-      <div>
-        <div class="emp-nome">${e.nome}</div>
-        <div class="emp-cnpj">${e.cnpj ? `CNPJ: ${e.cnpj}` : `Desde ${since}`}</div>
+      <div style="display:flex;gap:10px;align-items:flex-start;flex:1;min-width:0">
+        ${logoHtml}
+        <div style="flex:1;min-width:0">
+          <div class="emp-nome">${e.nome}</div>
+          ${e.nome_fantasia ? `<div class="emp-fantasia">${e.nome_fantasia}</div>` : ''}
+          <div class="emp-cnpj">${subDoc}</div>
+          ${trialBadgeHtml}
+        </div>
       </div>
       <span class="status-badge s-${e.status}">${STATUS_LABEL[e.status] || e.status}</span>
     </div>
@@ -519,12 +695,12 @@ function empCard(e) {
         <span class="users-pill ${uCls}">${uLbl}</span>
       </div>
       <div class="emp-meta-item">
-        <span class="emp-meta-label">Stripe</span>
-        ${stripeStatusHtml}
-      </div>
-      <div class="emp-meta-item">
         <span class="emp-meta-label">Registros</span>
         <span class="emp-meta-val">${(e.total_registros || 0).toLocaleString('pt-BR')}</span>
+      </div>
+      <div class="emp-meta-item">
+        <span class="emp-meta-label">Tolerância</span>
+        <span class="emp-meta-val">${e.tolerancia_dias ?? 3}d</span>
       </div>
     </div>
 
@@ -541,6 +717,11 @@ function empCard(e) {
         style="color:#7c3aed;border-color:#ddd6fe"
         onclick="abrirAssinatura(${e.id},'${e.nome.replace(/'/g,"\\'")}')">
         <i class="fab fa-stripe-s"></i> Stripe
+      </button>
+      <button class="btn btn-action btn-outline" title="Acessar empresa como admin"
+        style="color:#0369a1;border-color:#bae6fd"
+        onclick="impersonar(${e.id},'${e.nome.replace(/'/g,"\\'")}')">
+        <i class="fas fa-eye"></i> Acessar
       </button>
 
       <div class="footer-spacer"></div>
@@ -566,12 +747,13 @@ function empCard(e) {
   </div>`;
 }
 
-// ── CRUD Empresa ─────────────────────────────────────────────
+// ── CRUD Empresa ──
 async function mudarStatus(id, status) {
   try {
     await API.patch(`/empresas/${id}/status`, { status });
     toast('Status alterado!', 'success');
     await carregarEmpresas();
+    carregarMetricas();
   } catch (err) { toast(err.data?.erro || 'Erro.', 'error'); }
 }
 
@@ -582,14 +764,25 @@ async function excluirEmpresa(id, nome) {
     await API.delete(`/empresas/${id}`);
     toast('Empresa excluída.', 'success');
     await carregarEmpresas();
+    carregarMetricas();
   } catch (err) { toast(err.data?.erro || 'Erro.', 'error'); }
 }
 
 function abrirNova() {
-  ['empId','empNome','empCnpj','empEmail','empTelefone'].forEach(id => {
+  ['empId','empNome','empNomeFantasia','empRazaoSocial','empDocumento','empEmail','empTelefone'].forEach(id => {
     document.getElementById(id).value = '';
   });
-  document.getElementById('empPlano').value = 'basico';
+  document.getElementById('empCnpj').value         = '';
+  document.getElementById('empPlano').value         = 'basico';
+  document.getElementById('empToleranciaDias').value = '3';
+  document.getElementById('empTrialDias').value     = '0';
+  document.getElementById('empTipoDocumento').value = 'cnpj';
+  document.getElementById('empDocLabel').textContent = 'CNPJ';
+  document.getElementById('empDocumento').placeholder = '00.000.000/0001-00';
+  document.getElementById('empLogoFile').value      = '';
+  document.getElementById('logoWrap').style.display = 'none';
+  document.getElementById('empTrialGroup').style.display = '';
+  document.getElementById('btnVerHistorico').style.display = 'none';
   document.getElementById('modalEmpresaTitulo').innerHTML = '<i class="fas fa-plus"></i> Nova Empresa';
   openModal('modalEmpresa');
 }
@@ -597,13 +790,38 @@ function abrirNova() {
 function abrirEdicao(id) {
   const e = _empresas.find(x => x.id === id);
   if (!e) return;
-  document.getElementById('empId').value       = e.id;
-  document.getElementById('empNome').value     = e.nome;
-  document.getElementById('empCnpj').value     = e.cnpj || '';
-  document.getElementById('empEmail').value    = e.email || '';
-  document.getElementById('empTelefone').value = e.telefone || '';
-  document.getElementById('empPlano').value    = e.plano || 'basico';
+  document.getElementById('empId').value            = e.id;
+  document.getElementById('empNome').value          = e.nome;
+  document.getElementById('empNomeFantasia').value  = e.nome_fantasia  || '';
+  document.getElementById('empRazaoSocial').value   = e.razao_social   || '';
+  document.getElementById('empDocumento').value     = e.documento || e.cnpj || '';
+  document.getElementById('empCnpj').value          = e.cnpj || '';
+  document.getElementById('empEmail').value         = e.email    || '';
+  document.getElementById('empTelefone').value      = e.telefone || '';
+  document.getElementById('empPlano').value         = e.plano    || 'basico';
+  document.getElementById('empToleranciaDias').value = e.tolerancia_dias ?? '3';
+  document.getElementById('empTrialDias').value     = '0';
+  const tipo = e.tipo_documento || 'cnpj';
+  document.getElementById('empTipoDocumento').value = tipo;
+  document.getElementById('empDocLabel').textContent = tipo === 'cpf' ? 'CPF' : 'CNPJ';
+  document.getElementById('empDocumento').placeholder = tipo === 'cpf' ? '000.000.000-00' : '00.000.000/0001-00';
+  document.getElementById('empLogoFile').value      = '';
+  document.getElementById('empTrialGroup').style.display = 'none';
+  document.getElementById('btnVerHistorico').style.display = '';
   document.getElementById('modalEmpresaTitulo').innerHTML = '<i class="fas fa-edit"></i> Editar Empresa';
+
+  // Logo preview
+  const logoPreview = document.getElementById('empLogoPreview');
+  const logoWrap    = document.getElementById('logoWrap');
+  if (e.logo) {
+    logoPreview.src       = e.logo;
+    logoPreview.style.display = 'block';
+    logoWrap.style.display    = '';
+  } else {
+    logoWrap.style.display    = 'none';
+    logoPreview.style.display = 'none';
+  }
+
   openModal('modalEmpresa');
 }
 
@@ -612,21 +830,51 @@ document.getElementById('btnNovaEmpresa').addEventListener('click', abrirNova);
 document.getElementById('btnSalvarEmpresa').addEventListener('click', async () => {
   const id   = document.getElementById('empId').value;
   const body = {
-    nome:     document.getElementById('empNome').value.trim(),
-    cnpj:     document.getElementById('empCnpj').value.trim(),
-    email:    document.getElementById('empEmail').value.trim(),
-    telefone: document.getElementById('empTelefone').value.trim(),
-    plano:    document.getElementById('empPlano').value,
+    nome:           document.getElementById('empNome').value.trim(),
+    nome_fantasia:  document.getElementById('empNomeFantasia').value.trim() || null,
+    razao_social:   document.getElementById('empRazaoSocial').value.trim()  || null,
+    documento:      document.getElementById('empDocumento').value.trim()    || null,
+    tipo_documento: document.getElementById('empTipoDocumento').value,
+    cnpj:           document.getElementById('empCnpj').value.trim()         || document.getElementById('empDocumento').value.trim() || null,
+    email:          document.getElementById('empEmail').value.trim(),
+    telefone:       document.getElementById('empTelefone').value.trim(),
+    plano:          document.getElementById('empPlano').value,
+    tolerancia_dias: parseInt(document.getElementById('empToleranciaDias').value) || 3,
   };
+  if (!id) {
+    body.trial_dias = parseInt(document.getElementById('empTrialDias').value) || 0;
+  }
   if (!body.nome) { toast('Nome é obrigatório.', 'error'); return; }
+
   const btn = document.getElementById('btnSalvarEmpresa');
   btn.disabled = true;
   try {
-    if (id) await API.put(`/empresas/${id}`, body);
-    else    await API.post('/empresas', body);
+    let empresaId = id;
+    if (id) {
+      await API.put(`/empresas/${id}`, body);
+    } else {
+      const created = await API.post('/empresas', body);
+      empresaId = created.id;
+    }
+
+    // Upload de logo (se selecionado)
+    const logoFile = document.getElementById('empLogoFile').files[0];
+    if (logoFile && empresaId) {
+      const fd = new FormData();
+      fd.append('logo', logoFile);
+      try {
+        await fetch(`/api/empresas/${empresaId}/logo`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${Auth.getToken()}` },
+          body: fd,
+        }).then(r => r.json());
+      } catch { toast('Empresa salva, mas falha no upload do logo.', 'warning'); }
+    }
+
     closeModal('modalEmpresa');
     toast(id ? 'Empresa atualizada!' : 'Empresa criada!', 'success');
     await carregarEmpresas();
+    carregarMetricas();
   } catch (err) { toast(err.data?.erro || 'Erro ao salvar.', 'error'); }
   finally { btn.disabled = false; }
 });
@@ -637,7 +885,73 @@ document.getElementById('btnLogout').addEventListener('click', async () => {
   window.location.href = '/index.html';
 });
 
-// ── Gestão de usuários por empresa ───────────────────────────
+// ── Impersonação ──
+async function impersonar(empresaId, empresaNome) {
+  const ok = await confirmDialog(
+    `Acessar <strong>${empresaNome}</strong> como administrador?<br>Você entrará na sessão da empresa. Para voltar, acesse <em>admin.html</em>.`
+  );
+  if (!ok) return;
+  try {
+    const data = await API.post(`/superadmin/impersonar/${empresaId}`, {});
+    // Salva sessão atual do super admin
+    sessionStorage.setItem('_sa_token', Auth.getToken());
+    sessionStorage.setItem('_sa_user',  JSON.stringify(Auth.getUsuario()));
+    // Limpa ambos os storages para o novo token ser lido corretamente pelo getToken()
+    localStorage.removeItem('token');   sessionStorage.removeItem('token');
+    localStorage.removeItem('usuario'); sessionStorage.removeItem('usuario');
+    // Define sessão da empresa (sessão, não persiste ao fechar o browser)
+    Auth.setToken(data.token, false);
+    const me = await API.get('/auth/me');
+    Auth.setUsuario(me, false);
+    toast(`Acessando ${data.empresa}...`, 'success');
+    setTimeout(() => { window.location.href = '/dashboard.html'; }, 600);
+  } catch (err) { toast(err.data?.erro || 'Erro ao impersonar.', 'error'); }
+}
+
+// ── Histórico de plano ──
+let _historicoEmpresaId = null;
+
+function abrirHistorico() {
+  const id = document.getElementById('empId').value;
+  if (!id) return;
+  _historicoEmpresaId = id;
+  const e = _empresas.find(x => x.id === parseInt(id));
+  document.getElementById('modalHistoricoTitulo').innerHTML =
+    `<i class="fas fa-history"></i> Histórico — ${e?.nome || 'Empresa'}`;
+  document.getElementById('modalHistoricoBody').innerHTML =
+    '<div class="page-loader"><span class="spinner"></span></div>';
+  openModal('modalHistorico');
+  carregarHistorico(id);
+}
+
+async function carregarHistorico(id) {
+  const el = document.getElementById('modalHistoricoBody');
+  try {
+    const rows = await API.get(`/empresas/${id}/historico-plano`);
+    if (!rows.length) {
+      el.innerHTML = '<div style="color:#94a3b8;padding:16px;text-align:center">Nenhuma alteração de plano registrada.</div>';
+      return;
+    }
+    el.innerHTML = rows.map(h => {
+      const d = new Date(h.created_at).toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+      return `<div class="hist-entry">
+        <div>
+          <div class="hist-planos">
+            <span class="plan-badge ${planBadge(h.plano_antes)}">${planLabel(h.plano_antes)}</span>
+            <i class="fas fa-arrow-right" style="margin:0 6px;color:#94a3b8;font-size:.75rem"></i>
+            <span class="plan-badge ${planBadge(h.plano_depois)}">${planLabel(h.plano_depois)}</span>
+          </div>
+          <div class="hist-meta">${d} ${h.alterado_por_nome ? `· por ${h.alterado_por_nome}` : ''}</div>
+          ${h.motivo ? `<div class="hist-meta" style="font-style:italic">"${h.motivo}"</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  } catch {
+    el.innerHTML = '<div style="color:#dc2626;padding:16px">Erro ao carregar histórico.</div>';
+  }
+}
+
+// ── Gestão de usuários por empresa ──
 let _empresaAtualId = null;
 
 async function abrirUsuarios(empresaId, empresaNome) {
@@ -721,7 +1035,7 @@ document.getElementById('btnSalvarNovoUser').addEventListener('click', async () 
   finally { btn.disabled = false; }
 });
 
-// ── Stripe ───────────────────────────────────────────────────
+// ── Stripe ──
 let _stripeEmpresaId   = null;
 let _stripeEmpresaNome = null;
 
@@ -768,11 +1082,11 @@ async function recarregarInfoAssinatura() {
       return;
     }
 
-    const sub    = data;
+    const sub       = data;
     const periodoFim = sub.current_period_end
       ? new Date(sub.current_period_end * 1000).toLocaleDateString('pt-BR') : '—';
-    const ssCls  = `ss-${sub.stripe_status || 'suspended'}`;
-    const ssLbl  = stripeStatusLabel[sub.stripe_status] || sub.stripe_status || '—';
+    const ssCls = `ss-${sub.stripe_status || 'suspended'}`;
+    const ssLbl = stripeStatusLabel[sub.stripe_status] || sub.stripe_status || '—';
 
     body.innerHTML = `
       <div class="modal-assinatura-body">
@@ -851,7 +1165,7 @@ async function cancelarAssinaturaEmpresa() {
   } catch (err) { toast(err.data?.erro || 'Erro ao cancelar.', 'error'); }
 }
 
-// ── Super Admins ─────────────────────────────────────────────
+// ── Super Admins ──
 let _superAdmins = [];
 
 async function carregarSuperAdmins() {
@@ -929,12 +1243,12 @@ async function excluirSuperAdmin(id, nome) {
 document.getElementById('btnNovoSuperAdmin').addEventListener('click', abrirCriarSuperAdmin);
 
 document.getElementById('btnSalvarSuperAdmin').addEventListener('click', async () => {
-  const id       = document.getElementById('saId').value;
-  const nome     = document.getElementById('saNome').value.trim();
-  const email    = document.getElementById('saEmail').value.trim();
-  const senha    = document.getElementById('saSenha').value;
+  const id      = document.getElementById('saId').value;
+  const nome    = document.getElementById('saNome').value.trim();
+  const email   = document.getElementById('saEmail').value.trim();
+  const senha   = document.getElementById('saSenha').value;
   const confirmar = document.getElementById('saConfirmar').value;
-  const erroEl   = document.getElementById('saErro');
+  const erroEl  = document.getElementById('saErro');
   erroEl.style.display = 'none';
 
   if (!nome || !email) { erroEl.textContent = 'Nome e e-mail são obrigatórios.'; erroEl.style.display = 'block'; return; }

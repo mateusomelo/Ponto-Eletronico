@@ -344,6 +344,50 @@ async function runIncrementalMigrations(conn) {
     console.log('[Migration] empresas: campos Stripe adicionados');
   }
 
+  // ── Fase 5: campos SaaS avançados na tabela empresas ─────
+  const [empCols2] = await conn.query('SHOW COLUMNS FROM empresas');
+  const empNames2  = empCols2.map(c => c.Field);
+  const empAlter2  = [];
+  if (!empNames2.includes('nome_fantasia'))     empAlter2.push('ADD COLUMN nome_fantasia    VARCHAR(200) NULL AFTER nome');
+  if (!empNames2.includes('razao_social'))      empAlter2.push('ADD COLUMN razao_social     VARCHAR(200) NULL AFTER nome_fantasia');
+  if (!empNames2.includes('documento'))         empAlter2.push('ADD COLUMN documento        VARCHAR(30)  NULL COMMENT "CPF ou CNPJ"');
+  if (!empNames2.includes('tipo_documento'))    empAlter2.push("ADD COLUMN tipo_documento   ENUM('cpf','cnpj') NULL DEFAULT 'cnpj'");
+  if (!empNames2.includes('logo'))              empAlter2.push('ADD COLUMN logo             VARCHAR(500) NULL');
+  if (!empNames2.includes('trial_ends_at'))     empAlter2.push('ADD COLUMN trial_ends_at    DATETIME     NULL');
+  if (!empNames2.includes('tolerancia_dias'))   empAlter2.push('ADD COLUMN tolerancia_dias  TINYINT UNSIGNED NOT NULL DEFAULT 3 COMMENT "dias de tolerância após vencimento"');
+  if (!empNames2.includes('inadimplente_desde'))empAlter2.push('ADD COLUMN inadimplente_desde DATETIME NULL COMMENT "quando entrou em past_due"');
+  if (empAlter2.length) {
+    await conn.query(`ALTER TABLE empresas ${empAlter2.join(', ')}`);
+    console.log('[Migration] empresas: campos SaaS avançados adicionados →', empAlter2.length);
+  }
+
+  // Adiciona 'trial' ao ENUM status da empresas se não existir
+  const [empStatusCol] = await conn.query("SHOW COLUMNS FROM empresas WHERE Field = 'status'");
+  if (empStatusCol.length && !empStatusCol[0].Type.includes('trial')) {
+    await conn.query(`
+      ALTER TABLE empresas
+        MODIFY COLUMN status ENUM('trial','active','past_due','suspended') NOT NULL DEFAULT 'trial'
+    `);
+    console.log('[Migration] empresas: status ENUM expandido com trial');
+  }
+
+  // ── Fase 5b: tabela plano_historico ──────────────────────
+  await conn.query(`
+    CREATE TABLE IF NOT EXISTS plano_historico (
+      id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      empresa_id   INT UNSIGNED NOT NULL,
+      plano_antes  VARCHAR(50)  NOT NULL,
+      plano_depois VARCHAR(50)  NOT NULL,
+      alterado_por INT UNSIGNED NULL COMMENT 'usuario_id do super admin',
+      motivo       TEXT         NULL,
+      created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      INDEX idx_ph_empresa (empresa_id),
+      INDEX idx_ph_created (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+  console.log('[Migration] plano_historico: tabela verificada.');
+
   // ── Fase 3: UNIQUE constraints compostos (nome+company_id, chave+company_id) ──
   // Tenta remover índices antigos (single-column) — ignora se já não existirem
   try { await conn.query('ALTER TABLE cargos DROP INDEX uq_cargo_nome'); } catch {}
