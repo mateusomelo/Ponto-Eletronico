@@ -142,9 +142,17 @@ async function me(req, res) {
       if (empR[0]) { company_status = empR[0].status; company_nome = empR[0].nome; }
     }
 
+    const permissoesList = perms.map(p => p.nome);
+
+    // Garante que admins e supervisores (nivel <= 2) sempre tenham pagamentos.visualizar
+    // independente do estado do banco — o backend já os libera via authorize()
+    if (u.role !== 'super_admin' && u.cargo_nivel <= 2 && !permissoesList.includes('pagamentos.visualizar')) {
+      permissoesList.push('pagamentos.visualizar');
+    }
+
     return res.json({
       ...u,
-      permissoes:     perms.map(p => p.nome),
+      permissoes:     permissoesList,
       company_status: company_status,
       company_nome:   company_nome,
     });
