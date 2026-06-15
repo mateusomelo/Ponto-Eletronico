@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Criar Conta — Ponto Eletrônico Corporativo</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕐</text></svg>" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 60%,#0f172a 100%);min-height:100vh;padding:32px 16px}
+
+    .page-wrap{max-width:760px;margin:0 auto}
+
+    /* Header */
+    .cad-header{text-align:center;margin-bottom:32px}
+    .cad-logo{display:inline-flex;align-items:center;gap:14px;margin-bottom:16px}
+    .cad-logo-icon{width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#1e3a5f,#3b82f6);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(59,130,246,.4)}
+    .cad-logo-icon i{font-size:22px;color:#fff}
+    .cad-logo-text{font-size:1.3rem;font-weight:700;color:#fff}
+    .cad-logo-sub{font-size:.8rem;color:#94a3b8;margin-top:2px}
+    .cad-header h1{font-size:1.6rem;font-weight:700;color:#f1f5f9;margin-bottom:6px}
+    .cad-header p{color:#94a3b8;font-size:.95rem}
+    .trial-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:#86efac;border-radius:50px;padding:6px 16px;font-size:.82rem;font-weight:600;margin-top:10px}
+    .trial-badge i{font-size:.75rem}
+
+    /* Card */
+    .cad-card{background:#fff;border-radius:20px;padding:36px 40px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+
+    /* Planos */
+    .section-title{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#64748b;margin-bottom:14px}
+    .planos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px}
+    @media(max-width:600px){.planos-grid{grid-template-columns:1fr}}
+    .plano-card{border:2px solid #e2e8f0;border-radius:14px;padding:16px 14px;cursor:pointer;transition:all .18s;position:relative}
+    .plano-card:hover{border-color:#3b82f6;background:#eff6ff}
+    .plano-card.selected{border-color:#3b82f6;background:#eff6ff;box-shadow:0 0 0 3px rgba(59,130,246,.15)}
+    .plano-card input[type=radio]{position:absolute;opacity:0;width:0;height:0}
+    .plano-radio{width:18px;height:18px;border-radius:50%;border:2px solid #cbd5e1;display:flex;align-items:center;justify-content:center;margin-bottom:10px;transition:all .18s}
+    .plano-card.selected .plano-radio{border-color:#3b82f6;background:#3b82f6}
+    .plano-card.selected .plano-radio::after{content:'';width:7px;height:7px;border-radius:50%;background:#fff}
+    .plano-nome{font-weight:700;font-size:.95rem;color:#1e293b;margin-bottom:2px}
+    .plano-preco{font-size:1.1rem;font-weight:800;color:#3b82f6;margin-bottom:6px}
+    .plano-preco span{font-size:.75rem;font-weight:500;color:#64748b}
+    .plano-feat{font-size:.75rem;color:#64748b;line-height:1.6}
+    .plano-popular{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#3b82f6;color:#fff;font-size:.7rem;font-weight:700;padding:3px 12px;border-radius:50px;white-space:nowrap}
+
+    /* Form */
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    @media(max-width:560px){.form-grid{grid-template-columns:1fr}}
+    .form-group{margin-bottom:16px}
+    .form-group.full{grid-column:1/-1}
+    .form-label{display:block;font-size:.82rem;font-weight:600;color:#374151;margin-bottom:6px}
+    .form-label .req{color:#ef4444;margin-left:2px}
+    .input-wrap{position:relative}
+    .input-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:.85rem;pointer-events:none}
+    .form-input{width:100%;padding:11px 13px 11px 38px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.9rem;color:#1e293b;background:#f8fafc;transition:all .18s;outline:none}
+    .form-input:focus{border-color:#3b82f6;background:#fff;box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+    .form-input.has-toggle{padding-right:42px}
+    .form-input.error{border-color:#ef4444;background:#fff8f8}
+    .field-error{font-size:.75rem;color:#ef4444;margin-top:4px;display:none}
+    .field-error.show{display:block}
+    .pw-toggle{position:absolute;right:13px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#94a3b8;padding:2px;font-size:.9rem}
+    .pw-toggle:hover{color:#3b82f6}
+    .pw-strength{height:3px;border-radius:2px;margin-top:6px;background:#e2e8f0;overflow:hidden}
+    .pw-strength-bar{height:100%;border-radius:2px;transition:all .3s;width:0}
+    .pw-hint{font-size:.72rem;color:#94a3b8;margin-top:4px}
+
+    /* Divider */
+    .divider{border:none;border-top:1px solid #f1f5f9;margin:20px 0}
+
+    /* Submit */
+    .btn-submit{width:100%;padding:14px;background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;border:none;border-radius:12px;font-size:.95rem;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:8px}
+    .btn-submit:hover{background:linear-gradient(135deg,#1d4ed8,#2563eb);transform:translateY(-1px);box-shadow:0 6px 20px rgba(59,130,246,.35)}
+    .btn-submit:disabled{opacity:.65;cursor:not-allowed;transform:none}
+    .spinner{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* Alert */
+    .alert{border-radius:10px;padding:12px 16px;font-size:.85rem;display:none;margin-bottom:16px;align-items:flex-start;gap:10px}
+    .alert.show{display:flex}
+    .alert-error{background:#fef2f2;border:1px solid #fecaca;color:#dc2626}
+    .alert-success{background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a}
+
+    /* Footer */
+    .cad-footer{text-align:center;margin-top:20px;color:#94a3b8;font-size:.82rem}
+    .cad-footer a{color:#60a5fa;text-decoration:none;font-weight:600}
+    .cad-footer a:hover{text-decoration:underline}
+
+    /* Terms */
+    .terms-row{display:flex;align-items:flex-start;gap:10px;margin-top:4px}
+    .terms-row input{margin-top:2px;flex-shrink:0;accent-color:#3b82f6}
+    .terms-row label{font-size:.8rem;color:#64748b;line-height:1.4}
+    .terms-row a{color:#3b82f6;text-decoration:none}
+    .terms-row a:hover{text-decoration:underline}
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+  <!-- Header -->
+  <div class="cad-header">
+    <div class="cad-logo">
+      <div class="cad-logo-icon"><i class="fas fa-fingerprint"></i></div>
+      <div>
+        <div class="cad-logo-text">Ponto Eletrônico</div>
+        <div class="cad-logo-sub">Sistema Corporativo</div>
+      </div>
+    </div>
+    <h1>Crie sua conta gratuitamente</h1>
+    <p>Configure o sistema de ponto da sua empresa em minutos</p>
+    <div class="trial-badge"><i class="fas fa-gift"></i> 14 dias grátis &nbsp;·&nbsp; Sem cartão de crédito</div>
+  </div>
+
+  <!-- Card -->
+  <div class="cad-card">
+
+    <div class="alert alert-error" id="alertError">
+      <i class="fas fa-exclamation-circle" style="margin-top:2px;flex-shrink:0"></i>
+      <span id="alertErrorMsg"></span>
+    </div>
+
+    <!-- Planos -->
+    <div class="section-title"><i class="fas fa-layer-group" style="margin-right:6px"></i>Escolha seu plano</div>
+    <div class="planos-grid" id="planosGrid">
+      <label class="plano-card" data-plano="basico">
+        <input type="radio" name="plano" value="basico" />
+        <div class="plano-radio"></div>
+        <div class="plano-nome">Básico</div>
+        <div class="plano-preco">R$49<span>/mês</span></div>
+        <div class="plano-feat">Até 10 funcionários<br>Registro de ponto<br>Relatórios básicos</div>
+      </label>
+      <label class="plano-card selected" data-plano="profissional">
+        <input type="radio" name="plano" value="profissional" checked />
+        <div class="plano-popular">Mais popular</div>
+        <div class="plano-radio"></div>
+        <div class="plano-nome">Profissional</div>
+        <div class="plano-preco">R$99<span>/mês</span></div>
+        <div class="plano-feat">Até 50 funcionários<br>Integração biométrica<br>Relatórios avançados<br>Suporte prioritário</div>
+      </label>
+      <label class="plano-card" data-plano="enterprise">
+        <input type="radio" name="plano" value="enterprise" />
+        <div class="plano-radio"></div>
+        <div class="plano-nome">Enterprise</div>
+        <div class="plano-preco">R$199<span>/mês</span></div>
+        <div class="plano-feat">Funcionários ilimitados<br>API personalizada<br>SLA garantido<br>Gerente de conta</div>
+      </label>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- Dados da empresa -->
+    <div class="section-title" style="margin-bottom:16px"><i class="fas fa-building" style="margin-right:6px"></i>Dados da empresa</div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label class="form-label">Nome da empresa <span class="req">*</span></label>
+        <div class="input-wrap">
+          <i class="fas fa-building input-icon"></i>
+          <input type="text" class="form-input" id="nomeEmpresa" placeholder="Ex.: Empresa Ltda" autocomplete="organization" />
+        </div>
+        <div class="field-error" id="errNomeEmpresa">Informe o nome da empresa.</div>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- Dados do responsável -->
+    <div class="section-title" style="margin-bottom:16px"><i class="fas fa-user-tie" style="margin-right:6px"></i>Dados do responsável</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Seu nome completo <span class="req">*</span></label>
+        <div class="input-wrap">
+          <i class="fas fa-user input-icon"></i>
+          <input type="text" class="form-input" id="nomeAdmin" placeholder="João da Silva" autocomplete="name" />
+        </div>
+        <div class="field-error" id="errNomeAdmin">Informe seu nome.</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Telefone</label>
+        <div class="input-wrap">
+          <i class="fas fa-phone input-icon"></i>
+          <input type="tel" class="form-input" id="telefone" placeholder="(11) 99999-9999" autocomplete="tel" />
+        </div>
+      </div>
+      <div class="form-group full">
+        <label class="form-label">E-mail <span class="req">*</span></label>
+        <div class="input-wrap">
+          <i class="fas fa-envelope input-icon"></i>
+          <input type="email" class="form-input" id="email" placeholder="voce@empresa.com" autocomplete="email" />
+        </div>
+        <div class="field-error" id="errEmail">Informe um e-mail válido.</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Senha <span class="req">*</span></label>
+        <div class="input-wrap">
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" class="form-input has-toggle" id="senha" placeholder="Mínimo 8 caracteres" autocomplete="new-password" />
+          <button type="button" class="pw-toggle" id="toggleSenha"><i class="fas fa-eye"></i></button>
+        </div>
+        <div class="pw-strength"><div class="pw-strength-bar" id="pwBar"></div></div>
+        <div class="pw-hint" id="pwHint">Use letras maiúsculas, números e símbolos.</div>
+        <div class="field-error" id="errSenha">A senha deve ter pelo menos 8 caracteres.</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirmar senha <span class="req">*</span></label>
+        <div class="input-wrap">
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" class="form-input has-toggle" id="confirmarSenha" placeholder="Repita a senha" autocomplete="new-password" />
+          <button type="button" class="pw-toggle" id="toggleConfirmar"><i class="fas fa-eye"></i></button>
+        </div>
+        <div class="field-error" id="errConfirmar">As senhas não coincidem.</div>
+      </div>
+    </div>
+
+    <div class="terms-row">
+      <input type="checkbox" id="termos" />
+      <label for="termos">
+        Concordo com os <a href="#" onclick="return false">Termos de Uso</a> e a
+        <a href="#" onclick="return false">Política de Privacidade</a>.
+        Minha empresa terá <strong>14 dias gratuitos</strong> para testar o sistema.
+      </label>
+    </div>
+    <div class="field-error" id="errTermos" style="margin-top:6px">Você deve aceitar os termos para continuar.</div>
+
+    <button class="btn-submit" id="btnCadastrar" style="margin-top:20px">
+      <span id="btnText"><i class="fas fa-rocket"></i> Criar minha conta grátis</span>
+      <span id="btnLoader" style="display:none"><span class="spinner"></span> Criando sua conta...</span>
+    </button>
+  </div>
+
+  <div class="cad-footer">
+    <p>Já tem uma conta? <a href="/index.html">Fazer login</a></p>
+    <p style="margin-top:8px">© 2026 Ponto Eletrônico Corporativo</p>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script>
+  // Se já estiver logado, redireciona
+  (function () {
+    if (!Auth.getToken()) return;
+    const user = Auth.getUsuario();
+    if (user && user.role === 'super_admin') window.location.href = '/admin.html';
+    else window.location.href = '/dashboard.html';
+  })();
+
+  // Seleção de planos
+  document.querySelectorAll('.plano-card').forEach(card => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.plano-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      card.querySelector('input[type=radio]').checked = true;
+    });
+  });
+
+  // Toggle senhas
+  function bindToggle(inputId, btnId) {
+    document.getElementById(btnId).addEventListener('click', () => {
+      const inp = document.getElementById(inputId);
+      const icon = document.getElementById(btnId).querySelector('i');
+      const show = inp.type === 'password';
+      inp.type = show ? 'text' : 'password';
+      icon.className = show ? 'fas fa-eye-slash' : 'fas fa-eye';
+    });
+  }
+  bindToggle('senha', 'toggleSenha');
+  bindToggle('confirmarSenha', 'toggleConfirmar');
+
+  // Força da senha
+  document.getElementById('senha').addEventListener('input', () => {
+    const v = document.getElementById('senha').value;
+    const bar = document.getElementById('pwBar');
+    const hint = document.getElementById('pwHint');
+    let score = 0;
+    if (v.length >= 8) score++;
+    if (/[A-Z]/.test(v)) score++;
+    if (/[0-9]/.test(v)) score++;
+    if (/[^A-Za-z0-9]/.test(v)) score++;
+    const colors = ['#ef4444','#f97316','#eab308','#22c55e'];
+    const labels = ['Fraca','Razoável','Boa','Forte'];
+    if (v.length === 0) { bar.style.width = '0'; bar.style.background = ''; hint.textContent = 'Use letras maiúsculas, números e símbolos.'; return; }
+    bar.style.width = (score * 25) + '%';
+    bar.style.background = colors[score - 1] || colors[0];
+    hint.textContent = 'Força: ' + (labels[score - 1] || 'Fraca');
+  });
+
+  function fieldOk(id, errId, check) {
+    const el = document.getElementById(id);
+    const err = document.getElementById(errId);
+    const ok = check(el.value);
+    el.classList.toggle('error', !ok);
+    err.classList.toggle('show', !ok);
+    return ok;
+  }
+
+  function showAlert(msg) {
+    document.getElementById('alertErrorMsg').textContent = msg;
+    document.getElementById('alertError').classList.add('show');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  function hideAlert() {
+    document.getElementById('alertError').classList.remove('show');
+  }
+
+  function setLoading(v) {
+    document.getElementById('btnText').style.display = v ? 'none' : 'flex';
+    document.getElementById('btnLoader').style.display = v ? 'flex' : 'none';
+    document.getElementById('btnCadastrar').disabled = v;
+  }
+
+  document.getElementById('btnCadastrar').addEventListener('click', async () => {
+    hideAlert();
+
+    const plano         = document.querySelector('input[name=plano]:checked')?.value || 'profissional';
+    const nome_empresa  = document.getElementById('nomeEmpresa').value.trim();
+    const nome_admin    = document.getElementById('nomeAdmin').value.trim();
+    const email         = document.getElementById('email').value.trim();
+    const senha         = document.getElementById('senha').value;
+    const confirmar     = document.getElementById('confirmarSenha').value;
+    const telefone      = document.getElementById('telefone').value.trim();
+    const aceitouTermos = document.getElementById('termos').checked;
+
+    let ok = true;
+    ok = fieldOk('nomeEmpresa', 'errNomeEmpresa', v => v.length >= 2) && ok;
+    ok = fieldOk('nomeAdmin',   'errNomeAdmin',   v => v.length >= 2) && ok;
+    ok = fieldOk('email',       'errEmail',       v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) && ok;
+    ok = fieldOk('senha',       'errSenha',       v => v.length >= 8) && ok;
+    ok = fieldOk('confirmarSenha', 'errConfirmar', () => senha === confirmar) && ok;
+
+    const termosErr = document.getElementById('errTermos');
+    if (!aceitouTermos) { termosErr.classList.add('show'); ok = false; } else { termosErr.classList.remove('show'); }
+
+    if (!ok) return;
+
+    setLoading(true);
+
+    try {
+      const res = await API.post('/auth/cadastrar', { nome_empresa, nome_admin, email, senha, telefone, plano });
+
+      // Auto-login: salvar token/usuario em sessionStorage (sem "lembrar")
+      Auth.setToken(res.token, false);
+      Auth.setUsuario(res.usuario, false);
+
+      // Buscar perfil completo
+      const me = await API.get('/auth/me');
+      Auth.setUsuario({ ...res.usuario, ...me }, false);
+
+      toast('Conta criada! Bem-vindo, ' + res.usuario.nome.split(' ')[0] + '!', 'success');
+      setTimeout(() => { window.location.href = '/dashboard.html'; }, 800);
+    } catch (err) {
+      const msg = err.data?.erro || 'Erro ao criar conta. Tente novamente.';
+      showAlert(msg);
+      setLoading(false);
+    }
+  });
+</script>
+</body>
+</html>

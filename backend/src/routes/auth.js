@@ -1,9 +1,11 @@
 const router = require('express').Router();
-const ctrl   = require('../controllers/authController');
+const ctrl       = require('../controllers/authController');
+const empresaCtrl = require('../controllers/empresaController');
 const { authenticate } = require('../middlewares/auth');
-const { loginLimiter } = require('../middlewares/rateLimiter');
+const { loginLimiter, cadastroLimiter } = require('../middlewares/rateLimiter');
 const { avatarUpload }  = require('../middlewares/upload');
 
+router.post('/cadastrar',       cadastroLimiter, empresaCtrl.cadastrarEmpresa);
 router.post('/login',           loginLimiter, ctrl.login);
 router.post('/logout',          authenticate, ctrl.logout);
 router.get ('/me',              authenticate, ctrl.me);

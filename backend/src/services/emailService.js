@@ -143,6 +143,29 @@ async function enviarAlteracaoSenha(email, nome) {
   });
 }
 
+async function enviarBoasVindas(email, nomeAdmin, nomeEmpresa, trialDias) {
+  const url = `${BASE_URL()}/dashboard.html`;
+  return enviarEmail({
+    para:   email,
+    assunto: `Bem-vindo ao Ponto Eletrônico — ${nomeEmpresa}`,
+    html: wrapHtml(`Bem-vindo, ${nomeAdmin}!`, `
+      <p>Sua conta foi criada com sucesso! 🎉</p>
+      <div class="alert success">
+        A empresa <strong>${nomeEmpresa}</strong> está ativa com <strong>${trialDias} dias gratuitos</strong> para explorar todas as funcionalidades.
+      </div>
+      <p>Durante o período de teste você tem acesso completo ao sistema. Comece agora:</p>
+      <a href="${url}" class="btn" style="background:#16a34a">Acessar o sistema</a>
+      <p style="margin-top:18px;font-size:.82rem;color:#64748b">
+        Próximos passos sugeridos:<br>
+        1. Configure os horários e regras da sua empresa<br>
+        2. Cadastre seus funcionários<br>
+        3. Registre o primeiro ponto
+      </p>
+    `),
+    texto: `Bem-vindo ao Ponto Eletrônico! Acesse: ${url}`,
+  });
+}
+
 module.exports = {
   enviarEmail,
   enviarResetSenha,
@@ -150,4 +173,5 @@ module.exports = {
   enviarEmpresaSuspensa,
   enviarEmpresaReativada,
   enviarAlteracaoSenha,
+  enviarBoasVindas,
 };

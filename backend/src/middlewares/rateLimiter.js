@@ -23,4 +23,12 @@ const pontoLimiter = rateLimit({
   message: { erro: 'Muitas tentativas de registro. Aguarde 1 minuto.' },
 });
 
-module.exports = { globalLimiter, loginLimiter, pontoLimiter };
+const cadastroLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hora
+  max: 5,                    // máx 5 cadastros por IP por hora
+  standardHeaders: true,
+  legacyHeaders:   false,
+  message: { erro: 'Muitos cadastros realizados. Tente novamente em 1 hora.' },
+});
+
+module.exports = { globalLimiter, loginLimiter, pontoLimiter, cadastroLimiter };

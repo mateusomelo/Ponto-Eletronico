@@ -1,7 +1,9 @@
 const bcrypt = require('bcrypt');
+const jwt    = require('jsonwebtoken');
 const path   = require('path');
 const fs     = require('fs');
-const { pool } = require('../database/connection');
+const { pool }       = require('../database/connection');
+const emailService   = require('../services/emailService');
 
 const UPLOADS_ROOT = process.env.UPLOADS_PATH
   ? path.resolve(process.env.UPLOADS_PATH)
@@ -398,7 +400,101 @@ async function excluirUsuario(req, res) {
   }
 }
 
+// POST /api/auth/cadastrar  (público — self-service)
+async function cadastrarEmpresa(req, res) {
+  const { nome_empresa, nome_admin, email, senha, telefone, plano } = req.body;
+
+  if (!nome_empresa || !nome_admin || !email || !senha) {
+    return res.status(400).json({ erro: 'Nome da empresa, seu nome, e-mail e senha são obrigatórios.' });
+  }
+  if (senha.length < 8) {
+    return res.status(400).json({ erro: 'A senha deve ter no mínimo 8 caracteres.' });
+  }
+
+  const emailNorm = email.toLowerCase().trim();
+
+  try {
+    // Verifica e-mail duplicado
+    const [dup] = await pool.query('SELECT id FROM usuarios WHERE email = ?', [emailNorm]);
+    if (dup.length) {
+      return res.status(409).json({ erro: 'Este e-mail já está cadastrado. Faça login ou use outro e-mail.' });
+    }
+
+    // Cria empresa com trial de 14 dias
+    const trialDias = 14;
+    const trialDate = new Date();
+    trialDate.setDate(trialDate.getDate() + trialDias);
+    const trialEndsAt = trialDate.toISOString().slice(0, 19).replace('T', ' ');
+    const planoFinal  = ['basico', 'profissional', 'enterprise'].includes(plano) ? plano : 'basico';
+
+    const [empResult] = await pool.query(
+      `INSERT INTO empresas (nome, email, telefone, plano, status, trial_ends_at)
+       VALUES (?, ?, ?, ?, 'trial', ?)`,
+      [nome_empresa.trim(), emailNorm, telefone || null, planoFinal, trialEndsAt]
+    );
+    const empresaId = empResult.insertId;
+
+    // Seed cargos padrão, permissões e configurações
+    const cargoIds = await seedEmpresaDefaults(empresaId, nome_empresa.trim(), null);
+
+    // Cria o primeiro usuário (admin da empresa)
+    const hash    = await bcrypt.hash(senha, parseInt(process.env.BCRYPT_ROUNDS || '12'));
+    const cpfFake = `AUTOCAD${empresaId}`; // placeholder único; pode ser atualizado no perfil
+
+    const [userResult] = await pool.query(
+      `INSERT INTO usuarios (nome, email, cpf, senha_hash, cargo_id, company_id, role, ativo)
+       VALUES (?, ?, ?, ?, ?, ?, 'company_admin', 1)`,
+      [nome_admin.trim(), emailNorm, cpfFake, hash, cargoIds[1], empresaId]
+    );
+    const userId = userResult.insertId;
+
+    // Registra plano inicial no histórico
+    await pool.query(
+      `INSERT INTO plano_historico (empresa_id, plano_antes, plano_depois, alterado_por, motivo)
+       VALUES (?, 'nenhum', ?, ?, 'Cadastro via self-service')`,
+      [empresaId, planoFinal, userId]
+    );
+
+    // Gera JWT (auto-login)
+    const token = jwt.sign(
+      { id: userId, email: emailNorm, cargo_id: cargoIds[1] },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
+    );
+
+    // E-mail de boas-vindas (silencioso se SMTP não configurado)
+    emailService.enviarBoasVindas(emailNorm, nome_admin.trim(), nome_empresa.trim(), trialDias)
+      .catch(() => {});
+
+    console.log(`[Empresa] Cadastro self-service: ${nome_empresa} (id=${empresaId}) — admin: ${emailNorm}`);
+
+    return res.status(201).json({
+      token,
+      usuario: {
+        id:          userId,
+        nome:        nome_admin.trim(),
+        email:       emailNorm,
+        cargo_id:    cargoIds[1],
+        cargo_nivel: 1,
+        role:        'company_admin',
+        company_id:  empresaId,
+      },
+      empresa: {
+        id:           empresaId,
+        nome:         nome_empresa.trim(),
+        status:       'trial',
+        trial_ends_at: trialEndsAt,
+        plano:        planoFinal,
+        trial_dias:   trialDias,
+      },
+    });
+  } catch (err) {
+    console.error('[Empresa] cadastrarEmpresa:', err);
+    return res.status(500).json({ erro: 'Erro interno ao criar conta. Tente novamente.' });
+  }
+}
+
 module.exports = {
   listar, obter, criar, editar, alterarStatus, uploadLogo, historicoPLano,
-  excluir, listarUsuarios, criarUsuario, excluirUsuario,
+  excluir, listarUsuarios, criarUsuario, excluirUsuario, cadastrarEmpresa,
 };
