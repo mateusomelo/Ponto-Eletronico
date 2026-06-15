@@ -52,8 +52,8 @@ function renderLayout(pageTitle) {
         <span class="nav-label">Fechamento de Folha</span>
       </a>
 
-      <div class="nav-group-label" data-admin>Sistema</div>
-      <a class="nav-item" href="pagamentos.html" data-perm="pagamentos.visualizar">
+      <div class="nav-group-label" data-supervisor>Sistema</div>
+      <a class="nav-item" href="pagamentos.html" data-supervisor>
         <i class="fas fa-credit-card nav-icon"></i>
         <span class="nav-label">Pagamentos</span>
       </a>
