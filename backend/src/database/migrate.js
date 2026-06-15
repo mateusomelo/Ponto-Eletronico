@@ -405,6 +405,21 @@ async function runMigrations() {
       await seedSuperAdmin(conn);
     }
 
+    // ── Garante pagamentos.visualizar para todos cargos nivel <= 2 (idempotente) ──
+    await conn.query(
+      "INSERT IGNORE INTO permissoes (nome, descricao) VALUES ('pagamentos.visualizar', 'Visualizar informações de assinatura e faturas da empresa')"
+    );
+    const [[_payPerm]] = await conn.query(
+      "SELECT id FROM permissoes WHERE nome = 'pagamentos.visualizar' LIMIT 1"
+    );
+    if (_payPerm) {
+      await conn.query(
+        "INSERT IGNORE INTO cargo_permissoes (cargo_id, permissao_id) SELECT c.id, ? FROM cargos c WHERE c.nivel <= 2",
+        [_payPerm.id]
+      );
+      console.log('[Migration] pagamentos.visualizar garantida para cargos nivel <= 2.');
+    }
+
     console.log('[Migration] OK — todas as migrações aplicadas.');
   } catch (err) {
     console.error('[Migration] ERRO:', err.message);
