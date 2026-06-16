@@ -1,0 +1,1924 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Apresentação Comercial — Ponto Eletrônico Corporativo</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css"/>
+<style>
+/* ═══════════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0f172a;--navy2:#1e3a5f;--blue:#3b82f6;--blue2:#2563eb;
+  --cyan:#06b6d4;--green:#22c55e;--orange:#f59e0b;--red:#ef4444;--purple:#8b5cf6;
+  --gray50:#f8fafc;--gray100:#f1f5f9;--gray200:#e2e8f0;--gray300:#cbd5e1;
+  --gray400:#94a3b8;--gray500:#64748b;--gray700:#334155;--gray900:#0f172a;
+  --white:#ffffff;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#1e293b;color:#1e293b;line-height:1.5}
+
+/* ═══════════════════════════════════════════════
+   SLIDES
+═══════════════════════════════════════════════ */
+.slide{
+  width:1280px;min-height:720px;margin:0 auto 32px;
+  background:#fff;border-radius:16px;overflow:hidden;
+  box-shadow:0 8px 40px rgba(0,0,0,.35);position:relative;
+  page-break-after:always;break-after:page;
+}
+.slide:last-child{margin-bottom:0;page-break-after:avoid}
+
+@media print{
+  body{background:#fff}
+  .slide{width:100%;margin:0;border-radius:0;box-shadow:none;min-height:100vh}
+  .no-print{display:none}
+}
+
+/* ── Layout helpers ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;height:100%}
+.two-col-40{display:grid;grid-template-columns:420px 1fr;min-height:720px}
+.two-col-60{display:grid;grid-template-columns:1fr 520px;min-height:720px}
+.slide-left{padding:60px 52px;display:flex;flex-direction:column;justify-content:center}
+.slide-right{display:flex;align-items:center;justify-content:center;padding:32px;background:var(--gray50)}
+.slide-right.dark{background:var(--navy)}
+.slide-right.blue{background:linear-gradient(135deg,#1e3a5f,#0f172a)}
+
+/* ── Typography ── */
+.tag{display:inline-block;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--blue);background:#eff6ff;border:1px solid #bfdbfe;border-radius:50px;padding:4px 14px;margin-bottom:14px}
+.tag.white{color:#fff;background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3)}
+.tag.green{color:#16a34a;background:#f0fdf4;border-color:#bbf7d0}
+.h1{font-size:2.6rem;font-weight:800;line-height:1.15;color:var(--navy);margin-bottom:16px}
+.h1.white{color:#fff}
+.h2{font-size:1.9rem;font-weight:800;line-height:1.2;color:var(--navy);margin-bottom:12px}
+.h2.white{color:#fff}
+.h3{font-size:1.25rem;font-weight:700;color:var(--navy);margin-bottom:8px}
+.h3.white{color:#fff}
+.lead{font-size:1.05rem;color:var(--gray500);line-height:1.7;margin-bottom:20px}
+.lead.white{color:rgba(255,255,255,.7)}
+.small{font-size:.82rem;color:var(--gray400)}
+
+/* ── Bullets ── */
+.check-list{list-style:none;display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.check-list li{display:flex;align-items:flex-start;gap:10px;font-size:.92rem;color:var(--gray700)}
+.check-list li i{color:var(--green);font-size:.85rem;margin-top:3px;flex-shrink:0}
+.check-list.white li{color:rgba(255,255,255,.85)}
+.check-list.white li i{color:#86efac}
+
+/* ── Icon blocks ── */
+.icon-box{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.1rem}
+.icon-box.blue{background:#eff6ff;color:var(--blue)}
+.icon-box.green{background:#f0fdf4;color:#16a34a}
+.icon-box.orange{background:#fff7ed;color:#ea580c}
+.icon-box.purple{background:#f5f3ff;color:var(--purple)}
+.icon-box.red{background:#fef2f2;color:var(--red)}
+.icon-box.cyan{background:#ecfeff;color:#0891b2}
+.icon-box.white-soft{background:rgba(255,255,255,.15);color:#fff}
+
+/* ── Feature rows ── */
+.feat-row{display:flex;gap:16px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--gray100)}
+.feat-row:last-child{border-bottom:none}
+.feat-body{flex:1}
+.feat-title{font-weight:700;font-size:.9rem;color:var(--navy);margin-bottom:3px}
+.feat-desc{font-size:.8rem;color:var(--gray500);line-height:1.5}
+
+/* ── Stat cards ── */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:24px}
+.stat-card{background:var(--gray50);border:1px solid var(--gray200);border-radius:14px;padding:18px 20px;display:flex;align-items:center;gap:14px}
+.stat-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0}
+.stat-icon.blue{background:#eff6ff;color:var(--blue)}
+.stat-icon.green{background:#f0fdf4;color:#16a34a}
+.stat-icon.orange{background:#fff7ed;color:#ea580c}
+.stat-icon.purple{background:#f5f3ff;color:var(--purple)}
+.stat-icon.cyan{background:#ecfeff;color:#0891b2}
+.stat-icon.red{background:#fef2f2;color:var(--red)}
+.stat-val{font-size:1.4rem;font-weight:800;color:var(--navy);line-height:1}
+.stat-lbl{font-size:.72rem;color:var(--gray400);margin-top:3px}
+
+/* ── Badges ── */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:50px;font-size:.72rem;font-weight:700}
+.badge.green{background:#dcfce7;color:#16a34a}
+.badge.blue{background:#dbeafe;color:#1d4ed8}
+.badge.orange{background:#ffedd5;color:#c2410c}
+.badge.red{background:#fee2e2;color:#dc2626}
+.badge.purple{background:#f5f3ff;color:#6d28d9}
+.badge.gray{background:#f1f5f9;color:#475569}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:10px;font-weight:700;font-size:.88rem;border:none;cursor:pointer;text-decoration:none}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-outline{background:transparent;border:2px solid var(--blue);color:var(--blue)}
+.btn-white{background:#fff;color:var(--navy2)}
+.btn-lg{padding:14px 28px;font-size:1rem;border-radius:12px}
+
+/* ── Section header (inside slide) ── */
+.slide-header{background:linear-gradient(135deg,var(--navy2),var(--navy));padding:28px 52px;display:flex;align-items:center;gap:16px}
+.slide-header-icon{width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.1rem;flex-shrink:0}
+.slide-header-text h2{font-size:1.3rem;font-weight:800;color:#fff;margin-bottom:2px}
+.slide-header-text p{font-size:.82rem;color:rgba(255,255,255,.6)}
+.slide-body{padding:36px 52px}
+
+/* ══════════════════════════════════════
+   NAV (tela cheia — não imprime)
+══════════════════════════════════════ */
+.nav-bar{position:fixed;top:0;left:0;right:0;z-index:999;background:rgba(15,23,42,.95);backdrop-filter:blur(10px);padding:12px 32px;display:flex;align-items:center;justify-content:space-between;color:#fff;font-size:.82rem}
+.nav-bar a{color:#94a3b8;text-decoration:none;padding:4px 10px;border-radius:6px;transition:.15s}
+.nav-bar a:hover{color:#fff;background:rgba(255,255,255,.1)}
+.nav-logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:.95rem}
+.nav-logo-icon{width:30px;height:30px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.8rem}
+
+/* ══════════════════════════════════════
+   BROWSER MOCKUP FRAME
+══════════════════════════════════════ */
+.browser{border-radius:12px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.2);background:#fff;width:100%;max-width:540px}
+.browser-bar{background:#e8eaed;padding:10px 16px;display:flex;align-items:center;gap:8px}
+.browser-dot{width:12px;height:12px;border-radius:50%}
+.browser-dot.r{background:#ff5f57}
+.browser-dot.y{background:#febc2e}
+.browser-dot.g{background:#28c840}
+.browser-url{flex:1;background:#fff;border-radius:6px;padding:4px 12px;font-size:.72rem;color:#64748b;margin-left:8px}
+.browser-body{overflow:hidden}
+
+/* ══════════════════════════════════════
+   MOCKUP: LOGIN
+══════════════════════════════════════ */
+.mock-login{background:linear-gradient(135deg,#0f172a,#1e3a5f,#0f172a);padding:32px 24px;display:flex;align-items:center;justify-content:center;min-height:340px}
+.mock-login-card{background:#fff;border-radius:16px;padding:28px 24px;width:260px;box-shadow:0 8px 32px rgba(0,0,0,.3)}
+.mock-logo-row{display:flex;align-items:center;gap:8px;margin-bottom:18px}
+.mock-logo-icon{width:36px;height:36px;background:linear-gradient(135deg,#1e3a5f,#3b82f6);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.85rem}
+.mock-logo-txt{font-weight:800;font-size:.9rem;color:#0f172a;line-height:1.2}
+.mock-logo-sub{font-size:.65rem;color:#94a3b8;font-weight:400}
+.mock-field{margin-bottom:10px}
+.mock-field label{display:block;font-size:.65rem;font-weight:600;color:#374151;margin-bottom:4px}
+.mock-input{width:100%;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 10px 8px 30px;font-size:.72rem;color:#1e293b;position:relative}
+.mock-input-wrap{position:relative}
+.mock-input-wrap i{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:.65rem}
+.mock-remember{display:flex;justify-content:space-between;font-size:.62rem;color:#64748b;margin-bottom:12px;align-items:center}
+.mock-btn-primary{width:100%;background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;border:none;border-radius:8px;padding:9px;font-size:.75rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.mock-footer-txt{text-align:center;font-size:.6rem;color:#94a3b8;margin-top:10px}
+.mock-link{color:#3b82f6;font-weight:600}
+
+/* ══════════════════════════════════════
+   MOCKUP: SIDEBAR
+══════════════════════════════════════ */
+.mock-app{display:flex;min-height:360px;background:#f8fafc}
+.mock-sidebar{width:180px;background:#0f172a;display:flex;flex-direction:column;padding:16px 0;flex-shrink:0}
+.mock-sidebar-logo{display:flex;align-items:center;gap:8px;padding:0 16px 16px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:8px}
+.mock-sidebar-logo-icon{width:28px;height:28px;background:linear-gradient(135deg,#1e3a5f,#3b82f6);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.65rem}
+.mock-sidebar-logo-txt{font-weight:700;font-size:.72rem;color:#fff;line-height:1.2}
+.mock-nav-item{display:flex;align-items:center;gap:8px;padding:8px 16px;font-size:.68rem;color:#94a3b8;cursor:pointer;transition:.15s;border-radius:0}
+.mock-nav-item.active{background:rgba(59,130,246,.15);color:#60a5fa;border-right:3px solid #3b82f6}
+.mock-nav-item i{width:14px;text-align:center;font-size:.7rem}
+.mock-main{flex:1;padding:16px;overflow:hidden}
+.mock-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.mock-page-title{font-weight:800;font-size:.82rem;color:#0f172a}
+.mock-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#1e3a5f,#3b82f6);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.65rem;font-weight:700}
+
+/* ══════════════════════════════════════
+   MOCKUP: DASHBOARD STATS
+══════════════════════════════════════ */
+.mock-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.mock-stat{background:#fff;border-radius:10px;padding:10px 12px;border:1px solid #e2e8f0;display:flex;align-items:center;gap:8px}
+.mock-stat-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.65rem;flex-shrink:0}
+.mock-stat-icon.blue{background:#eff6ff;color:#3b82f6}
+.mock-stat-icon.green{background:#f0fdf4;color:#16a34a}
+.mock-stat-icon.orange{background:#fff7ed;color:#ea580c}
+.mock-stat-icon.purple{background:#f5f3ff;color:#7c3aed}
+.mock-stat-icon.cyan{background:#ecfeff;color:#0891b2}
+.mock-stat-icon.red{background:#fef2f2;color:#dc2626}
+.mock-stat-val{font-size:.9rem;font-weight:800;color:#0f172a;line-height:1}
+.mock-stat-lbl{font-size:.58rem;color:#94a3b8;margin-top:2px}
+
+/* Mini bar chart */
+.mock-chart{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px}
+.mock-chart-title{font-size:.65rem;font-weight:700;color:#374151;margin-bottom:8px}
+.mock-bars{display:flex;align-items:flex-end;gap:4px;height:60px}
+.mock-bar{flex:1;border-radius:3px 3px 0 0;background:#3b82f6;opacity:.8;min-width:0}
+.mock-bar.green{background:#22c55e}
+.mock-bar.orange{background:#f59e0b}
+
+/* Mini line chart */
+.mock-line-chart{position:relative;height:60px;margin-top:8px}
+.mock-line-chart svg{width:100%;height:100%}
+
+/* Table mockup */
+.mock-table{background:#fff;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;font-size:.62rem}
+.mock-table-head{background:#f8fafc;display:grid;border-bottom:1px solid #e2e8f0;padding:6px 10px;font-weight:700;color:#64748b;gap:4px}
+.mock-table-row{display:grid;padding:7px 10px;border-bottom:1px solid #f1f5f9;align-items:center;gap:4px;color:#374151}
+.mock-table-row:last-child{border-bottom:none}
+.mock-avatar-sm{width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#1e3a5f,#3b82f6);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.55rem;font-weight:700;flex-shrink:0}
+
+/* ══════════════════════════════════════
+   MOCKUP: PONTO
+══════════════════════════════════════ */
+.mock-ponto-card{background:#fff;border-radius:14px;padding:20px;box-shadow:0 4px 20px rgba(0,0,0,.1);max-width:280px;margin:0 auto}
+.mock-clock{font-size:2rem;font-weight:800;color:#0f172a;text-align:center;font-variant-numeric:tabular-nums;letter-spacing:.05em;margin-bottom:12px;font-family:monospace}
+.mock-status-check{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.mock-check-row{display:flex;align-items:center;gap:6px;font-size:.68rem;color:#374151}
+.mock-check-row i.ok{color:#22c55e}
+.mock-check-row i.wait{color:#f59e0b}
+.mock-steps{display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:14px}
+.mock-step{display:flex;flex-direction:column;align-items:center;gap:3px}
+.mock-step-num{width:22px;height:22px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700}
+.mock-step-num.done{background:#22c55e}
+.mock-step-num.inactive{background:#e2e8f0;color:#94a3b8}
+.mock-step-lbl{font-size:.55rem;color:#64748b}
+.mock-step-sep{width:24px;height:2px;background:#e2e8f0;margin-bottom:12px}
+.mock-btn-entrada{background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;border:none;border-radius:10px;padding:10px;font-size:.75rem;font-weight:700;width:100%;cursor:pointer;margin-bottom:6px}
+.mock-btn-saida{background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;border:none;border-radius:10px;padding:10px;font-size:.75rem;font-weight:700;width:100%;cursor:pointer}
+.mock-status-pill{display:inline-flex;align-items:center;gap:6px;background:#dcfce7;color:#166534;border-radius:50px;padding:5px 12px;font-size:.65rem;font-weight:700;margin-bottom:12px}
+.mock-status-dot{width:7px;height:7px;border-radius:50%;background:#16a34a}
+
+/* ══════════════════════════════════════
+   MOCKUP: HISTÓRICO / TABELAS GERAIS
+══════════════════════════════════════ */
+.mock-filter-bar{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.mock-filter-input{background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:7px;padding:5px 10px;font-size:.62rem;color:#64748b;width:90px}
+.mock-filter-select{background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:7px;padding:5px 10px;font-size:.62rem;color:#64748b;width:80px}
+.mock-btn-sm{background:var(--blue);color:#fff;border:none;border-radius:7px;padding:5px 10px;font-size:.62rem;font-weight:700;cursor:pointer}
+.mock-btn-sm.gray{background:#f1f5f9;color:#374151}
+.mock-export-row{display:flex;gap:6px;margin-left:auto}
+.mock-export-btn{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:7px;padding:5px 10px;font-size:.6rem;color:#374151;display:flex;align-items:center;gap:4px;cursor:pointer}
+.mock-export-btn i{color:#dc2626}
+.mock-export-btn .xl{color:#16a34a}
+
+/* ══════════════════════════════════════
+   MOCKUP: RELATÓRIOS
+══════════════════════════════════════ */
+.mock-period-tabs{display:flex;gap:4px;margin-bottom:10px}
+.mock-tab{font-size:.62rem;padding:4px 10px;border-radius:6px;border:1px solid #e2e8f0;background:#f8fafc;color:#64748b;cursor:pointer}
+.mock-tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+/* ══════════════════════════════════════
+   COVER SLIDE
+══════════════════════════════════════ */
+.cover{background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 50%,#0f172a 100%);min-height:720px;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.cover-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(59,130,246,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.06) 1px,transparent 1px);background-size:40px 40px}
+.cover-content{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;flex:1;padding:60px 80px}
+.cover-logo{display:flex;align-items:center;gap:16px;margin-bottom:32px}
+.cover-logo-icon{width:72px;height:72px;border-radius:20px;background:linear-gradient(135deg,#1e3a5f,#3b82f6);display:flex;align-items:center;justify-content:center;font-size:2rem;color:#fff;box-shadow:0 8px 32px rgba(59,130,246,.4)}
+.cover-logo-text{text-align:left}
+.cover-logo-name{font-size:1.6rem;font-weight:800;color:#fff;line-height:1}
+.cover-logo-sub{font-size:.85rem;color:rgba(255,255,255,.5);margin-top:4px}
+.cover-title{font-size:3rem;font-weight:800;color:#fff;line-height:1.15;margin-bottom:16px;max-width:700px}
+.cover-title span{color:#3b82f6}
+.cover-subtitle{font-size:1.1rem;color:rgba(255,255,255,.6);max-width:540px;line-height:1.6;margin-bottom:36px}
+.cover-pills{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:40px}
+.cover-pill{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:50px;padding:8px 18px;color:rgba(255,255,255,.8);font-size:.82rem;font-weight:600}
+.cover-pill i{color:#3b82f6}
+.cover-footer{background:rgba(0,0,0,.3);padding:16px 60px;display:flex;align-items:center;justify-content:space-between;color:rgba(255,255,255,.4);font-size:.75rem;position:relative;z-index:1}
+.cover-footer-right{display:flex;gap:24px}
+
+/* ══════════════════════════════════════
+   SLIDE: PROBLEMAS (cards pain)
+══════════════════════════════════════ */
+.pain-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:8px}
+.pain-card{background:#fff;border:1px solid var(--gray200);border-radius:16px;padding:22px 20px;border-top:4px solid var(--red)}
+.pain-icon{font-size:1.6rem;margin-bottom:10px}
+.pain-title{font-weight:700;font-size:.9rem;color:var(--navy);margin-bottom:6px}
+.pain-desc{font-size:.78rem;color:var(--gray500);line-height:1.55}
+
+/* ══════════════════════════════════════
+   SLIDE: VISÃO GERAL FUNCIONALIDADES
+══════════════════════════════════════ */
+.func-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.func-card{background:var(--gray50);border:1px solid var(--gray200);border-radius:14px;padding:20px 18px;transition:.2s}
+.func-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:.95rem;margin-bottom:12px}
+.func-title{font-weight:700;font-size:.88rem;color:var(--navy);margin-bottom:6px}
+.func-desc{font-size:.75rem;color:var(--gray500);line-height:1.55}
+
+/* ══════════════════════════════════════
+   PAGE NUMBER
+══════════════════════════════════════ */
+.page-num{position:absolute;bottom:16px;right:20px;font-size:.65rem;color:rgba(255,255,255,.4);font-weight:600}
+.page-num.dark{color:var(--gray300)}
+
+/* ══════════════════════════════════════
+   DECORATIVE ELEMENTS
+══════════════════════════════════════ */
+.accent-bar{height:4px;background:linear-gradient(90deg,var(--blue),var(--cyan));border-radius:2px;margin-bottom:24px;width:60px}
+.accent-bar.white{background:linear-gradient(90deg,#fff,rgba(255,255,255,.3))}
+
+</style>
+</head>
+<body>
+
+<!-- NAV (não imprime) -->
+<div class="nav-bar no-print">
+  <div class="nav-logo">
+    <div class="nav-logo-icon"><i class="fas fa-fingerprint" style="color:#fff;font-size:.75rem"></i></div>
+    Ponto Eletrônico — Apresentação Comercial
+  </div>
+  <div style="display:flex;gap:4px">
+    <a href="#s1">Capa</a><a href="#s2">Sobre</a><a href="#s3">Problemas</a>
+    <a href="#s4">Funcionalidades</a><a href="#s5">Login</a><a href="#s6">Dashboard</a>
+    <a href="#s7">Ponto</a><a href="#s8">Histórico</a><a href="#s9">Relatórios</a>
+  </div>
+  <div style="color:#94a3b8">Ctrl+P para exportar PDF</div>
+</div>
+
+<div style="padding:80px 40px 40px" class="no-print"></div>
+<div style="max-width:1300px;margin:0 auto;padding:0 24px 60px">
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 1 — CAPA
+══════════════════════════════════════════════════════ -->
+<div class="slide" id="s1">
+  <div class="cover">
+    <div class="cover-grid"></div>
+    <div class="cover-content">
+      <div class="cover-logo">
+        <div class="cover-logo-icon"><i class="fas fa-fingerprint"></i></div>
+        <div class="cover-logo-text">
+          <div class="cover-logo-name">Ponto Eletrônico</div>
+          <div class="cover-logo-sub">Sistema Corporativo</div>
+        </div>
+      </div>
+      <h1 class="cover-title">Controle de Ponto <span>Inteligente</span><br>para Empresas Modernas</h1>
+      <p class="cover-subtitle">Plataforma SaaS completa para gestão de jornada de trabalho com GPS, biometria por selfie, relatórios automáticos e assinatura digital.</p>
+      <div class="cover-pills">
+        <div class="cover-pill"><i class="fas fa-map-marker-alt"></i> GPS em tempo real</div>
+        <div class="cover-pill"><i class="fas fa-camera"></i> Selfie no ponto</div>
+        <div class="cover-pill"><i class="fas fa-file-signature"></i> Assinatura digital</div>
+        <div class="cover-pill"><i class="fas fa-chart-bar"></i> Relatórios automáticos</div>
+        <div class="cover-pill"><i class="fas fa-shield-alt"></i> Auditoria completa</div>
+        <div class="cover-pill"><i class="fas fa-cloud"></i> 100% na nuvem</div>
+      </div>
+      <div style="display:flex;gap:16px">
+        <a href="https://ponto-eletronicoo.netlify.app/cadastro.html" class="btn btn-primary btn-lg" style="background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;text-decoration:none">
+          <i class="fas fa-rocket"></i> Teste 14 dias grátis
+        </a>
+        <a href="#s6" class="btn btn-lg" style="background:rgba(255,255,255,.1);color:#fff;border:2px solid rgba(255,255,255,.3);text-decoration:none">
+          <i class="fas fa-play"></i> Ver demonstração
+        </a>
+      </div>
+    </div>
+    <div class="cover-footer">
+      <span>© 2026 Ponto Eletrônico Corporativo · Todos os direitos reservados</span>
+      <div class="cover-footer-right">
+        <span><i class="fas fa-globe" style="margin-right:4px"></i>ponto-eletronicoo.netlify.app</span>
+        <span><i class="fas fa-envelope" style="margin-right:4px"></i>contato@pontoeletronico.com.br</span>
+      </div>
+    </div>
+    <div class="page-num">1 / 22</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 2 — SOBRE A PLATAFORMA
+══════════════════════════════════════════════════════ -->
+<div class="slide" id="s2">
+  <div class="two-col-40">
+    <div class="slide-left" style="background:linear-gradient(135deg,#0f172a,#1e3a5f);position:relative;overflow:hidden">
+      <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(59,130,246,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.05) 1px,transparent 1px);background-size:30px 30px"></div>
+      <div style="position:relative;z-index:1">
+        <div class="tag white">Sobre a Plataforma</div>
+        <div class="accent-bar white"></div>
+        <h2 class="h2 white">Tudo que sua empresa precisa para controlar a jornada de trabalho</h2>
+        <p class="lead white">O Ponto Eletrônico é uma plataforma SaaS brasileira desenvolvida para empresas de todos os tamanhos, do time de 5 pessoas à operação com centenas de funcionários.</p>
+        <ul class="check-list white">
+          <li><i class="fas fa-check-circle"></i> Acesso via qualquer dispositivo — celular, tablet ou computador</li>
+          <li><i class="fas fa-check-circle"></i> Sem instalação de software ou equipamento físico</li>
+          <li><i class="fas fa-check-circle"></i> Dados armazenados com segurança na nuvem</li>
+          <li><i class="fas fa-check-circle"></i> Implantação em minutos, não semanas</li>
+          <li><i class="fas fa-check-circle"></i> Suporte por e-mail incluído em todos os planos</li>
+          <li><i class="fas fa-check-circle"></i> Trial gratuito de 14 dias, sem cartão de crédito</li>
+        </ul>
+      </div>
+      <div class="page-num">2 / 22</div>
+    </div>
+    <div style="padding:48px 44px;display:flex;flex-direction:column;gap:18px;justify-content:center;background:#f8fafc">
+      <div class="feat-row" style="border-bottom:1px solid #e2e8f0">
+        <div class="icon-box blue"><i class="fas fa-building"></i></div>
+        <div class="feat-body">
+          <div class="feat-title">Multi-empresa (SaaS)</div>
+          <div class="feat-desc">Cada empresa tem seu ambiente isolado, com dados, usuários e configurações independentes. Perfeito para grupos empresariais e franquias.</div>
+        </div>
+      </div>
+      <div class="feat-row" style="border-bottom:1px solid #e2e8f0">
+        <div class="icon-box green"><i class="fas fa-users-cog"></i></div>
+        <div class="feat-body">
+          <div class="feat-title">Hierarquia de acesso completa</div>
+          <div class="feat-desc">Três níveis: Administrador, Supervisor/RH e Funcionário. Cada nível acessa apenas o que precisa, com permissões granulares configuráveis.</div>
+        </div>
+      </div>
+      <div class="feat-row" style="border-bottom:1px solid #e2e8f0">
+        <div class="icon-box orange"><i class="fas fa-mobile-alt"></i></div>
+        <div class="feat-body">
+          <div class="feat-title">100% responsivo</div>
+          <div class="feat-desc">Interface adaptada para celular, tablet e desktop. Funcionários registram o ponto pelo próprio smartphone sem instalar nada.</div>
+        </div>
+      </div>
+      <div class="feat-row" style="border-bottom:1px solid #e2e8f0">
+        <div class="icon-box purple"><i class="fas fa-bolt"></i></div>
+        <div class="feat-body">
+          <div class="feat-title">Implantação imediata</div>
+          <div class="feat-desc">Crie a conta, cadastre sua equipe e comece a registrar pontos no mesmo dia. Sem necessidade de treinamento técnico.</div>
+        </div>
+      </div>
+      <div class="feat-row">
+        <div class="icon-box cyan"><i class="fas fa-credit-card"></i></div>
+        <div class="feat-body">
+          <div class="feat-title">Pagamento simples e seguro</div>
+          <div class="feat-desc">Cobrança via Stripe com boleto, cartão ou Pix. Cancele quando quiser, sem multas ou fidelidade.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 3 — PROBLEMAS QUE RESOLVE
+══════════════════════════════════════════════════════ -->
+<div class="slide" id="s3">
+  <div class="slide-header">
+    <div class="slide-header-icon"><i class="fas fa-exclamation-triangle"></i></div>
+    <div class="slide-header-text">
+      <h2>Problemas que o Ponto Eletrônico resolve</h2>
+      <p>Desafios reais que empresas enfrentam todos os dias sem um sistema adequado</p>
+    </div>
+  </div>
+  <div class="slide-body">
+    <div class="pain-grid">
+      <div class="pain-card">
+        <div class="pain-icon">📋</div>
+        <div class="pain-title">Folha de ponto em papel</div>
+        <div class="pain-desc">Registros manuais são imprecisos, fáceis de fraudar, difíceis de armazenar e praticamente impossíveis de auditar. Um funcionário pode assinar por outro sem que ninguém perceba.</div>
+      </div>
+      <div class="pain-card">
+        <div class="pain-icon">⏰</div>
+        <div class="pain-title">Horas extras não controladas</div>
+        <div class="pain-desc">Sem um sistema de registro, fica impossível saber quem trabalhou além do horário, quando e por quanto tempo. Isso gera passivos trabalhistas e disputas com funcionários.</div>
+      </div>
+      <div class="pain-card">
+        <div class="pain-icon">📍</div>
+        <div class="pain-title">Funcionários externos sem controle</div>
+        <div class="pain-desc">Equipes em campo, trabalho remoto ou em múltiplas unidades tornam o controle de presença presencial impossível. O gestor não sabe onde o funcionário está ao registrar o ponto.</div>
+      </div>
+      <div class="pain-card" style="border-top-color:#f59e0b">
+        <div class="pain-icon">🗂️</div>
+        <div class="pain-title">Fechamento de folha demorado</div>
+        <div class="pain-desc">Calcular horas trabalhadas manualmente no Excel leva dias toda competência, é propenso a erros e atrasa o fechamento da folha de pagamento e o envio ao contador.</div>
+      </div>
+      <div class="pain-card" style="border-top-color:#f59e0b">
+        <div class="pain-icon">⚖️</div>
+        <div class="pain-title">Risco trabalhista e autuações</div>
+        <div class="pain-desc">A legislação brasileira exige controle de jornada para empresas com mais de 20 funcionários. Sem documentação adequada, multas do MTE e ações judiciais são riscos reais.</div>
+      </div>
+      <div class="pain-card" style="border-top-color:#f59e0b">
+        <div class="pain-icon">📊</div>
+        <div class="pain-title">Falta de visibilidade para o RH</div>
+        <div class="pain-desc">Gestores e RH não têm dados em tempo real sobre quem está presente, quem está atrasado ou qual é a taxa de absenteísmo da equipe. Decisões são tomadas no escuro.</div>
+      </div>
+    </div>
+    <div style="background:linear-gradient(135deg,#eff6ff,#f0fdf4);border:1px solid #bfdbfe;border-radius:14px;padding:18px 24px;margin-top:20px;display:flex;align-items:center;gap:16px">
+      <i class="fas fa-lightbulb" style="font-size:1.5rem;color:#3b82f6;flex-shrink:0"></i>
+      <div>
+        <div style="font-weight:700;font-size:.9rem;color:#1e3a5f;margin-bottom:3px">O Ponto Eletrônico resolve todos esses problemas em um único sistema</div>
+        <div style="font-size:.8rem;color:#64748b">Registro com GPS + selfie, relatórios automáticos, fechamento digital com assinatura eletrônica e auditoria completa — pronto para uso em minutos.</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-num dark" style="color:var(--gray300)">3 / 22</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 4 — VISÃO GERAL DAS FUNCIONALIDADES
+══════════════════════════════════════════════════════ -->
+<div class="slide" id="s4">
+  <div class="slide-header">
+    <div class="slide-header-icon"><i class="fas fa-th-large"></i></div>
+    <div class="slide-header-text">
+      <h2>Visão geral das funcionalidades</h2>
+      <p>12 módulos integrados em um único sistema, sem necessidade de outras ferramentas</p>
+    </div>
+  </div>
+  <div class="slide-body" style="padding-top:28px">
+    <div class="func-grid">
+      <div class="func-card">
+        <div class="func-icon" style="background:#eff6ff;color:#3b82f6"><i class="fas fa-clock"></i></div>
+        <div class="func-title">Registro de Ponto</div>
+        <div class="func-desc">GPS obrigatório, selfie no momento, fluxo de 3 etapas e relógio em tempo real. Funciona em qualquer dispositivo.</div>
+      </div>
+      <div class="func-card">
+        <div class="func-icon" style="background:#f0fdf4;color:#16a34a"><i class="fas fa-tachometer-alt"></i></div>
+        <div class="func-title">Dashboard em tempo real</div>
+        <div class="func-desc">Presença atual, KPIs do dia/semana/mês, gráficos de registros e últimos acessos para admins e funcionários.</div>
+      </div>
+      <div class="func-card">
+        <div class="func-icon" style="background:#fff7ed;color:#ea580c"><i class="fas fa-history"></i></div>
+        <div class="func-title">Histórico completo</div>
+        <div class="func-desc">Todos os registros com foto, GPS, IP, dispositivo e navegador. Filtros por período e tipo, exportação em PDF e Excel.</div>
+      </div>
+      <div class="func-card">
+        <div class="func-icon" style="background:#f5f3ff;color:#7c3aed"><i class="fas fa-chart-bar"></i></div>
+        <div class="func-title">Central de Relatórios</div>
+        <div class="func-desc">Resumo por funcionário, gráficos de presença e comparativo entradas vs. saídas. Exporta PDF e Excel com um clique.</div>
+      </div>
+      <div class="func-card">
+        <div class="func-icon" style="background:#ecfeff;color:#0891b2"><i class="fas fa-file-signature"></i></div>
+        <div class="func-title">Fechamento de Folha</div>
+        <div class="func-desc">Workflow completo: rascunho, envio para assinatura, assinatura digital com registro de IP e rejeição com motivo.</div>
+      </div>
+      <div class="func-card">
+        <div class="func-icon" style="background:#fef2f2;color:#dc2626"><i class="fas fa-users"></i></div>
+        <div class="func-title">Gestão de Usuários</div>
+        <div class="func-desc">Cadastro completo com foto, CPF, cargo, salário, carga horária e cálculos automáticos de remuneração.</div>
+      </div>
+      <div class="func-card">
+        <div class="func-icon" style="background:#fefce8;color:#ca8a04"><i class="fas fa-user-tag"></i></div>
+        <div class="func-title">Cargos & Permissões</div>
+        <div class="func-desc">3 níveis hierárquicos com permissões granulares. Cada cargo acessa exatamente o que precisa.</div>
+      </div>
+      <div class="func-card">
+        <div class="func-icon" style="background:#f0fdf4;color:#16a34a"><i class="fas fa-file-alt"></i></div>
+        <div class="func-title">Meus Relatórios</div>
+        <div class="func-desc">Autoatendimento: funcionário visualiza, assina ou rejeita seus próprios relatórios diretamente no sistema.</div>
+      </div>
+      <div class="func-card">
+        <div class="func-icon" style="background:#eff6ff;color:#1d4ed8"><i class="fas fa-shield-alt"></i></div>
+        <div class="func-title">Logs de Auditoria</div>
+        <div class="func-desc">Rastreamento completo de todas as ações: login, logout, ponto, usuários, senhas, permissões e fechamentos.</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-num dark">4 / 22</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 5 — TELA DE LOGIN (com mockup)
+══════════════════════════════════════════════════════ -->
+<div class="slide" id="s5">
+  <div class="two-col-40">
+    <div class="slide-left" style="background:linear-gradient(135deg,#0f172a,#1e3a5f)">
+      <div class="tag white">Tela de Acesso</div>
+      <div class="accent-bar white"></div>
+      <h2 class="h2 white">Login seguro e corporativo</h2>
+      <p class="lead white">A primeira tela da plataforma transmite profissionalismo e confiança. Acesso por e-mail e senha com opção de sessão prolongada.</p>
+      <ul class="check-list white" style="gap:12px">
+        <li><i class="fas fa-check-circle"></i> <span><strong>Lembrar-me por 7 dias</strong> — sem precisar fazer login a cada acesso</span></li>
+        <li><i class="fas fa-check-circle"></i> <span><strong>Recuperação de senha</strong> — link enviado por e-mail para redefinição segura</span></li>
+        <li><i class="fas fa-check-circle"></i> <span><strong>Link de cadastro</strong> — empresas novas criam conta diretamente pela tela de login</span></li>
+        <li><i class="fas fa-check-circle"></i> <span><strong>Redirecionamento por perfil</strong> — admin vai para o painel master, funcionário vai para o dashboard</span></li>
+        <li><i class="fas fa-check-circle"></i> <span><strong>Rate limiting</strong> — bloqueio automático após 10 tentativas em 15 minutos</span></li>
+      </ul>
+      <div style="margin-top:24px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:14px 16px">
+        <div style="font-size:.72rem;color:rgba(255,255,255,.5);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Acesso pelo sistema</div>
+        <div style="font-size:.82rem;color:rgba(255,255,255,.8)">🌐 ponto-eletronicoo.netlify.app</div>
+      </div>
+      <div class="page-num">5 / 22</div>
+    </div>
+    <div class="slide-right dark">
+      <!-- Browser mockup -->
+      <div class="browser" style="max-width:320px">
+        <div class="browser-bar">
+          <div class="browser-dot r"></div><div class="browser-dot y"></div><div class="browser-dot g"></div>
+          <div class="browser-url">ponto-eletronicoo.netlify.app</div>
+        </div>
+        <div class="browser-body">
+          <div class="mock-login">
+            <div class="mock-login-card">
+              <div class="mock-logo-row">
+                <div class="mock-logo-icon"><i class="fas fa-fingerprint"></i></div>
+                <div>
+                  <div class="mock-logo-txt">Ponto Eletrônico</div>
+                  <div class="mock-logo-sub">Sistema Corporativo</div>
+                </div>
+              </div>
+              <div class="mock-field">
+                <label>E-mail corporativo</label>
+                <div class="mock-input-wrap">
+                  <i class="fas fa-envelope"></i>
+                  <div class="mock-input">teste12@gmail.com</div>
+                </div>
+              </div>
+              <div class="mock-field">
+                <label>Senha</label>
+                <div class="mock-input-wrap">
+                  <i class="fas fa-lock"></i>
+                  <div class="mock-input">••••••••</div>
+                </div>
+              </div>
+              <div class="mock-remember">
+                <span>☑ Lembrar-me por 7 dias</span>
+                <span class="mock-link">Esqueci a senha</span>
+              </div>
+              <button class="mock-btn-primary"><i class="fas fa-sign-in-alt"></i> Entrar</button>
+              <div class="mock-footer-txt">Não tem conta? <span class="mock-link">Cadastre sua empresa grátis</span></div>
+              <div class="mock-footer-txt" style="margin-top:8px;color:#cbd5e1">© 2026 Ponto Eletrônico Corporativo</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 6 — DASHBOARD (com mockup)
+══════════════════════════════════════════════════════ -->
+<div class="slide" id="s6">
+  <div class="slide-header">
+    <div class="slide-header-icon"><i class="fas fa-tachometer-alt"></i></div>
+    <div class="slide-header-text">
+      <h2>Dashboard — Visão em tempo real para gestores e funcionários</h2>
+      <p>Interface adaptada ao perfil do usuário: administradores veem dados da empresa, funcionários veem seus próprios registros</p>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:24px 52px">
+    <!-- Dashboard Admin mockup -->
+    <div>
+      <div style="font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;display:flex;align-items:center;gap:6px"><i class="fas fa-user-shield" style="color:#3b82f6"></i> Visão Administrador / Supervisor</div>
+      <div class="browser" style="max-width:100%">
+        <div class="browser-bar"><div class="browser-dot r"></div><div class="browser-dot y"></div><div class="browser-dot g"></div><div class="browser-url">Dashboard — Ponto Eletrônico</div></div>
+        <div class="browser-body">
+          <div class="mock-app">
+            <div class="mock-sidebar">
+              <div class="mock-sidebar-logo"><div class="mock-sidebar-logo-icon"><i class="fas fa-fingerprint"></i></div><div class="mock-sidebar-logo-txt">Ponto<br>Eletrônico</div></div>
+              <div class="mock-nav-item active"><i class="fas fa-tachometer-alt"></i> Dashboard</div>
+              <div class="mock-nav-item"><i class="fas fa-clock"></i> Registrar Ponto</div>
+              <div class="mock-nav-item"><i class="fas fa-history"></i> Histórico</div>
+              <div class="mock-nav-item"><i class="fas fa-chart-bar"></i> Relatórios</div>
+              <div class="mock-nav-item"><i class="fas fa-file-signature"></i> Fechamento</div>
+              <div class="mock-nav-item"><i class="fas fa-users"></i> Usuários</div>
+              <div class="mock-nav-item"><i class="fas fa-user-tag"></i> Cargos</div>
+              <div class="mock-nav-item"><i class="fas fa-cog"></i> Configurações</div>
+              <div class="mock-nav-item"><i class="fas fa-shield-alt"></i> Logs</div>
+            </div>
+            <div class="mock-main">
+              <div class="mock-topbar"><div class="mock-page-title">Dashboard</div><div class="mock-avatar">A</div></div>
+              <div class="mock-stats" style="grid-template-columns:repeat(3,1fr)">
+                <div class="mock-stat"><div class="mock-stat-icon blue"><i class="fas fa-users"></i></div><div><div class="mock-stat-val">24</div><div class="mock-stat-lbl">Total Usuários</div></div></div>
+                <div class="mock-stat"><div class="mock-stat-icon green"><i class="fas fa-user-check"></i></div><div><div class="mock-stat-val">22</div><div class="mock-stat-lbl">Usuários Ativos</div></div></div>
+                <div class="mock-stat"><div class="mock-stat-icon cyan"><i class="fas fa-building"></i></div><div><div class="mock-stat-val">18</div><div class="mock-stat-lbl">Presentes Agora</div></div></div>
+                <div class="mock-stat"><div class="mock-stat-icon orange"><i class="fas fa-calendar-day"></i></div><div><div class="mock-stat-val">47</div><div class="mock-stat-lbl">Registros Hoje</div></div></div>
+                <div class="mock-stat"><div class="mock-stat-icon purple"><i class="fas fa-calendar-week"></i></div><div><div class="mock-stat-val">183</div><div class="mock-stat-lbl">Esta Semana</div></div></div>
+                <div class="mock-stat"><div class="mock-stat-icon red"><i class="fas fa-calendar-alt"></i></div><div><div class="mock-stat-val">712</div><div class="mock-stat-lbl">Este Mês</div></div></div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+                <div class="mock-chart">
+                  <div class="mock-chart-title"><i class="fas fa-chart-bar" style="color:#3b82f6;margin-right:4px"></i>Registros — 7 dias</div>
+                  <div class="mock-bars">
+                    <div class="mock-bar" style="height:40%"></div><div class="mock-bar" style="height:55%"></div>
+                    <div class="mock-bar" style="height:70%"></div><div class="mock-bar" style="height:45%"></div>
+                    <div class="mock-bar" style="height:80%"></div><div class="mock-bar" style="height:65%"></div>
+                    <div class="mock-bar" style="height:90%"></div>
+                  </div>
+                </div>
+                <div class="mock-chart">
+                  <div class="mock-chart-title"><i class="fas fa-chart-line" style="color:#8b5cf6;margin-right:4px"></i>Horas trabalhadas</div>
+                  <div class="mock-bars">
+                    <div class="mock-bar green" style="height:60%"></div><div class="mock-bar green" style="height:75%"></div>
+                    <div class="mock-bar green" style="height:50%"></div><div class="mock-bar green" style="height:85%"></div>
+                    <div class="mock-bar green" style="height:70%"></div><div class="mock-bar green" style="height:90%"></div>
+                    <div class="mock-bar green" style="height:65%"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Dashboard Funcionário mockup -->
+    <div>
+      <div style="font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;display:flex;align-items:center;gap:6px"><i class="fas fa-user" style="color:#22c55e"></i> Visão Funcionário</div>
+      <div class="browser" style="max-width:100%">
+        <div class="browser-bar"><div class="browser-dot r"></div><div class="browser-dot y"></div><div class="browser-dot g"></div><div class="browser-url">Dashboard — Ponto Eletrônico</div></div>
+        <div class="browser-body">
+          <div class="mock-app">
+            <div class="mock-sidebar">
+              <div class="mock-sidebar-logo"><div class="mock-sidebar-logo-icon"><i class="fas fa-fingerprint"></i></div><div class="mock-sidebar-logo-txt">Ponto<br>Eletrônico</div></div>
+              <div class="mock-nav-item active"><i class="fas fa-tachometer-alt"></i> Dashboard</div>
+              <div class="mock-nav-item"><i class="fas fa-clock"></i> Registrar Ponto</div>
+              <div class="mock-nav-item"><i class="fas fa-history"></i> Histórico</div>
+              <div class="mock-nav-item"><i class="fas fa-file-alt"></i> Meus Relatórios</div>
+            </div>
+            <div class="mock-main">
+              <div class="mock-topbar"><div class="mock-page-title">Bom dia, João!</div><div class="mock-avatar">J</div></div>
+              <!-- Saudação card -->
+              <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+                <div>
+                  <div class="mock-status-pill"><div class="mock-status-dot"></div>Você está trabalhando</div>
+                  <div style="font-size:.6rem;color:#64748b">Último registro: <strong>entrada</strong> às 08:14</div>
+                </div>
+                <div style="background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:.65rem;font-weight:700;cursor:pointer">
+                  <i class="fas fa-clock"></i> Registrar Ponto
+                </div>
+              </div>
+              <!-- Stats pessoais -->
+              <div class="mock-stats" style="grid-template-columns:repeat(2,1fr)">
+                <div class="mock-stat"><div class="mock-stat-icon orange"><i class="fas fa-calendar-day"></i></div><div><div class="mock-stat-val">2</div><div class="mock-stat-lbl">Registros Hoje</div></div></div>
+                <div class="mock-stat"><div class="mock-stat-icon blue"><i class="fas fa-calendar-week"></i></div><div><div class="mock-stat-val">8</div><div class="mock-stat-lbl">Esta Semana</div></div></div>
+                <div class="mock-stat"><div class="mock-stat-icon green"><i class="fas fa-calendar-alt"></i></div><div><div class="mock-stat-val">34</div><div class="mock-stat-lbl">Este Mês</div></div></div>
+                <div class="mock-stat"><div class="mock-stat-icon purple"><i class="fas fa-business-time"></i></div><div><div class="mock-stat-val">17</div><div class="mock-stat-lbl">Dias Trabalhados</div></div></div>
+              </div>
+              <div class="mock-chart" style="margin-top:8px">
+                <div class="mock-chart-title"><i class="fas fa-chart-bar" style="color:#3b82f6;margin-right:4px"></i>Meus Registros — 7 dias</div>
+                <div class="mock-bars">
+                  <div class="mock-bar" style="height:50%"></div><div class="mock-bar" style="height:100%"></div>
+                  <div class="mock-bar" style="height:75%"></div><div class="mock-bar" style="height:100%"></div>
+                  <div class="mock-bar" style="height:50%"></div><div class="mock-bar" style="height:75%"></div>
+                  <div class="mock-bar" style="height:50%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-num dark">6 / 22</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 7 — REGISTRO DE PONTO (com mockup)
+══════════════════════════════════════════════════════ -->
+<div class="slide" id="s7">
+  <div class="two-col-60">
+    <div class="slide-left">
+      <div class="tag">Registro de Ponto</div>
+      <div class="accent-bar"></div>
+      <h2 class="h2">Ponto com GPS e selfie — 100% à prova de fraudes</h2>
+      <p class="lead">O funcionário registra o ponto em 3 etapas obrigatórias: verificação de localização, captura de foto e confirmação. Tudo registrado no servidor com timestamp preciso.</p>
+      <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:24px">
+        <div class="feat-row" style="border-bottom:1px solid var(--gray100)">
+          <div class="icon-box green"><i class="fas fa-map-marker-alt"></i></div>
+          <div class="feat-body">
+            <div class="feat-title">GPS com raio configurável</div>
+            <div class="feat-desc">O admin define o raio máximo de distância permitido. Se o funcionário estiver fora do raio, o registro é bloqueado automaticamente.</div>
+          </div>
+        </div>
+        <div class="feat-row" style="border-bottom:1px solid var(--gray100)">
+          <div class="icon-box blue"><i class="fas fa-camera"></i></div>
+          <div class="feat-body">
+            <div class="feat-title">Selfie obrigatória (configurável)</div>
+            <div class="feat-desc">Foto tirada no momento exato do registro. Fica vinculada ao ponto e pode ser visualizada no histórico para confirmar presença física.</div>
+          </div>
+        </div>
+        <div class="feat-row" style="border-bottom:1px solid var(--gray100)">
+          <div class="icon-box orange"><i class="fas fa-desktop"></i></div>
+          <div class="feat-body">
+            <div class="feat-title">Detecção de dispositivo e IP</div>
+            <div class="feat-desc">Sistema registra automaticamente o dispositivo, navegador e endereço IP do acesso — evidência adicional para auditoria.</div>
+          </div>
+        </div>
+        <div class="feat-row">
+          <div class="icon-box purple"><i class="fas fa-clock"></i></div>
+          <div class="feat-body">
+            <div class="feat-title">Relógio em tempo real</div>
+            <div class="feat-desc">Relógio digital sincronizado com o servidor, exibido na tela antes do registro para transparência total.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-right blue">
+      <div class="browser" style="max-width:300px">
+        <div class="browser-bar"><div class="browser-dot r"></div><div class="browser-dot y"></div><div class="browser-dot g"></div><div class="browser-url">/ponto.html</div></div>
+        <div class="browser-body">
+          <div class="mock-app">
+            <div class="mock-sidebar" style="width:140px">
+              <div class="mock-sidebar-logo"><div class="mock-sidebar-logo-icon"><i class="fas fa-fingerprint"></i></div><div class="mock-sidebar-logo-txt">Ponto<br>Eletrônico</div></div>
+              <div class="mock-nav-item"><i class="fas fa-tachometer-alt"></i> Dashboard</div>
+              <div class="mock-nav-item active"><i class="fas fa-clock"></i> Registrar Ponto</div>
+              <div class="mock-nav-item"><i class="fas fa-history"></i> Histórico</div>
+            </div>
+            <div class="mock-main" style="display:flex;align-items:center;justify-content:center;background:#f8fafc">
+              <div class="mock-ponto-card">
+                <div style="text-align:center;margin-bottom:8px">
+                  <div style="font-size:.65rem;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:4px">Registrar Ponto</div>
+                  <div class="mock-clock">08:14:37</div>
+                </div>
+                <div class="mock-status-check">
+                  <div class="mock-check-row"><i class="fas fa-check-circle ok"></i> GPS: Localização obtida</div>
+                  <div class="mock-check-row"><i class="fas fa-check-circle ok"></i> Câmera: Disponível</div>
+                  <div class="mock-check-row"><i class="fas fa-check-circle ok"></i> Dispositivo: iPhone 13</div>
+                </div>
+                <div class="mock-steps">
+                  <div class="mock-step"><div class="mock-step-num done"><i class="fas fa-check" style="font-size:.5rem"></i></div><div class="mock-step-lbl">GPS</div></div>
+                  <div class="mock-step-sep"></div>
+                  <div class="mock-step"><div class="mock-step-num done"><i class="fas fa-check" style="font-size:.5rem"></i></div><div class="mock-step-lbl">Selfie</div></div>
+                  <div class="mock-step-sep"></div>
+                  <div class="mock-step"><div class="mock-step-num">3</div><div class="mock-step-lbl">Confirmar</div></div>
+                </div>
+                <button class="mock-btn-entrada"><i class="fas fa-sign-in-alt"></i> Registrar Entrada</button>
+                <button class="mock-btn-saida" style="margin-top:6px"><i class="fas fa-sign-out-alt"></i> Registrar Saída</button>
+                <div style="margin-top:10px;background:#f8fafc;border-radius:8px;padding:8px;font-size:.6rem;color:#64748b">
+                  <div style="font-weight:700;margin-bottom:4px">Registros de Hoje</div>
+                  <div style="display:flex;justify-content:space-between;align-items:center"><span><span class="badge green" style="font-size:.55rem">entrada</span> 08:14</span><span style="color:#94a3b8">IP: 187.xx.xx.1</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-num">7 / 22</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 8 — HISTÓRICO DE REGISTROS (com mockup)
+══════════════════════════════════════════════════════ -->
+<div class="slide" id="s8">
+  <div class="two-col-40">
+    <div class="slide-left" style="background:linear-gradient(135deg,#0f172a,#1e293b)">
+      <div class="tag white">Histórico de Registros</div>
+      <div class="accent-bar white"></div>
+      <h2 class="h2 white">Rastreabilidade total de todos os registros</h2>
+      <p class="lead white">Acesse o histórico completo de qualquer funcionário, com filtros avançados e visualização da foto tirada no momento do ponto.</p>
+      <ul class="check-list white">
+        <li><i class="fas fa-check-circle"></i> Filtre por período (data início e fim)</li>
+        <li><i class="fas fa-check-circle"></i> Filtre por tipo: Entrada ou Saída</li>
+        <li><i class="fas fa-check-circle"></i> Veja a foto tirada no momento do registro</li>
+        <li><i class="fas fa-check-circle"></i> IP, dispositivo e navegador registrados</li>
+        <li><i class="fas fa-check-circle"></i> Localização GPS de cada ponto</li>
+        <li><i class="fas fa-check-circle"></i> Exportação em <strong>PDF</strong> e <strong>Excel</strong></li>
+        <li><i class="fas fa-check-circle"></i> Admin vê todos os funcionários; funcionário vê apenas os próprios</li>
+      </ul>
+      <div class="page-num">8 / 22</div>
+    </div>
+    <div style="padding:32px 40px;background:#f8fafc;display:flex;flex-direction:column;justify-content:center">
+      <div class="browser">
+        <div class="browser-bar"><div class="browser-dot r"></div><div class="browser-dot y"></div><div class="browser-dot g"></div><div class="browser-url">Histórico de Registros — Ponto Eletrônico</div></div>
+        <div class="browser-body">
+          <div class="mock-app">
+            <div class="mock-sidebar" style="width:140px">
+              <div class="mock-sidebar-logo"><div class="mock-sidebar-logo-icon"><i class="fas fa-fingerprint"></i></div><div class="mock-sidebar-logo-txt">Ponto<br>Eletrônico</div></div>
+              <div class="mock-nav-item"><i class="fas fa-tachometer-alt"></i> Dashboard</div>
+              <div class="mock-nav-item"><i class="fas fa-clock"></i> Registrar Ponto</div>
+              <div class="mock-nav-item active"><i class="fas fa-history"></i> Histórico</div>
+              <div class="mock-nav-item"><i class="fas fa-chart-bar"></i> Relatórios</div>
+            </div>
+            <div class="mock-main">
+              <div class="mock-topbar"><div class="mock-page-title">Histórico de Registros</div><div class="mock-avatar">A</div></div>
+              <div class="mock-filter-bar">
+                <div style="font-size:.6rem;color:#64748b">De:</div>
+                <div class="mock-filter-input">01/06/2026</div>
+                <div style="font-size:.6rem;color:#64748b">Até:</div>
+                <div class="mock-filter-input">15/06/2026</div>
+                <div class="mock-filter-select">Todos</div>
+                <div class="mock-btn-sm">Buscar</div>
+                <div class="mock-export-row">
+                  <div class="mock-export-btn"><i class="fas fa-file-pdf"></i> PDF</div>
+                  <div class="mock-export-btn"><i class="fas fa-file-excel xl"></i> Excel</div>
+                </div>
+              </div>
+              <div class="mock-table">
+                <div class="mock-table-head" style="grid-template-columns:18px 90px 70px 44px 60px 60px 50px"># <span>Funcionário</span><span>Data/Hora</span><span>Tipo</span><span>IP</span><span>GPS</span><span>Disp.</span></div>
+                <div class="mock-table-row" style="grid-template-columns:18px 90px 70px 44px 60px 60px 50px"><span style="color:#94a3b8">1</span><div style="display:flex;align-items:center;gap:4px"><div class="mock-avatar-sm">JS</div>João S.</div><span>15/06 08:14</span><span class="badge green" style="font-size:.55rem">entrada</span><span style="color:#94a3b8">187.xx</span><span style="color:#22c55e;font-size:.6rem"><i class="fas fa-map-marker-alt"></i> OK</span><span style="font-size:.55rem;color:#64748b">iPhone</span></div>
+                <div class="mock-table-row" style="grid-template-columns:18px 90px 70px 44px 60px 60px 50px"><span style="color:#94a3b8">2</span><div style="display:flex;align-items:center;gap:4px"><div class="mock-avatar-sm">MS</div>Maria S.</div><span>15/06 08:22</span><span class="badge green" style="font-size:.55rem">entrada</span><span style="color:#94a3b8">189.xx</span><span style="color:#22c55e;font-size:.6rem"><i class="fas fa-map-marker-alt"></i> OK</span><span style="font-size:.55rem;color:#64748b">Android</span></div>
+                <div class="mock-table-row" style="grid-template-columns:18px 90px 70px 44px 60px 60px 50px"><span style="color:#94a3b8">3</span><div style="display:flex;align-items:center;gap:4px"><div class="mock-avatar-sm">PC</div>Pedro C.</div><span>15/06 08:31</span><span class="badge green" style="font-size:.55rem">entrada</span><span style="color:#94a3b8">200.xx</span><span style="color:#22c55e;font-size:.6rem"><i class="fas fa-map-marker-alt"></i> OK</span><span style="font-size:.55rem;color:#64748b">Chrome</span></div>
+                <div class="mock-table-row" style="grid-template-columns:18px 90px 70px 44px 60px 60px 50px"><span style="color:#94a3b8">4</span><div style="display:flex;align-items:center;gap:4px"><div class="mock-avatar-sm">JS</div>João S.</div><span>15/06 12:02</span><span class="badge red" style="font-size:.55rem">saída</span><span style="color:#94a3b8">187.xx</span><span style="color:#22c55e;font-size:.6rem"><i class="fas fa-map-marker-alt"></i> OK</span><span style="font-size:.55rem;color:#64748b">iPhone</span></div>
+                <div class="mock-table-row" style="grid-template-columns:18px 90px 70px 44px 60px 60px 50px"><span style="color:#94a3b8">5</span><div style="display:flex;align-items:center;gap:4px"><div class="mock-avatar-sm">MS</div>Maria S.</div><span>15/06 12:15</span><span class="badge red" style="font-size:.55rem">saída</span><span style="color:#94a3b8">189.xx</span><span style="color:#22c55e;font-size:.6rem"><i class="fas fa-map-marker-alt"></i> OK</span><span style="font-size:.55rem;color:#64748b">Android</span></div>
+              </div>
+              <div style="margin-top:8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 12px;font-size:.62rem;color:#166534;display:flex;align-items:center;gap:6px">
+                <i class="fas fa-camera"></i> Clique em qualquer linha para ver a <strong>foto do registro</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 9 — RELATÓRIOS (com mockup)
+══════════════════════════════════════════════════════ -->
+<div class="slide" id="s9">
+  <div class="two-col-60">
+    <div class="slide-left">
+      <div class="tag">Central de Relatórios</div>
+      <div class="accent-bar"></div>
+      <h2 class="h2">Relatórios prontos para o RH e a gestão</h2>
+      <p class="lead">Dados de presença consolidados por funcionário, com gráficos comparativos e exportação em PDF e Excel — prontos para enviar ao contador ou arquivar.</p>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="stat-card">
+          <div class="stat-icon blue"><i class="fas fa-user-clock"></i></div>
+          <div><div class="stat-val" style="font-size:1rem">Resumo por Funcionário</div><div class="stat-lbl">Dias trabalhados, entradas, saídas e último registro de cada colaborador</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple"><i class="fas fa-chart-bar"></i></div>
+          <div><div class="stat-val" style="font-size:1rem">Gráfico de Presença</div><div class="stat-lbl">Comparativo visual de dias trabalhados por funcionário no período</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green"><i class="fas fa-exchange-alt"></i></div>
+          <div><div class="stat-val" style="font-size:1rem">Entradas vs. Saídas</div><div class="stat-lbl">Gráfico comparativo do volume de entradas e saídas no período selecionado</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon orange"><i class="fas fa-download"></i></div>
+          <div><div class="stat-val" style="font-size:1rem">Exportação em 1 clique</div><div class="stat-lbl">PDF formatado e Excel com todos os dados prontos para impressão ou envio</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-right" style="background:#f8fafc;padding:28px 32px">
+      <div class="browser" style="max-width:100%">
+        <div class="browser-bar"><div class="browser-dot r"></div><div class="browser-dot y"></div><div class="browser-dot g"></div><div class="browser-url">Central de Relatórios — Ponto Eletrônico</div></div>
+        <div class="browser-body">
+          <div class="mock-app">
+            <div class="mock-sidebar" style="width:140px">
+              <div class="mock-sidebar-logo"><div class="mock-sidebar-logo-icon"><i class="fas fa-fingerprint"></i></div><div class="mock-sidebar-logo-txt">Ponto<br>Eletrônico</div></div>
+              <div class="mock-nav-item"><i class="fas fa-tachometer-alt"></i> Dashboard</div>
+              <div class="mock-nav-item"><i class="fas fa-clock"></i> Registrar Ponto</div>
+              <div class="mock-nav-item"><i class="fas fa-history"></i> Histórico</div>
+              <div class="mock-nav-item active"><i class="fas fa-chart-bar"></i> Relatórios</div>
+              <div class="mock-nav-item"><i class="fas fa-file-signature"></i> Fechamento</div>
+            </div>
+            <div class="mock-main">
+              <div class="mock-topbar"><div class="mock-page-title">Central de Relatórios</div></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px">
+                <div class="mock-period-tabs">
+                  <div class="mock-tab">Hoje</div><div class="mock-tab">Esta semana</div>
+                  <div class="mock-tab active">Este mês</div><div class="mock-tab">Personalizado</div>
+                </div>
+                <div class="mock-export-row">
+                  <div class="mock-export-btn"><i class="fas fa-file-pdf"></i> PDF</div>
+                  <div class="mock-export-btn"><i class="fas fa-file-excel xl"></i> Excel</div>
+                </div>
+              </div>
+              <!-- Gráficos -->
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+                <div class="mock-chart">
+                  <div class="mock-chart-title">Dias Trabalhados por Funcionário</div>
+                  <div class="mock-bars" style="height:50px">
+                    <div class="mock-bar blue" style="height:90%;background:#3b82f6"></div>
+                    <div class="mock-bar blue" style="height:70%;background:#3b82f6"></div>
+                    <div class="mock-bar blue" style="height:80%;background:#3b82f6"></div>
+                    <div class="mock-bar blue" style="height:60%;background:#3b82f6"></div>
+                    <div class="mock-bar blue" style="height:95%;background:#3b82f6"></div>
+                  </div>
+                </div>
+                <div class="mock-chart">
+                  <div class="mock-chart-title">Entradas vs. Saídas</div>
+                  <div class="mock-bars" style="height:50px;gap:6px">
+                    <div class="mock-bar" style="height:85%;background:#22c55e;flex:2"></div>
+                    <div class="mock-bar" style="height:78%;background:#ef4444;flex:2"></div>
+                  </div>
+                  <div style="display:flex;gap:8px;margin-top:4px;font-size:.55rem;color:#64748b">
+                    <span style="color:#22c55e">● Entradas: 234</span>
+                    <span style="color:#ef4444">● Saídas: 218</span>
+                  </div>
+                </div>
+              </div>
+              <!-- Tabela resumo -->
+              <div class="mock-table">
+                <div class="mock-table-head" style="grid-template-columns:100px 70px 60px 50px 50px 80px">Funcionário <span>Cargo</span><span>Dias Trab.</span><span>Entradas</span><span>Saídas</span><span>Último Reg.</span></div>
+                <div class="mock-table-row" style="grid-template-columns:100px 70px 60px 50px 50px 80px"><div style="display:flex;align-items:center;gap:4px"><div class="mock-avatar-sm">JS</div>João Silva</div><span style="font-size:.6rem">Analista</span><span style="font-weight:700;color:#0f172a">17</span><span style="color:#22c55e;font-weight:700">34</span><span style="color:#ef4444;font-weight:700">32</span><span style="font-size:.58rem;color:#64748b">15/06 17:32</span></div>
+                <div class="mock-table-row" style="grid-template-columns:100px 70px 60px 50px 50px 80px"><div style="display:flex;align-items:center;gap:4px"><div class="mock-avatar-sm">MS</div>Maria S.</div><span style="font-size:.6rem">RH</span><span style="font-weight:700;color:#0f172a">16</span><span style="color:#22c55e;font-weight:700">30</span><span style="color:#ef4444;font-weight:700">30</span><span style="font-size:.58rem;color:#64748b">15/06 18:00</span></div>
+                <div class="mock-table-row" style="grid-template-columns:100px 70px 60px 50px 50px 80px"><div style="display:flex;align-items:center;gap:4px"><div class="mock-avatar-sm">PC</div>Pedro C.</div><span style="font-size:.6rem">Dev</span><span style="font-weight:700;color:#0f172a">15</span><span style="color:#22c55e;font-weight:700">28</span><span style="color:#ef4444;font-weight:700">26</span><span style="font-size:.58rem;color:#64748b">14/06 17:45</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-num dark">9 / 22</div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 10 — FECHAMENTO DE FOLHA (com mockup)
+══════════════════════════════════════════════════════ -->
+<div class="slide" id="s10">
+  <div class="two-col-40">
+    <div class="slide-left" style="background:linear-gradient(135deg,#0f172a,#1e3a5f)">
+      <div class="tag white">Fechamento de Folha</div>
+      <div class="accent-bar white"></div>
+      <h2 class="h2 white">Assinatura digital com validade jurídica</h2>
+      <p class="lead white">Workflow completo de fechamento mensal: o RH envia o relatório para assinatura, o funcionário revisa e assina digitalmente — tudo com rastreabilidade total.</p>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+        <div style="background:rgba(255,255,255,.08);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px">
+          <div style="width:28px;height:28px;border-radius:8px;background:#1d4ed8;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="color:#fff;font-size:.7rem;font-weight:700">1</span></div>
+          <div style="font-size:.78rem;color:rgba(255,255,255,.85)"><strong style="color:#fff">Rascunho</strong> — RH cria o fechamento por competência</div>
+        </div>
+        <div style="background:rgba(255,255,255,.08);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px">
+          <div style="width:28px;height:28px;border-radius:8px;background:#1d4ed8;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="color:#fff;font-size:.7rem;font-weight:700">2</span></div>
+          <div style="font-size:.78rem;color:rgba(255,255,255,.85)"><strong style="color:#fff">Enviado</strong> — Funcionário recebe para revisar</div>
+        </div>
+        <div style="background:rgba(255,255,255,.08);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px">
+          <div style="width:28px;height:28px;border-radius:8px;background:#16a34a;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="color:#fff;font-size:.7rem;font-weight:700">3</span></div>
+          <div style="font-size:.78rem;color:rgba(255,255,255,.85)"><strong style="color:#fff">Assinado</strong> — Assinatura digital com data, hora e IP registrados</div>
+        </div>
+        <div style="background:rgba(239,68,68,.15);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px">
+          <div style="width:28px;height:28px;border-radius:8px;background:#dc2626;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="fas fa-times" style="color:#fff;font-size:.65rem"></i></div>
+          <div style="font-size:.78rem;color:rgba(255,255,255,.85)"><strong style="color:#fff">Rejeitado</strong> — Motivo obrigatório, notificação automática ao RH</div>
+        </div>
+      </div>
+      <div style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:12px 14px;font-size:.75rem;color:rgba(255,255,255,.7)">
+        <i class="fas fa-balance-scale" style="color:#60a5fa;margin-right:6px"></i>
+        <strong style="color:#fff">Conformidade legal:</strong> a assinatura registra o IP e timestamp exatos, gerando evidência auditável em caso de disputas trabalhistas.
+      </div>
+      <div class="page-num">10 / 22</div>
+    </div>
+    <div style="padding:28px 36px;background:#f8fafc;display:flex;flex-direction:column;justify-content:center">
+      <div class="browser">
+        <div class="browser-bar"><div class="browser-dot r"></div><div class="browser-dot y"></div><div class="browser-dot g"></div><div class="browser-url">Fechamento de Folha</div></div>
+        <div class="browser-body">
+          <div class="mock-app">
+            <div class="mock-sidebar" style="width:130px">
+              <div class="mock-sidebar-logo"><div class="mock-sidebar-logo-icon"><i class="fas fa-fingerprint"></i></div><div class="mock-sidebar-logo-txt">Ponto<br>Eletrônico</div></div>
+              <div class="mock-nav-item"><i class="fas fa-tachometer-alt"></i> Dashboard</div>
+              <div class="mock-nav-item"><i class="fas fa-chart-bar"></i> Relatórios</div>
+              <div class="mock-nav-item active"><i class="fas fa-file-signature"></i> Fechamento</div>
+              <div class="mock-nav-item"><i class="fas fa-users"></i> Usuários</div>
+            </div>
+            <div class="mock-main">
+              <div class="mock-topbar">
+                <div class="mock-page-title">Fechamento de Folha</div>
+                <div style="background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:.6rem;font-weight:700;cursor:pointer">+ Novo Fechamento</div>
+              </div>
+              <!-- Filtros de status -->
+              <div style="display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap">
+                <div class="mock-tab active" style="font-size:.58rem;background:var(--blue);color:#fff;border-color:var(--blue)">Todos</div>
+                <div class="mock-tab" style="font-size:.58rem">Rascunho</div>
+                <div class="mock-tab" style="font-size:.58rem">Enviado</div>
+                <div class="mock-tab" style="font-size:.58rem">Assinado</div>
+                <div class="mock-tab" style="font-size:.58rem">Rejeitado</div>
+                <div class="mock-tab" style="font-size:.58rem">Fechado</div>
+              </div>
+              <div class="mock-table">
+                <div class="mock-table-head" style="grid-template-columns:80px 55px 55px 55px 60px 50px">Funcionário <span>Cargo</span><span>Compet.</span><span>Status</span><span>Enviado</span><span>Ações</span></div>
+                <div class="mock-table-row" style="grid-template-columns:80px 55px 55px 55px 60px 50px">
+                  <div style="display:flex;align-items:center;gap:3px"><div class="mock-avatar-sm">JS</div><span style="font-size:.6rem">João S.</span></div>
+                  <span style="font-size:.58rem;color:#64748b">Analista</span>
+                  <span style="font-size:.6rem">Mai/2026</span>
+                  <span class="badge green" style="font-size:.5rem">Assinado</span>
+                  <span style="font-size:.58rem;color:#64748b">01/06</span>
+                  <div style="display:flex;gap:3px"><div style="background:#eff6ff;border-radius:4px;padding:2px 5px;font-size:.55rem;color:#3b82f6;cursor:pointer">Ver</div></div>
+                </div>
+                <div class="mock-table-row" style="grid-template-columns:80px 55px 55px 55px 60px 50px">
+                  <div style="display:flex;align-items:center;gap:3px"><div class="mock-avatar-sm">MS</div><span style="font-size:.6rem">Maria S.</span></div>
+                  <span style="font-size:.58rem;color:#64748b">RH</span>
+                  <span style="font-size:.6rem">Mai/2026</span>
+                  <span class="badge blue" style="font-size:.5rem">Enviado</span>
+                  <span style="font-size:.58rem;color:#64748b">01/06</span>
+                  <div style="display:flex;gap:3px"><div style="background:#eff6ff;border-radius:4px;padding:2px 5px;font-size:.55rem;color:#3b82f6;cursor:pointer">Ver</div></div>
+                </div>
+                <div class="mock-table-row" style="grid-template-columns:80px 55px 55px 55px 60px 50px">
+                  <div style="display:flex;align-items:center;gap:3px"><div class="mock-avatar-sm">PC</div><span style="font-size:.6rem">Pedro C.</span></div>
+                  <span style="font-size:.58rem;color:#64748b">Dev</span>
+                  <span style="font-size:.6rem">Mai/2026</span>
+                  <span class="badge red" style="font-size:.5rem">Rejeitado</span>
+                  <span style="font-size:.58rem;color:#64748b">01/06</span>
+                  <div style="display:flex;gap:3px"><div style="background:#eff6ff;border-radius:4px;padding:2px 5px;font-size:.55rem;color:#3b82f6;cursor:pointer">Ver</div></div>
+                </div>
+                <div class="mock-table-row" style="grid-template-columns:80px 55px 55px 55px 60px 50px">
+                  <div style="display:flex;align-items:center;gap:3px"><div class="mock-avatar-sm">AL</div><span style="font-size:.6rem">Ana L.</span></div>
+                  <span style="font-size:.58rem;color:#64748b">Gestor</span>
+                  <span style="font-size:.6rem">Mai/2026</span>
+                  <span class="badge gray" style="font-size:.5rem">Rascunho</span>
+                  <span style="font-size:.58rem;color:#94a3b8">—</span>
+                  <div style="display:flex;gap:3px"><div style="background:#eff6ff;border-radius:4px;padding:2px 5px;font-size:.55rem;color:#3b82f6;cursor:pointer">Ver</div></div>
+                </div>
+              </div>
+              <!-- Modal assinatura preview -->
+              <div style="margin-top:8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 12px;font-size:.6rem;color:#166534;display:flex;gap:6px;align-items:center">
+                <i class="fas fa-info-circle"></i> Assinatura registra data, hora e IP — evidência jurídica armazenada no sistema
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 11 — GESTÃO DE USUÁRIOS (com mockup)
+══════════════════════════════════════════════════════ -->
+<div class="slide" id="s11">
+  <div class="slide-header">
+    <div class="slide-header-icon"><i class="fas fa-users"></i></div>
+    <div class="slide-header-text">
+      <h2>Gestão de Usuários — Controle completo da sua equipe</h2>
+      <p>Cadastre, edite e gerencie todos os colaboradores com foto, cargo, salário e cálculos automáticos de remuneração</p>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:24px 52px">
+    <div>
+      <div class="browser">
+        <div class="browser-bar"><div class="browser-dot r"></div><div class="browser-dot y"></div><div class="browser-dot g"></div><div class="browser-url">Gestão de Usuários</div></div>
+        <div class="browser-body">
+          <div class="mock-app">
+            <div class="mock-sidebar" style="width:130px">
+              <div class="mock-sidebar-logo"><div class="mock-sidebar-logo-icon"><i class="fas fa-fingerprint"></i></div><div class="mock-sidebar-logo-txt">Ponto<br>Eletrônico</div></div>
+              <div class="mock-nav-item"><i class="fas fa-tachometer-alt"></i> Dashboard</div>
+              <div class="mock-nav-item active"><i class="fas fa-users"></i> Usuários</div>
+              <div class="mock-nav-item"><i class="fas fa-user-tag"></i> Cargos</div>
+              <div class="mock-nav-item"><i class="fas fa-cog"></i> Config.</div>
+            </div>
+            <div class="mock-main">
+              <div class="mock-topbar">
+                <div class="mock-page-title">Usuários</div>
+                <div style="background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:.6rem;font-weight:700;cursor:pointer">+ Novo Usuário</div>
+              </div>
+              <div class="mock-filter-bar" style="margin-bottom:8px">
+                <div class="mock-filter-select">Todos os cargos</div>
+                <div class="mock-filter-select">Ativos</div>
+                <div class="mock-btn-sm">Filtrar</div>
+              </div>
+              <div class="mock-table">
+                <div class="mock-table-head" style="grid-template-columns:22px 90px 70px 55px 55px 50px">Foto <span>Nome</span><span>E-mail</span><span>Cargo</span><span>Status</span><span>Último Acesso</span></div>
+                <div class="mock-table-row" style="grid-template-columns:22px 90px 70px 55px 55px 50px"><div class="mock-avatar-sm">JS</div><span style="font-size:.62rem;font-weight:600">João Silva</span><span style="font-size:.55rem;color:#64748b">joao@emp.com</span><span style="font-size:.58rem">Analista</span><span class="badge green" style="font-size:.5rem">Ativo</span><span style="font-size:.55rem;color:#64748b">hoje</span></div>
+                <div class="mock-table-row" style="grid-template-columns:22px 90px 70px 55px 55px 50px"><div class="mock-avatar-sm">MS</div><span style="font-size:.62rem;font-weight:600">Maria S.</span><span style="font-size:.55rem;color:#64748b">maria@emp.com</span><span style="font-size:.58rem">RH</span><span class="badge green" style="font-size:.5rem">Ativo</span><span style="font-size:.55rem;color:#64748b">hoje</span></div>
+                <div class="mock-table-row" style="grid-template-columns:22px 90px 70px 55px 55px 50px"><div class="mock-avatar-sm">PC</div><span style="font-size:.62rem;font-weight:600">Pedro C.</span><span style="font-size:.55rem;color:#64748b">pedro@emp.com</span><span style="font-size:.58rem">Dev</span><span class="badge green" style="font-size:.5rem">Ativo</span><span style="font-size:.55rem;color:#64748b">ontem</span></div>
+                <div class="mock-table-row" style="grid-template-columns:22px 90px 70px 55px 55px 50px"><div class="mock-avatar-sm">AL</div><span style="font-size:.62rem;font-weight:600">Ana Lima</span><span style="font-size:.55rem;color:#64748b">ana@emp.com</span><span style="font-size:.58rem">Admin</span><span class="badge gray" style="font-size:.5rem">Inativo</span><span style="font-size:.55rem;color:#94a3b8">—</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Campos do cadastro -->
+    <div style="display:flex;flex-direction:column;justify-content:center;gap:14px">
+      <div style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Formulário de Cadastro de Usuário</div>
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px 22px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <div style="font-size:.65rem;font-weight:600;color:#374151;margin-bottom:4px">Foto do Funcionário</div>
+            <div style="background:#e2e8f0;border-radius:8px;height:50px;display:flex;align-items:center;justify-content:center;font-size:.65rem;color:#94a3b8"><i class="fas fa-camera" style="margin-right:4px"></i> JPG, PNG · 2MB</div>
+          </div>
+          <div>
+            <div style="font-size:.65rem;font-weight:600;color:#374151;margin-bottom:4px">Status</div>
+            <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:.7rem;color:#374151">● Ativo</div>
+          </div>
+          <div><div style="font-size:.65rem;font-weight:600;color:#374151;margin-bottom:4px">Nome completo *</div><div style="background:#fff;border:1.5px solid #3b82f6;border-radius:8px;padding:8px 10px;font-size:.7rem;color:#1e293b">João da Silva</div></div>
+          <div><div style="font-size:.65rem;font-weight:600;color:#374151;margin-bottom:4px">CPF *</div><div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:.7rem;color:#1e293b">123.456.789-00</div></div>
+          <div><div style="font-size:.65rem;font-weight:600;color:#374151;margin-bottom:4px">E-mail *</div><div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:.7rem;color:#1e293b">joao@empresa.com</div></div>
+          <div><div style="font-size:.65rem;font-weight:600;color:#374151;margin-bottom:4px">Cargo *</div><div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:.7rem;color:#1e293b">Analista</div></div>
+        </div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid #e2e8f0">
+          <div style="font-size:.65rem;font-weight:700;color:#374151;margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Remuneração</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div><div style="font-size:.6rem;color:#64748b;margin-bottom:3px">Salário mensal</div><div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:.7rem;font-weight:700;color:#16a34a">R$ 3.500,00</div></div>
+            <div><div style="font-size:.6rem;color:#64748b;margin-bottom:3px">Carga horária/sem.</div><div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:.7rem;color:#1e293b">44h</div></div>
+          </div>
+          <div style="background:#f0fdf4;border-radius:8px;padding:8px 10px;margin-top:8px;font-size:.6rem;color:#16a34a;display:grid;grid-template-columns:1fr 1fr;gap:4px">
+            <div><span style="color:#64748b">Por hora:</span> <strong>R$ 19,89</strong></div>
+            <div><span style="color:#64748b">Semanal:</span> <strong>R$ 875,00</strong></div>
+            <div><span style="color:#64748b">Quinzenal:</span> <strong>R$ 1.750,00</strong></div>
+            <div><span style="color:#64748b">Mensal:</span> <strong>R$ 3.500,00</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-num dark">11 / 22</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 12 — CARGOS, PERMISSÕES E LOGS
+══════════════════════════════════════════════════════ -->
+<div class="slide" id="s12">
+  <div class="slide-header">
+    <div class="slide-header-icon"><i class="fas fa-shield-alt"></i></div>
+    <div class="slide-header-text">
+      <h2>Cargos, Permissões e Auditoria</h2>
+      <p>Controle granular de acesso por cargo e rastreamento completo de todas as ações no sistema</p>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:24px 52px">
+    <!-- Cargos mockup -->
+    <div>
+      <div style="font-size:.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px"><i class="fas fa-user-tag" style="color:#8b5cf6;margin-right:5px"></i>Cargos & Permissões</div>
+      <div class="browser">
+        <div class="browser-bar"><div class="browser-dot r"></div><div class="browser-dot y"></div><div class="browser-dot g"></div><div class="browser-url">Cargos & Permissões</div></div>
+        <div class="browser-body">
+          <div class="mock-app">
+            <div class="mock-sidebar" style="width:120px">
+              <div class="mock-sidebar-logo"><div class="mock-sidebar-logo-icon"><i class="fas fa-fingerprint"></i></div><div class="mock-sidebar-logo-txt">Ponto<br>Eletrônico</div></div>
+              <div class="mock-nav-item"><i class="fas fa-users"></i> Usuários</div>
+              <div class="mock-nav-item active"><i class="fas fa-user-tag"></i> Cargos</div>
+              <div class="mock-nav-item"><i class="fas fa-cog"></i> Config.</div>
+              <div class="mock-nav-item"><i class="fas fa-shield-alt"></i> Logs</div>
+            </div>
+            <div class="mock-main">
+              <div class="mock-topbar"><div class="mock-page-title">Cargos</div><div style="background:var(--blue);color:#fff;border-radius:6px;padding:4px 8px;font-size:.58rem;font-weight:700">+ Novo Cargo</div></div>
+              <!-- 3 níveis -->
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <div style="background:#fff;border:2px solid #3b82f6;border-radius:8px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between">
+                  <div style="display:flex;align-items:center;gap:6px"><div style="width:20px;height:20px;border-radius:6px;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:.55rem;color:#3b82f6"><i class="fas fa-crown"></i></div><span style="font-size:.68rem;font-weight:700;color:#0f172a">Administrador</span></div>
+                  <div class="badge blue" style="font-size:.5rem">Nível 1</div>
+                </div>
+                <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between">
+                  <div style="display:flex;align-items:center;gap:6px"><div style="width:20px;height:20px;border-radius:6px;background:#f5f3ff;display:flex;align-items:center;justify-content:center;font-size:.55rem;color:#7c3aed"><i class="fas fa-user-tie"></i></div><span style="font-size:.68rem;font-weight:700;color:#0f172a">Supervisor / RH</span></div>
+                  <div class="badge purple" style="font-size:.5rem">Nível 2</div>
+                </div>
+                <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between">
+                  <div style="display:flex;align-items:center;gap:6px"><div style="width:20px;height:20px;border-radius:6px;background:#f0fdf4;display:flex;align-items:center;justify-content:center;font-size:.55rem;color:#16a34a"><i class="fas fa-user"></i></div><span style="font-size:.68rem;font-weight:700;color:#0f172a">Funcionário</span></div>
+                  <div class="badge green" style="font-size:.5rem">Nível 3</div>
+                </div>
+              </div>
+              <div style="margin-top:8px;background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:8px 10px;font-size:.6rem;color:#92400e">
+                <i class="fas fa-info-circle" style="margin-right:4px"></i>Clique em um cargo para editar suas permissões específicas
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Logs mockup -->
+    <div>
+      <div style="font-size:.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px"><i class="fas fa-shield-alt" style="color:#3b82f6;margin-right:5px"></i>Logs de Auditoria</div>
+      <div class="browser">
+        <div class="browser-bar"><div class="browser-dot r"></div><div class="browser-dot y"></div><div class="browser-dot g"></div><div class="browser-url">Logs de Auditoria — Apenas Administradores</div></div>
+        <div class="browser-body">
+          <div class="mock-app">
+            <div class="mock-sidebar" style="width:120px">
+              <div class="mock-sidebar-logo"><div class="mock-sidebar-logo-icon"><i class="fas fa-fingerprint"></i></div><div class="mock-sidebar-logo-txt">Ponto<br>Eletrônico</div></div>
+              <div class="mock-nav-item"><i class="fas fa-users"></i> Usuários</div>
+              <div class="mock-nav-item"><i class="fas fa-user-tag"></i> Cargos</div>
+              <div class="mock-nav-item"><i class="fas fa-cog"></i> Config.</div>
+              <div class="mock-nav-item active"><i class="fas fa-shield-alt"></i> Logs</div>
+            </div>
+            <div class="mock-main">
+              <div class="mock-topbar"><div class="mock-page-title">Auditoria</div><div class="badge red" style="font-size:.55rem"><i class="fas fa-lock"></i> Só Admin</div></div>
+              <div class="mock-filter-bar" style="margin-bottom:8px">
+                <div class="mock-filter-input" style="width:70px">01/06</div>
+                <div class="mock-filter-input" style="width:70px">15/06</div>
+                <div class="mock-filter-select" style="width:90px">Login</div>
+                <div class="mock-btn-sm">Filtrar</div>
+              </div>
+              <div class="mock-table">
+                <div class="mock-table-head" style="grid-template-columns:65px 55px 45px 80px 45px">Data/Hora <span>Usuário</span><span>Ação</span><span>Descrição</span><span>IP</span></div>
+                <div class="mock-table-row" style="grid-template-columns:65px 55px 45px 80px 45px"><span style="font-size:.55rem">15/06 08:14</span><span style="font-size:.58rem">João S.</span><span class="badge green" style="font-size:.48rem">Login</span><span style="font-size:.55rem;color:#64748b">Login com sucesso</span><span style="font-size:.52rem;color:#94a3b8">187.xx</span></div>
+                <div class="mock-table-row" style="grid-template-columns:65px 55px 45px 80px 45px"><span style="font-size:.55rem">15/06 08:14</span><span style="font-size:.58rem">João S.</span><span class="badge orange" style="font-size:.48rem">Ponto</span><span style="font-size:.55rem;color:#64748b">Entrada registrada</span><span style="font-size:.52rem;color:#94a3b8">187.xx</span></div>
+                <div class="mock-table-row" style="grid-template-columns:65px 55px 45px 80px 45px"><span style="font-size:.55rem">15/06 09:01</span><span style="font-size:.58rem">Admin</span><span class="badge blue" style="font-size:.48rem">Usuários</span><span style="font-size:.55rem;color:#64748b">Pedro C. criado</span><span style="font-size:.52rem;color:#94a3b8">200.xx</span></div>
+                <div class="mock-table-row" style="grid-template-columns:65px 55px 45px 80px 45px"><span style="font-size:.55rem">14/06 17:30</span><span style="font-size:.58rem">Maria S.</span><span class="badge purple" style="font-size:.48rem">Fecham.</span><span style="font-size:.55rem;color:#64748b">Folha assinada</span><span style="font-size:.52rem;color:#94a3b8">189.xx</span></div>
+                <div class="mock-table-row" style="grid-template-columns:65px 55px 45px 80px 45px"><span style="font-size:.55rem">14/06 18:00</span><span style="font-size:.58rem">João S.</span><span class="badge gray" style="font-size:.48rem">Logout</span><span style="font-size:.55rem;color:#64748b">Sessão encerrada</span><span style="font-size:.52rem;color:#94a3b8">187.xx</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-num dark">12 / 22</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 13 — CONFIGURAÇÕES (com mockup)
+══════════════════════════════════════════════════════ -->
+<div class="slide" id="s13">
+  <div class="two-col-60">
+    <div class="slide-left">
+      <div class="tag">Configurações</div>
+      <div class="accent-bar"></div>
+      <h2 class="h2">Cada empresa configura o sistema do seu jeito</h2>
+      <p class="lead">O administrador personaliza todas as regras de jornada sem precisar de suporte técnico. Alterações entram em vigor imediatamente para todos os usuários.</p>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="feat-row" style="border-bottom:1px solid var(--gray100)">
+          <div class="icon-box blue"><i class="fas fa-map-marker-alt"></i></div>
+          <div class="feat-body"><div class="feat-title">Raio máximo de GPS</div><div class="feat-desc">Define em metros a distância máxima permitida para registrar ponto. Funcionários fora do raio são automaticamente bloqueados.</div></div>
+        </div>
+        <div class="feat-row" style="border-bottom:1px solid var(--gray100)">
+          <div class="icon-box green"><i class="fas fa-camera"></i></div>
+          <div class="feat-body"><div class="feat-title">Selfie obrigatória (mobile)</div><div class="feat-desc">Ative ou desative a exigência de foto no momento do ponto para dispositivos móveis. Pode ser desligado para uso em desktop.</div></div>
+        </div>
+        <div class="feat-row" style="border-bottom:1px solid var(--gray100)">
+          <div class="icon-box orange"><i class="fas fa-clock"></i></div>
+          <div class="feat-body"><div class="feat-title">Horário padrão de entrada e saída</div><div class="feat-desc">Define o horário esperado de toda a equipe. Usado como referência para relatórios de atraso e horas extras.</div></div>
+        </div>
+        <div class="feat-row" style="border-bottom:1px solid var(--gray100)">
+          <div class="icon-box purple"><i class="fas fa-stopwatch"></i></div>
+          <div class="feat-body"><div class="feat-title">Tolerância de atraso (minutos)</div><div class="feat-desc">Quantos minutos de tolerância são permitidos antes de um acesso ser considerado atraso nos relatórios.</div></div>
+        </div>
+        <div class="feat-row">
+          <div class="icon-box cyan"><i class="fas fa-globe-americas"></i></div>
+          <div class="feat-body"><div class="feat-title">Fuso horário</div><div class="feat-desc">Todos os fusos brasileiros disponíveis: Brasília, Manaus, Cuiabá, Porto Velho, Boa Vista, Acre e mais.</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-right" style="background:#f8fafc">
+      <div class="browser" style="max-width:380px">
+        <div class="browser-bar"><div class="browser-dot r"></div><div class="browser-dot y"></div><div class="browser-dot g"></div><div class="browser-url">Configurações — Ponto Eletrônico</div></div>
+        <div class="browser-body">
+          <div class="mock-app">
+            <div class="mock-sidebar" style="width:120px">
+              <div class="mock-sidebar-logo"><div class="mock-sidebar-logo-icon"><i class="fas fa-fingerprint"></i></div><div class="mock-sidebar-logo-txt">Ponto<br>Eletrônico</div></div>
+              <div class="mock-nav-item"><i class="fas fa-users"></i> Usuários</div>
+              <div class="mock-nav-item"><i class="fas fa-user-tag"></i> Cargos</div>
+              <div class="mock-nav-item active"><i class="fas fa-cog"></i> Config.</div>
+              <div class="mock-nav-item"><i class="fas fa-shield-alt"></i> Logs</div>
+            </div>
+            <div class="mock-main">
+              <div class="mock-topbar"><div class="mock-page-title">Configurações do Sistema</div></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <div><div style="font-size:.6rem;font-weight:600;color:#374151;margin-bottom:3px">Nome da empresa</div><div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:7px;padding:6px 8px;font-size:.65rem;color:#1e293b">Empresa Exemplo Ltda</div></div>
+                <div><div style="font-size:.6rem;font-weight:600;color:#374151;margin-bottom:3px">CNPJ</div><div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:7px;padding:6px 8px;font-size:.65rem;color:#1e293b">12.345.678/0001-90</div></div>
+                <div style="grid-column:1/-1"><div style="font-size:.6rem;font-weight:600;color:#374151;margin-bottom:3px">Fuso horário</div><div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:7px;padding:6px 8px;font-size:.62rem;color:#1e293b">🇧🇷 Brasil — Brasília (UTC-3)</div></div>
+                <div><div style="font-size:.6rem;font-weight:600;color:#374151;margin-bottom:3px">GPS obrigatório</div><div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:7px;padding:6px 8px;font-size:.65rem;color:#16a34a;font-weight:700">✓ Sim</div></div>
+                <div><div style="font-size:.6rem;font-weight:600;color:#374151;margin-bottom:3px">Selfie obrigatória</div><div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:7px;padding:6px 8px;font-size:.65rem;color:#16a34a;font-weight:700">✓ Sim</div></div>
+                <div><div style="font-size:.6rem;font-weight:600;color:#374151;margin-bottom:3px">Horário entrada</div><div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:7px;padding:6px 8px;font-size:.65rem;color:#1e293b;font-weight:700">08:00</div></div>
+                <div><div style="font-size:.6rem;font-weight:600;color:#374151;margin-bottom:3px">Horário saída</div><div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:7px;padding:6px 8px;font-size:.65rem;color:#1e293b;font-weight:700">18:00</div></div>
+                <div><div style="font-size:.6rem;font-weight:600;color:#374151;margin-bottom:3px">Tolerância atraso</div><div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:7px;padding:6px 8px;font-size:.65rem;color:#1e293b;font-weight:700">10 minutos</div></div>
+                <div><div style="font-size:.6rem;font-weight:600;color:#374151;margin-bottom:3px">Raio máx. GPS</div><div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:7px;padding:6px 8px;font-size:.65rem;color:#1e293b;font-weight:700">500 metros</div></div>
+              </div>
+              <div style="margin-top:10px">
+                <div style="background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;border:none;border-radius:8px;padding:8px;font-size:.68rem;font-weight:700;text-align:center;cursor:pointer"><i class="fas fa-save" style="margin-right:4px"></i> Salvar Configurações</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-num dark">13 / 22</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 14 — PAINEL SUPER ADMIN (com mockup)
+══════════════════════════════════════════════════════ -->
+<div class="slide" id="s14">
+  <div class="slide-header">
+    <div class="slide-header-icon"><i class="fas fa-crown"></i></div>
+    <div class="slide-header-text">
+      <h2>Painel Super Admin — Visão 360° de toda a plataforma</h2>
+      <p>Painel exclusivo para o operador da plataforma: gerencie todas as empresas, métricas financeiras e acesse qualquer conta</p>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:18px 52px 24px">
+    <div>
+      <!-- KPIs master -->
+      <div style="font-size:.7rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Métricas da Plataforma (tempo real)</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">
+        <div class="stat-card" style="border-top:3px solid #3b82f6">
+          <div class="stat-icon blue"><i class="fas fa-building"></i></div>
+          <div><div class="stat-val">47</div><div class="stat-lbl">Empresas</div></div>
+        </div>
+        <div class="stat-card" style="border-top:3px solid #22c55e">
+          <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
+          <div><div class="stat-val">31</div><div class="stat-lbl">Ativas</div></div>
+        </div>
+        <div class="stat-card" style="border-top:3px solid #06b6d4">
+          <div class="stat-icon cyan"><i class="fas fa-hourglass-half"></i></div>
+          <div><div class="stat-val">9</div><div class="stat-lbl">Em Teste</div></div>
+        </div>
+        <div class="stat-card" style="border-top:3px solid #f59e0b">
+          <div class="stat-icon orange"><i class="fas fa-exclamation-triangle"></i></div>
+          <div><div class="stat-val">4</div><div class="stat-lbl">Em Atraso</div></div>
+        </div>
+        <div class="stat-card" style="border-top:3px solid #ef4444">
+          <div class="stat-icon red"><i class="fas fa-ban"></i></div>
+          <div><div class="stat-val">3</div><div class="stat-lbl">Suspensas</div></div>
+        </div>
+        <div class="stat-card" style="border-top:3px solid #8b5cf6">
+          <div class="stat-icon purple"><i class="fas fa-clock"></i></div>
+          <div><div class="stat-val">1.284</div><div class="stat-lbl">Pontos Hoje</div></div>
+        </div>
+      </div>
+      <!-- MRR/ARR -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="background:linear-gradient(135deg,#1e3a5f,#0f172a);border-radius:14px;padding:18px 20px">
+          <div style="font-size:.7rem;font-weight:600;color:rgba(255,255,255,.5);margin-bottom:6px;text-transform:uppercase">MRR — Receita Mensal</div>
+          <div style="font-size:1.6rem;font-weight:800;color:#fff">R$ 4.851</div>
+          <div style="font-size:.7rem;color:#86efac;margin-top:4px"><i class="fas fa-arrow-up"></i> +12% vs. mês anterior</div>
+        </div>
+        <div style="background:linear-gradient(135deg,#064e3b,#065f46);border-radius:14px;padding:18px 20px">
+          <div style="font-size:.7rem;font-weight:600;color:rgba(255,255,255,.5);margin-bottom:6px;text-transform:uppercase">ARR — Receita Anual</div>
+          <div style="font-size:1.6rem;font-weight:800;color:#fff">R$ 58.212</div>
+          <div style="font-size:.7rem;color:#86efac;margin-top:4px"><i class="fas fa-chart-line"></i> Projeção anual</div>
+        </div>
+      </div>
+    </div>
+    <!-- Lista de empresas mockup -->
+    <div>
+      <div style="font-size:.7rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Gestão de Empresas</div>
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden">
+        <div style="padding:10px 14px;display:flex;gap:6px;border-bottom:1px solid #e2e8f0;background:#f8fafc">
+          <div class="mock-tab active" style="font-size:.58rem">Todas</div>
+          <div class="mock-tab" style="font-size:.58rem">Ativas</div>
+          <div class="mock-tab" style="font-size:.58rem">Em Teste</div>
+          <div class="mock-tab" style="font-size:.58rem">Em Atraso</div>
+          <div class="mock-tab" style="font-size:.58rem">Suspensas</div>
+        </div>
+        <!-- Cards empresa -->
+        <div style="padding:10px;display:flex;flex-direction:column;gap:8px">
+          <div style="border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#1e3a5f,#3b82f6);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.65rem;font-weight:700">EM</div>
+              <div><div style="font-size:.72rem;font-weight:700;color:#0f172a">Empresa Modelo</div><div style="font-size:.6rem;color:#94a3b8">Profissional · 24 usuários</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px"><span class="badge green" style="font-size:.5rem">Ativa</span><div style="background:#eff6ff;border-radius:6px;padding:3px 7px;font-size:.55rem;color:#3b82f6;cursor:pointer"><i class="fas fa-sign-in-alt"></i> Entrar</div></div>
+          </div>
+          <div style="border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#065f46,#16a34a);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.65rem;font-weight:700">TC</div>
+              <div><div style="font-size:.72rem;font-weight:700;color:#0f172a">Tech Corp</div><div style="font-size:.6rem;color:#94a3b8">Enterprise · 87 usuários</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px"><span class="badge blue" style="font-size:.5rem">Trial 8d</span><div style="background:#eff6ff;border-radius:6px;padding:3px 7px;font-size:.55rem;color:#3b82f6;cursor:pointer"><i class="fas fa-sign-in-alt"></i> Entrar</div></div>
+          </div>
+          <div style="border:1px solid #fecaca;border-radius:10px;padding:10px 12px;background:#fff8f8;display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#7f1d1d,#dc2626);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.65rem;font-weight:700">VE</div>
+              <div><div style="font-size:.72rem;font-weight:700;color:#0f172a">Varejo Express</div><div style="font-size:.6rem;color:#94a3b8">Básico · 8 usuários</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px"><span class="badge red" style="font-size:.5rem">Em Atraso</span><div style="background:#fef2f2;border-radius:6px;padding:3px 7px;font-size:.55rem;color:#dc2626;cursor:pointer"><i class="fas fa-sign-in-alt"></i> Entrar</div></div>
+          </div>
+        </div>
+        <div style="padding:8px 14px;background:#eff6ff;border-top:1px solid #bfdbfe;font-size:.6rem;color:#1d4ed8;display:flex;align-items:center;gap:6px">
+          <i class="fas fa-user-secret"></i> <strong>Impersonação:</strong> acesse a conta de qualquer empresa sem precisar da senha
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-num dark">14 / 22</div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 15 — SEGURANÇA
+══════════════════════════════════════════════════════ -->
+<div class="slide" id="s15">
+  <div class="two-col">
+    <div style="background:linear-gradient(135deg,#0f172a,#1e3a5f);padding:52px;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden">
+      <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(59,130,246,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.04) 1px,transparent 1px);background-size:28px 28px"></div>
+      <div style="position:relative;z-index:1">
+        <div class="tag white">Segurança</div>
+        <div class="accent-bar white"></div>
+        <h2 class="h2 white">Arquitetura segura de ponta a ponta</h2>
+        <p class="lead white">Cada camada do sistema foi projetada com segurança em mente — desde o registro do ponto até o armazenamento e acesso aos dados.</p>
+        <div style="display:flex;flex-direction:column;gap:14px;margin-top:8px">
+          <div style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:14px 16px;display:flex;gap:12px;align-items:center">
+            <div style="width:36px;height:36px;border-radius:10px;background:#1d4ed8;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="fas fa-key" style="color:#fff;font-size:.8rem"></i></div>
+            <div><div style="font-size:.82rem;font-weight:700;color:#fff;margin-bottom:2px">JWT + bcrypt 12 rounds</div><div style="font-size:.72rem;color:rgba(255,255,255,.6)">Tokens criptografados com expiração configurável. Senhas com 12 rounds de hash — padrão bancário.</div></div>
+          </div>
+          <div style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:14px 16px;display:flex;gap:12px;align-items:center">
+            <div style="width:36px;height:36px;border-radius:10px;background:#16a34a;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="fas fa-tachometer-alt" style="color:#fff;font-size:.8rem"></i></div>
+            <div><div style="font-size:.82rem;font-weight:700;color:#fff;margin-bottom:2px">Rate Limiting em todas as rotas</div><div style="font-size:.72rem;color:rgba(255,255,255,.6)">Login: 10 tentativas/15min. Ponto: 5/min. Cadastro: 5/hora. Global: 500/15min. Anti-brute force.</div></div>
+          </div>
+          <div style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:14px 16px;display:flex;gap:12px;align-items:center">
+            <div style="width:36px;height:36px;border-radius:10px;background:#7c3aed;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="fas fa-map-marker-alt" style="color:#fff;font-size:.8rem"></i></div>
+            <div><div style="font-size:.82rem;font-weight:700;color:#fff;margin-bottom:2px">GPS + Selfie + IP + Dispositivo</div><div style="font-size:.72rem;color:rgba(255,255,255,.6)">Cada registro guarda 4 evidências independentes: localização, foto, endereço IP e dados do dispositivo.</div></div>
+          </div>
+          <div style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:14px 16px;display:flex;gap:12px;align-items:center">
+            <div style="width:36px;height:36px;border-radius:10px;background:#0891b2;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="fas fa-users-cog" style="color:#fff;font-size:.8rem"></i></div>
+            <div><div style="font-size:.82rem;font-weight:700;color:#fff;margin-bottom:2px">Multi-tenant isolado</div><div style="font-size:.72rem;color:rgba(255,255,255,.6)">Dados de cada empresa completamente isolados. Nenhuma empresa tem acesso aos dados de outra.</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="page-num">15 / 22</div>
+    </div>
+    <div style="padding:52px;display:flex;flex-direction:column;justify-content:center;background:#f8fafc">
+      <div style="font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:20px">Camadas de Proteção</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px">
+          <div style="font-size:1.3rem">🔐</div>
+          <div><div style="font-weight:700;font-size:.88rem;color:#0f172a">Autenticação segura</div><div style="font-size:.76rem;color:#64748b">JWT com expiração, blacklist de tokens no logout, refresh automático</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px">
+          <div style="font-size:1.3rem">📝</div>
+          <div><div style="font-weight:700;font-size:.88rem;color:#0f172a">Auditoria completa</div><div style="font-size:.76rem;color:#64748b">Log de cada ação com usuário, timestamp e IP — rastreabilidade total</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px">
+          <div style="font-size:1.3rem">🛡️</div>
+          <div><div style="font-weight:700;font-size:.88rem;color:#0f172a">Permissões granulares</div><div style="font-size:.76rem;color:#64748b">Cada cargo acessa apenas o que foi explicitamente permitido pelo admin</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px">
+          <div style="font-size:1.3rem">💳</div>
+          <div><div style="font-weight:700;font-size:.88rem;color:#0f172a">Pagamentos via Stripe</div><div style="font-size:.76rem;color:#64748b">Dados de cartão nunca passam pelo servidor — processamento direto no Stripe (PCI-DSS Level 1)</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px">
+          <div style="font-size:1.3rem">☁️</div>
+          <div><div style="font-weight:700;font-size:.88rem;color:#0f172a">Infraestrutura em nuvem</div><div style="font-size:.76rem;color:#64748b">Backend no Railway com HTTPS obrigatório. Backups automáticos do banco de dados MySQL.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 16 — BENEFÍCIOS POR PERFIL
+══════════════════════════════════════════════════════ -->
+<div class="slide" id="s16">
+  <div class="slide-header">
+    <div class="slide-header-icon"><i class="fas fa-heart"></i></div>
+    <div class="slide-header-text">
+      <h2>Benefícios para cada perfil da sua empresa</h2>
+      <p>O sistema entrega valor concreto para todos — do funcionário ao dono da empresa</p>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:28px 52px">
+    <!-- Dono/CEO -->
+    <div style="background:linear-gradient(135deg,#0f172a,#1e3a5f);border-radius:16px;padding:24px 20px;color:#fff">
+      <div style="width:44px;height:44px;background:rgba(255,255,255,.15);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;margin-bottom:14px"><i class="fas fa-briefcase"></i></div>
+      <div style="font-size:.82rem;font-weight:800;margin-bottom:10px;color:#fff">Proprietário / CEO</div>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:8px">
+        <li style="font-size:.74rem;color:rgba(255,255,255,.8);display:flex;gap:7px"><i class="fas fa-check" style="color:#86efac;margin-top:2px;flex-shrink:0"></i>Elimina fraudes no ponto</li>
+        <li style="font-size:.74rem;color:rgba(255,255,255,.8);display:flex;gap:7px"><i class="fas fa-check" style="color:#86efac;margin-top:2px;flex-shrink:0"></i>Reduz passivo trabalhista</li>
+        <li style="font-size:.74rem;color:rgba(255,255,255,.8);display:flex;gap:7px"><i class="fas fa-check" style="color:#86efac;margin-top:2px;flex-shrink:0"></i>Visibilidade da presença em tempo real</li>
+        <li style="font-size:.74rem;color:rgba(255,255,255,.8);display:flex;gap:7px"><i class="fas fa-check" style="color:#86efac;margin-top:2px;flex-shrink:0"></i>ROI imediato: substitui relógio de ponto físico</li>
+        <li style="font-size:.74rem;color:rgba(255,255,255,.8);display:flex;gap:7px"><i class="fas fa-check" style="color:#86efac;margin-top:2px;flex-shrink:0"></i>Conformidade com CLT e portaria MTE</li>
+      </ul>
+    </div>
+    <!-- RH -->
+    <div style="background:#fff;border:2px solid #3b82f6;border-radius:16px;padding:24px 20px">
+      <div style="width:44px;height:44px;background:#eff6ff;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:#3b82f6;margin-bottom:14px"><i class="fas fa-user-tie"></i></div>
+      <div style="font-size:.82rem;font-weight:800;margin-bottom:10px;color:#0f172a">RH / Supervisor</div>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:8px">
+        <li style="font-size:.74rem;color:#475569;display:flex;gap:7px"><i class="fas fa-check" style="color:#22c55e;margin-top:2px;flex-shrink:0"></i>Fechamento de folha digital e rápido</li>
+        <li style="font-size:.74rem;color:#475569;display:flex;gap:7px"><i class="fas fa-check" style="color:#22c55e;margin-top:2px;flex-shrink:0"></i>Relatórios prontos para o contador</li>
+        <li style="font-size:.74rem;color:#475569;display:flex;gap:7px"><i class="fas fa-check" style="color:#22c55e;margin-top:2px;flex-shrink:0"></i>Exportação em PDF e Excel em 1 clique</li>
+        <li style="font-size:.74rem;color:#475569;display:flex;gap:7px"><i class="fas fa-check" style="color:#22c55e;margin-top:2px;flex-shrink:0"></i>Histórico completo de qualquer funcionário</li>
+        <li style="font-size:.74rem;color:#475569;display:flex;gap:7px"><i class="fas fa-check" style="color:#22c55e;margin-top:2px;flex-shrink:0"></i>Zero planilha manual de horas</li>
+      </ul>
+    </div>
+    <!-- Gestor -->
+    <div style="background:#fff;border:2px solid #8b5cf6;border-radius:16px;padding:24px 20px">
+      <div style="width:44px;height:44px;background:#f5f3ff;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:#8b5cf6;margin-bottom:14px"><i class="fas fa-sitemap"></i></div>
+      <div style="font-size:.82rem;font-weight:800;margin-bottom:10px;color:#0f172a">Gestor de Equipe</div>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:8px">
+        <li style="font-size:.74rem;color:#475569;display:flex;gap:7px"><i class="fas fa-check" style="color:#22c55e;margin-top:2px;flex-shrink:0"></i>Quem está presente agora? Dashboard mostra</li>
+        <li style="font-size:.74rem;color:#475569;display:flex;gap:7px"><i class="fas fa-check" style="color:#22c55e;margin-top:2px;flex-shrink:0"></i>Gráficos de presença da equipe</li>
+        <li style="font-size:.74rem;color:#475569;display:flex;gap:7px"><i class="fas fa-check" style="color:#22c55e;margin-top:2px;flex-shrink:0"></i>Registros com GPS — controle de equipes externas</li>
+        <li style="font-size:.74rem;color:#475569;display:flex;gap:7px"><i class="fas fa-check" style="color:#22c55e;margin-top:2px;flex-shrink:0"></i>Acompanha último acesso de cada membro</li>
+        <li style="font-size:.74rem;color:#475569;display:flex;gap:7px"><i class="fas fa-check" style="color:#22c55e;margin-top:2px;flex-shrink:0"></i>Comparativo semanal e mensal por funcionário</li>
+      </ul>
+    </div>
+    <!-- Funcionário -->
+    <div style="background:#fff;border:2px solid #22c55e;border-radius:16px;padding:24px 20px">
+      <div style="width:44px;height:44px;background:#f0fdf4;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:#16a34a;margin-bottom:14px"><i class="fas fa-user"></i></div>
+      <div style="font-size:.82rem;font-weight:800;margin-bottom:10px;color:#0f172a">Funcionário</div>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:8px">
+        <li style="font-size:.74rem;color:#475569;display:flex;gap:7px"><i class="fas fa-check" style="color:#22c55e;margin-top:2px;flex-shrink:0"></i>Registra ponto pelo celular em qualquer lugar</li>
+        <li style="font-size:.74rem;color:#475569;display:flex;gap:7px"><i class="fas fa-check" style="color:#22c55e;margin-top:2px;flex-shrink:0"></i>Acessa seu histórico completo</li>
+        <li style="font-size:.74rem;color:#475569;display:flex;gap:7px"><i class="fas fa-check" style="color:#22c55e;margin-top:2px;flex-shrink:0"></i>Assina ou contesta relatórios mensais</li>
+        <li style="font-size:.74rem;color:#475569;display:flex;gap:7px"><i class="fas fa-check" style="color:#22c55e;margin-top:2px;flex-shrink:0"></i>Sem papel, sem fila, sem esquecimento</li>
+        <li style="font-size:.74rem;color:#475569;display:flex;gap:7px"><i class="fas fa-check" style="color:#22c55e;margin-top:2px;flex-shrink:0"></i>Transparência total dos próprios registros</li>
+      </ul>
+    </div>
+  </div>
+  <!-- ROI banner -->
+  <div style="margin:0 52px 24px;background:linear-gradient(135deg,#eff6ff,#f0fdf4);border:1px solid #bfdbfe;border-radius:14px;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div style="display:flex;align-items:center;gap:12px"><i class="fas fa-calculator" style="font-size:1.3rem;color:#3b82f6"></i><div><div style="font-weight:700;font-size:.9rem;color:#1e3a5f">Retorno estimado do investimento</div><div style="font-size:.75rem;color:#64748b">Uma única ação trabalhista evitada já paga anos de assinatura. E o tempo do RH economizado no fechamento de folha, também.</div></div></div>
+    <div style="display:flex;gap:20px;text-align:center">
+      <div><div style="font-size:1.4rem;font-weight:800;color:#16a34a">-80%</div><div style="font-size:.68rem;color:#64748b">tempo fechamento<br>de folha</div></div>
+      <div><div style="font-size:1.4rem;font-weight:800;color:#3b82f6">100%</div><div style="font-size:.68rem;color:#64748b">rastreabilidade<br>de registros</div></div>
+      <div><div style="font-size:1.4rem;font-weight:800;color:#8b5cf6">0</div><div style="font-size:.68rem;color:#64748b">equipamento<br>físico necessário</div></div>
+    </div>
+  </div>
+  <div class="page-num dark">16 / 22</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 17 — DIFERENCIAIS
+══════════════════════════════════════════════════════ -->
+<div class="slide" id="s17">
+  <div class="two-col">
+    <div style="padding:52px;background:#f8fafc;display:flex;flex-direction:column;justify-content:center">
+      <div class="tag">Diferenciais</div>
+      <div class="accent-bar"></div>
+      <h2 class="h2">Por que o Ponto Eletrônico?</h2>
+      <p class="lead">Enquanto sistemas tradicionais exigem equipamento físico e meses de implantação, a nossa plataforma está pronta em minutos — sem hardware, sem instalação, sem complicação.</p>
+      <!-- Comparativo -->
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;margin-top:8px">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;background:#0f172a;padding:10px 16px">
+          <div style="font-size:.7rem;font-weight:700;color:rgba(255,255,255,.5)">Característica</div>
+          <div style="font-size:.7rem;font-weight:700;color:#ef4444;text-align:center">Relógio de Ponto Físico</div>
+          <div style="font-size:.7rem;font-weight:700;color:#22c55e;text-align:center">Ponto Eletrônico</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;padding:9px 16px;border-bottom:1px solid #f1f5f9;background:#fff">
+          <div style="font-size:.75rem;color:#374151;font-weight:600">Instalação</div>
+          <div style="font-size:.72rem;color:#ef4444;text-align:center">Semanas + técnico</div>
+          <div style="font-size:.72rem;color:#22c55e;text-align:center;font-weight:700">Minutos</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;padding:9px 16px;border-bottom:1px solid #f1f5f9;background:#f8fafc">
+          <div style="font-size:.75rem;color:#374151;font-weight:600">Custo inicial</div>
+          <div style="font-size:.72rem;color:#ef4444;text-align:center">R$ 800 a R$ 3.000+</div>
+          <div style="font-size:.72rem;color:#22c55e;text-align:center;font-weight:700">R$ 0</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;padding:9px 16px;border-bottom:1px solid #f1f5f9;background:#fff">
+          <div style="font-size:.75rem;color:#374151;font-weight:600">Funcionário externo</div>
+          <div style="font-size:.72rem;color:#ef4444;text-align:center">Não funciona</div>
+          <div style="font-size:.72rem;color:#22c55e;text-align:center;font-weight:700">GPS no celular</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;padding:9px 16px;border-bottom:1px solid #f1f5f9;background:#f8fafc">
+          <div style="font-size:.75rem;color:#374151;font-weight:600">Relatórios automáticos</div>
+          <div style="font-size:.72rem;color:#ef4444;text-align:center">Não</div>
+          <div style="font-size:.72rem;color:#22c55e;text-align:center;font-weight:700">Sim, com PDF e Excel</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;padding:9px 16px;border-bottom:1px solid #f1f5f9;background:#fff">
+          <div style="font-size:.75rem;color:#374151;font-weight:600">Assinatura digital</div>
+          <div style="font-size:.72rem;color:#ef4444;text-align:center">Não</div>
+          <div style="font-size:.72rem;color:#22c55e;text-align:center;font-weight:700">Sim, com auditoria</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;padding:9px 16px;background:#f8fafc">
+          <div style="font-size:.75rem;color:#374151;font-weight:600">Prova de presença</div>
+          <div style="font-size:.72rem;color:#ef4444;text-align:center">Apenas digital</div>
+          <div style="font-size:.72rem;color:#22c55e;text-align:center;font-weight:700">GPS + Foto + IP</div>
+        </div>
+      </div>
+    </div>
+    <div style="background:linear-gradient(135deg,#0f172a,#1e293b);padding:52px;display:flex;flex-direction:column;justify-content:center">
+      <div style="font-size:.75rem;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:20px">Nossos diferenciais únicos</div>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div style="background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.3);border-radius:12px;padding:16px 18px">
+          <div style="font-size:.85rem;font-weight:700;color:#60a5fa;margin-bottom:4px"><i class="fas fa-star" style="margin-right:6px"></i>Trial de 14 dias sem cartão</div>
+          <div style="font-size:.74rem;color:rgba(255,255,255,.65)">Empresas testam o sistema completo gratuitamente. Zero fricção no início do relacionamento.</div>
+        </div>
+        <div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);border-radius:12px;padding:16px 18px">
+          <div style="font-size:.85rem;font-weight:700;color:#86efac;margin-bottom:4px"><i class="fas fa-star" style="margin-right:6px"></i>Auto-cadastro instantâneo</div>
+          <div style="font-size:.74rem;color:rgba(255,255,255,.65)">A empresa cria a própria conta em menos de 2 minutos. Sem contato com vendedor, sem esperar aprovação.</div>
+        </div>
+        <div style="background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.3);border-radius:12px;padding:16px 18px">
+          <div style="font-size:.85rem;font-weight:700;color:#c4b5fd;margin-bottom:4px"><i class="fas fa-star" style="margin-right:6px"></i>Suspensão automática inteligente</div>
+          <div style="font-size:.74rem;color:rgba(255,255,255,.65)">Alertas por e-mail antes do vencimento. Suspensão e reativação automática controladas pelo sistema.</div>
+        </div>
+        <div style="background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.25);border-radius:12px;padding:16px 18px">
+          <div style="font-size:.85rem;font-weight:700;color:#67e8f9;margin-bottom:4px"><i class="fas fa-star" style="margin-right:6px"></i>Painel SaaS completo para resellers</div>
+          <div style="font-size:.74rem;color:rgba(255,255,255,.65)">Super Admin com MRR, ARR, impersonação e gestão de todas as empresas da plataforma em um lugar.</div>
+        </div>
+      </div>
+      <div class="page-num">17 / 22</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 18 — PLANOS E PREÇOS
+══════════════════════════════════════════════════════ -->
+<div class="slide" id="s18">
+  <div style="background:linear-gradient(135deg,#0f172a,#1e3a5f);min-height:720px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:52px;position:relative;overflow:hidden">
+    <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(59,130,246,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.05) 1px,transparent 1px);background-size:32px 32px"></div>
+    <div style="position:relative;z-index:1;width:100%;max-width:900px">
+      <div style="text-align:center;margin-bottom:36px">
+        <div class="tag white" style="margin-bottom:12px">Planos e Preços</div>
+        <h2 style="font-size:2rem;font-weight:800;color:#fff;margin-bottom:10px">Preço justo para cada tamanho de empresa</h2>
+        <p style="color:rgba(255,255,255,.6);font-size:.92rem">14 dias grátis em todos os planos · Sem cartão de crédito · Cancele quando quiser</p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px">
+        <!-- Básico -->
+        <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:28px 24px">
+          <div style="font-size:.75rem;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">Básico</div>
+          <div style="font-size:2.4rem;font-weight:800;color:#fff;line-height:1;margin-bottom:4px">R$ 49</div>
+          <div style="font-size:.78rem;color:rgba(255,255,255,.4);margin-bottom:20px">por mês</div>
+          <div style="border-top:1px solid rgba(255,255,255,.1);padding-top:16px;margin-bottom:20px">
+            <ul style="list-style:none;display:flex;flex-direction:column;gap:9px">
+              <li style="font-size:.78rem;color:rgba(255,255,255,.8);display:flex;gap:8px"><i class="fas fa-check" style="color:#86efac;flex-shrink:0;margin-top:2px"></i>Até 10 funcionários</li>
+              <li style="font-size:.78rem;color:rgba(255,255,255,.8);display:flex;gap:8px"><i class="fas fa-check" style="color:#86efac;flex-shrink:0;margin-top:2px"></i>Registro de ponto com GPS</li>
+              <li style="font-size:.78rem;color:rgba(255,255,255,.8);display:flex;gap:8px"><i class="fas fa-check" style="color:#86efac;flex-shrink:0;margin-top:2px"></i>Histórico de registros</li>
+              <li style="font-size:.78rem;color:rgba(255,255,255,.8);display:flex;gap:8px"><i class="fas fa-check" style="color:#86efac;flex-shrink:0;margin-top:2px"></i>Relatórios básicos (PDF/Excel)</li>
+              <li style="font-size:.78rem;color:rgba(255,255,255,.8);display:flex;gap:8px"><i class="fas fa-check" style="color:#86efac;flex-shrink:0;margin-top:2px"></i>Dashboard funcionário</li>
+              <li style="font-size:.78rem;color:rgba(255,255,255,.4);display:flex;gap:8px"><i class="fas fa-times" style="color:rgba(255,255,255,.2);flex-shrink:0;margin-top:2px"></i>Fechamento digital</li>
+              <li style="font-size:.78rem;color:rgba(255,255,255,.4);display:flex;gap:8px"><i class="fas fa-times" style="color:rgba(255,255,255,.2);flex-shrink:0;margin-top:2px"></i>Logs de auditoria</li>
+            </ul>
+          </div>
+          <a href="https://ponto-eletronicoo.netlify.app/cadastro.html" style="display:block;text-align:center;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:10px;padding:11px;font-size:.82rem;font-weight:700;text-decoration:none">Começar grátis</a>
+        </div>
+        <!-- Profissional (destaque) -->
+        <div style="background:#fff;border-radius:20px;padding:28px 24px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.4);transform:scale(1.03)">
+          <div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;font-size:.7rem;font-weight:700;padding:5px 16px;border-radius:50px;white-space:nowrap">⭐ Mais popular</div>
+          <div style="font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">Profissional</div>
+          <div style="font-size:2.4rem;font-weight:800;color:#0f172a;line-height:1;margin-bottom:4px">R$ 99</div>
+          <div style="font-size:.78rem;color:#64748b;margin-bottom:20px">por mês</div>
+          <div style="border-top:1px solid #e2e8f0;padding-top:16px;margin-bottom:20px">
+            <ul style="list-style:none;display:flex;flex-direction:column;gap:9px">
+              <li style="font-size:.78rem;color:#374151;display:flex;gap:8px"><i class="fas fa-check" style="color:#22c55e;flex-shrink:0;margin-top:2px"></i>Até 50 funcionários</li>
+              <li style="font-size:.78rem;color:#374151;display:flex;gap:8px"><i class="fas fa-check" style="color:#22c55e;flex-shrink:0;margin-top:2px"></i>Tudo do plano Básico</li>
+              <li style="font-size:.78rem;color:#374151;display:flex;gap:8px"><i class="fas fa-check" style="color:#22c55e;flex-shrink:0;margin-top:2px"></i>Selfie + GPS avançado</li>
+              <li style="font-size:.78rem;color:#374151;display:flex;gap:8px"><i class="fas fa-check" style="color:#22c55e;flex-shrink:0;margin-top:2px"></i>Fechamento digital com assinatura</li>
+              <li style="font-size:.78rem;color:#374151;display:flex;gap:8px"><i class="fas fa-check" style="color:#22c55e;flex-shrink:0;margin-top:2px"></i>Logs de auditoria completos</li>
+              <li style="font-size:.78rem;color:#374151;display:flex;gap:8px"><i class="fas fa-check" style="color:#22c55e;flex-shrink:0;margin-top:2px"></i>Relatórios avançados + gráficos</li>
+              <li style="font-size:.78rem;color:#374151;display:flex;gap:8px"><i class="fas fa-check" style="color:#22c55e;flex-shrink:0;margin-top:2px"></i>Suporte prioritário</li>
+            </ul>
+          </div>
+          <a href="https://ponto-eletronicoo.netlify.app/cadastro.html" style="display:block;text-align:center;background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;border-radius:10px;padding:11px;font-size:.82rem;font-weight:700;text-decoration:none">Começar grátis</a>
+        </div>
+        <!-- Enterprise -->
+        <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:28px 24px">
+          <div style="font-size:.75rem;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">Enterprise</div>
+          <div style="font-size:2.4rem;font-weight:800;color:#fff;line-height:1;margin-bottom:4px">R$ 199</div>
+          <div style="font-size:.78rem;color:rgba(255,255,255,.4);margin-bottom:20px">por mês</div>
+          <div style="border-top:1px solid rgba(255,255,255,.1);padding-top:16px;margin-bottom:20px">
+            <ul style="list-style:none;display:flex;flex-direction:column;gap:9px">
+              <li style="font-size:.78rem;color:rgba(255,255,255,.8);display:flex;gap:8px"><i class="fas fa-check" style="color:#86efac;flex-shrink:0;margin-top:2px"></i>Funcionários ilimitados</li>
+              <li style="font-size:.78rem;color:rgba(255,255,255,.8);display:flex;gap:8px"><i class="fas fa-check" style="color:#86efac;flex-shrink:0;margin-top:2px"></i>Tudo do plano Profissional</li>
+              <li style="font-size:.78rem;color:rgba(255,255,255,.8);display:flex;gap:8px"><i class="fas fa-check" style="color:#86efac;flex-shrink:0;margin-top:2px"></i>API personalizada</li>
+              <li style="font-size:.78rem;color:rgba(255,255,255,.8);display:flex;gap:8px"><i class="fas fa-check" style="color:#86efac;flex-shrink:0;margin-top:2px"></i>SLA garantido</li>
+              <li style="font-size:.78rem;color:rgba(255,255,255,.8);display:flex;gap:8px"><i class="fas fa-check" style="color:#86efac;flex-shrink:0;margin-top:2px"></i>Gerente de conta dedicado</li>
+              <li style="font-size:.78rem;color:rgba(255,255,255,.8);display:flex;gap:8px"><i class="fas fa-check" style="color:#86efac;flex-shrink:0;margin-top:2px"></i>Implantação assistida</li>
+              <li style="font-size:.78rem;color:rgba(255,255,255,.8);display:flex;gap:8px"><i class="fas fa-check" style="color:#86efac;flex-shrink:0;margin-top:2px"></i>Personalização de marca</li>
+            </ul>
+          </div>
+          <a href="https://ponto-eletronicoo.netlify.app/cadastro.html" style="display:block;text-align:center;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:10px;padding:11px;font-size:.82rem;font-weight:700;text-decoration:none">Falar com consultor</a>
+        </div>
+      </div>
+    </div>
+    <div class="page-num">18 / 22</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 19 — FAQ
+══════════════════════════════════════════════════════ -->
+<div class="slide" id="s19">
+  <div class="slide-header">
+    <div class="slide-header-icon"><i class="fas fa-question-circle"></i></div>
+    <div class="slide-header-text">
+      <h2>Perguntas Frequentes</h2>
+      <p>As dúvidas mais comuns de novos clientes, respondidas diretamente</p>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:24px 52px">
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px">
+        <div style="font-weight:700;font-size:.85rem;color:#0f172a;margin-bottom:6px"><i class="fas fa-question-circle" style="color:#3b82f6;margin-right:6px"></i>Precisa instalar algum aplicativo?</div>
+        <div style="font-size:.78rem;color:#475569;line-height:1.6">Não. O sistema funciona 100% pelo navegador — Chrome, Safari ou Firefox — em qualquer dispositivo. Sem instalação, sem loja de apps.</div>
+      </div>
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px">
+        <div style="font-weight:700;font-size:.85rem;color:#0f172a;margin-bottom:6px"><i class="fas fa-question-circle" style="color:#3b82f6;margin-right:6px"></i>Funciona para equipes em campo ou home office?</div>
+        <div style="font-size:.78rem;color:#475569;line-height:1.6">Sim. O GPS registra a localização exata de onde o funcionário está ao bater o ponto. Funciona em qualquer lugar com internet.</div>
+      </div>
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px">
+        <div style="font-weight:700;font-size:.85rem;color:#0f172a;margin-bottom:6px"><i class="fas fa-question-circle" style="color:#3b82f6;margin-right:6px"></i>Um funcionário pode registrar o ponto pelo outro?</div>
+        <div style="font-size:.78rem;color:#475569;line-height:1.6">Não é possível. Cada registro exige selfie, GPS e autenticação individual por e-mail e senha. O sistema rastreia o IP e o dispositivo.</div>
+      </div>
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px">
+        <div style="font-weight:700;font-size:.85rem;color:#0f172a;margin-bottom:6px"><i class="fas fa-question-circle" style="color:#3b82f6;margin-right:6px"></i>Os relatórios têm valor jurídico?</div>
+        <div style="font-size:.78rem;color:#475569;line-height:1.6">Sim. Os registros com GPS, foto, IP e assinatura digital com timestamp constituem evidência robusta para processos trabalhistas e auditorias do MTE.</div>
+      </div>
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px">
+        <div style="font-weight:700;font-size:.85rem;color:#0f172a;margin-bottom:6px"><i class="fas fa-question-circle" style="color:#3b82f6;margin-right:6px"></i>Posso usar para equipes em múltiplas cidades?</div>
+        <div style="font-size:.78rem;color:#475569;line-height:1.6">Sim. Não há restrição geográfica. O GPS registra a localização exata independente de onde o funcionário estiver.</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px">
+        <div style="font-weight:700;font-size:.85rem;color:#0f172a;margin-bottom:6px"><i class="fas fa-question-circle" style="color:#3b82f6;margin-right:6px"></i>Como é feito o fechamento de folha?</div>
+        <div style="font-size:.78rem;color:#475569;line-height:1.6">O RH cria o fechamento por competência, seleciona os funcionários, envia para assinatura. Cada funcionário revisa e assina digitalmente. Tudo em poucos cliques.</div>
+      </div>
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px">
+        <div style="font-weight:700;font-size:.85rem;color:#0f172a;margin-bottom:6px"><i class="fas fa-question-circle" style="color:#3b82f6;margin-right:6px"></i>Posso exportar os dados para o meu contador?</div>
+        <div style="font-size:.78rem;color:#475569;line-height:1.6">Sim. Todos os relatórios podem ser exportados em PDF formatado ou Excel com todos os dados brutos. Compatível com qualquer sistema contábil.</div>
+      </div>
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px">
+        <div style="font-weight:700;font-size:.85rem;color:#0f172a;margin-bottom:6px"><i class="fas fa-question-circle" style="color:#3b82f6;margin-right:6px"></i>O que acontece se eu não pagar?</div>
+        <div style="font-size:.78rem;color:#475569;line-height:1.6">O sistema envia alertas por e-mail antes do vencimento. Após a tolerância configurada, o acesso é suspenso automaticamente. Os dados são mantidos e o acesso é restaurado assim que o pagamento é regularizado.</div>
+      </div>
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px">
+        <div style="font-weight:700;font-size:.85rem;color:#0f172a;margin-bottom:6px"><i class="fas fa-question-circle" style="color:#3b82f6;margin-right:6px"></i>Posso mudar de plano depois?</div>
+        <div style="font-size:.78rem;color:#475569;line-height:1.6">Sim. Você pode fazer upgrade ou downgrade a qualquer momento pelo painel de pagamentos. A mudança é imediata e o valor é calculado proporcionalmente.</div>
+      </div>
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:16px 18px">
+        <div style="font-weight:700;font-size:.85rem;color:#1e3a5f;margin-bottom:6px"><i class="fas fa-gift" style="color:#3b82f6;margin-right:6px"></i>Como funciona o trial de 14 dias?</div>
+        <div style="font-size:.78rem;color:#1d4ed8;line-height:1.6">Você cria a conta gratuitamente, configura sua empresa e começa a usar imediatamente — sem cartão de crédito. Após 14 dias, escolhe o plano que melhor se encaixa.</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-num dark">19 / 22</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 20 — ROTEIRO DE DEMONSTRAÇÃO
+══════════════════════════════════════════════════════ -->
+<div class="slide" id="s20">
+  <div class="two-col-40">
+    <div style="background:linear-gradient(135deg,#0f172a,#1e3a5f);padding:48px;display:flex;flex-direction:column;justify-content:center">
+      <div class="tag white">Roteiro de Demo</div>
+      <div class="accent-bar white"></div>
+      <h2 class="h2 white">Mostre o sistema em 10 minutos</h2>
+      <p class="lead white" style="font-size:.88rem">Script sugerido para demonstração ao cliente — cobrindo os pontos de maior impacto em uma apresentação rápida e convincente.</p>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+        <div style="background:rgba(255,255,255,.06);border-radius:8px;padding:10px 12px;font-size:.72rem;color:rgba(255,255,255,.7)">
+          <strong style="color:#60a5fa">Dica:</strong> Comece sempre pelo Dashboard Admin — os KPIs em tempo real impressionam na primeira visão.
+        </div>
+        <div style="background:rgba(255,255,255,.06);border-radius:8px;padding:10px 12px;font-size:.72rem;color:rgba(255,255,255,.7)">
+          <strong style="color:#86efac">Gatilho:</strong> Pergunte "quantas horas seu RH gasta no fechamento de folha?" — depois mostre como fazer em 3 cliques.
+        </div>
+        <div style="background:rgba(255,255,255,.06);border-radius:8px;padding:10px 12px;font-size:.72rem;color:rgba(255,255,255,.7)">
+          <strong style="color:#fbbf24">Fechamento:</strong> Mostre o cadastro de empresa e o trial gratuito. Incentive criar a conta durante a reunião.
+        </div>
+      </div>
+      <div class="page-num">20 / 22</div>
+    </div>
+    <div style="padding:36px 44px;background:#f8fafc;overflow-y:auto">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <div style="width:32px;height:32px;border-radius:50%;background:#3b82f6;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.72rem;font-weight:700;flex-shrink:0;margin-top:2px">1</div>
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;flex:1">
+            <div style="font-weight:700;font-size:.82rem;color:#0f172a;margin-bottom:4px">Acesse o sistema (1 min)</div>
+            <div style="font-size:.74rem;color:#475569">Abra ponto-eletronicoo.netlify.app e faça login. Mostre a tela de login e o link de cadastro de empresa.</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <div style="width:32px;height:32px;border-radius:50%;background:#3b82f6;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.72rem;font-weight:700;flex-shrink:0;margin-top:2px">2</div>
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;flex:1">
+            <div style="font-weight:700;font-size:.82rem;color:#0f172a;margin-bottom:4px">Dashboard Admin (2 min)</div>
+            <div style="font-size:.74rem;color:#475569">Mostre os KPIs: presentes agora, registros hoje. Destaque o gráfico de presença. Pergunte: "Você sabe agora quem está presente?"</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <div style="width:32px;height:32px;border-radius:50%;background:#22c55e;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.72rem;font-weight:700;flex-shrink:0;margin-top:2px">3</div>
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;flex:1">
+            <div style="font-weight:700;font-size:.82rem;color:#0f172a;margin-bottom:4px">Registro de Ponto (2 min)</div>
+            <div style="font-size:.74rem;color:#475569">Mostre o relógio, o GPS verificando, as etapas (GPS → Selfie → Confirmar). Destaque: "Um funcionário não pode bater ponto pelo outro."</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <div style="width:32px;height:32px;border-radius:50%;background:#8b5cf6;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.72rem;font-weight:700;flex-shrink:0;margin-top:2px">4</div>
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;flex:1">
+            <div style="font-weight:700;font-size:.82rem;color:#0f172a;margin-bottom:4px">Histórico e Relatórios (2 min)</div>
+            <div style="font-size:.74rem;color:#475569">Abra o histórico, mostre a foto de um registro. Vá em Relatórios, clique "Exportar PDF". Diga: "Isso é o que você entrega para o contador."</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <div style="width:32px;height:32px;border-radius:50%;background:#f59e0b;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.72rem;font-weight:700;flex-shrink:0;margin-top:2px">5</div>
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;flex:1">
+            <div style="font-weight:700;font-size:.82rem;color:#0f172a;margin-bottom:4px">Fechamento com Assinatura (2 min)</div>
+            <div style="font-size:.74151;color:#475569">Mostre o workflow de fechamento. Simule envio para assinatura e mostre o modal com registro de IP. Destaque o valor jurídico.</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <div style="width:32px;height:32px;border-radius:50%;background:#ef4444;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.72rem;font-weight:700;flex-shrink:0;margin-top:2px">6</div>
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;flex:1">
+            <div style="font-weight:700;font-size:.82rem;color:#0f172a;margin-bottom:4px">Cadastre a empresa agora (1 min)</div>
+            <div style="font-size:.74rem;color:#475569">Abra cadastro.html, mostre os 3 planos, o trial de 14 dias sem cartão. Incentive criar a conta durante a reunião: "Você sai daqui já usando."</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 21 — CONTATO / CTA
+══════════════════════════════════════════════════════ -->
+<div class="slide" id="s21">
+  <div style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 50%,#0f172a 100%);min-height:720px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px;position:relative;overflow:hidden">
+    <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(59,130,246,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.06) 1px,transparent 1px);background-size:40px 40px"></div>
+    <div style="position:relative;z-index:1;max-width:700px">
+      <div class="tag white" style="margin-bottom:20px">Pronto para começar?</div>
+      <h2 style="font-size:2.5rem;font-weight:800;color:#fff;line-height:1.15;margin-bottom:16px">Implante o controle de ponto<br><span style="color:#3b82f6">da sua empresa hoje mesmo</span></h2>
+      <p style="font-size:1rem;color:rgba(255,255,255,.65);max-width:520px;margin:0 auto 36px;line-height:1.7">14 dias grátis, sem cartão de crédito, sem instalação. Crie a conta em menos de 2 minutos e sua equipe já pode começar a registrar o ponto.</p>
+      <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:48px">
+        <a href="https://ponto-eletronicoo.netlify.app/cadastro.html" style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;border-radius:14px;padding:16px 32px;font-size:1rem;font-weight:700;text-decoration:none;box-shadow:0 8px 24px rgba(59,130,246,.4)">
+          <i class="fas fa-rocket"></i> Criar conta grátis agora
+        </a>
+        <a href="https://ponto-eletronicoo.netlify.app/" style="display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,.1);color:#fff;border:2px solid rgba(255,255,255,.3);border-radius:14px;padding:16px 32px;font-size:1rem;font-weight:700;text-decoration:none">
+          <i class="fas fa-eye"></i> Ver demonstração
+        </a>
+      </div>
+      <!-- Contatos -->
+      <div style="display:flex;gap:32px;justify-content:center;flex-wrap:wrap;margin-bottom:32px">
+        <div style="display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.7);font-size:.85rem">
+          <div style="width:36px;height:36px;background:rgba(255,255,255,.1);border-radius:10px;display:flex;align-items:center;justify-content:center"><i class="fas fa-globe" style="color:#60a5fa"></i></div>
+          ponto-eletronicoo.netlify.app
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.7);font-size:.85rem">
+          <div style="width:36px;height:36px;background:rgba(255,255,255,.1);border-radius:10px;display:flex;align-items:center;justify-content:center"><i class="fas fa-envelope" style="color:#60a5fa"></i></div>
+          contato@pontoeletronico.com.br
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.7);font-size:.85rem">
+          <div style="width:36px;height:36px;background:rgba(255,255,255,.1);border-radius:10px;display:flex;align-items:center;justify-content:center"><i class="fab fa-whatsapp" style="color:#60a5fa"></i></div>
+          (11) 9 0000-0000
+        </div>
+      </div>
+      <!-- Features finais -->
+      <div style="display:flex;gap:24px;justify-content:center;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:7px;color:rgba(255,255,255,.5);font-size:.75rem"><i class="fas fa-check-circle" style="color:#22c55e"></i> 14 dias grátis</div>
+        <div style="display:flex;align-items:center;gap:7px;color:rgba(255,255,255,.5);font-size:.75rem"><i class="fas fa-check-circle" style="color:#22c55e"></i> Sem cartão de crédito</div>
+        <div style="display:flex;align-items:center;gap:7px;color:rgba(255,255,255,.5);font-size:.75rem"><i class="fas fa-check-circle" style="color:#22c55e"></i> Cancele quando quiser</div>
+        <div style="display:flex;align-items:center;gap:7px;color:rgba(255,255,255,.5);font-size:.75rem"><i class="fas fa-check-circle" style="color:#22c55e"></i> Suporte incluso</div>
+      </div>
+    </div>
+    <div class="page-num">21 / 22</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 22 — ENCERRAMENTO
+══════════════════════════════════════════════════════ -->
+<div class="slide" id="s22">
+  <div style="background:#fff;min-height:720px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px;text-align:center;position:relative">
+    <div style="position:absolute;top:0;left:0;right:0;height:6px;background:linear-gradient(90deg,#1e3a5f,#3b82f6,#06b6d4)"></div>
+    <div style="width:80px;height:80px;background:linear-gradient(135deg,#1e3a5f,#3b82f6);border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:2.2rem;color:#fff;margin-bottom:28px;box-shadow:0 8px 32px rgba(59,130,246,.35)"><i class="fas fa-fingerprint"></i></div>
+    <h1 style="font-size:2.2rem;font-weight:800;color:#0f172a;margin-bottom:10px">Ponto Eletrônico Corporativo</h1>
+    <p style="font-size:1rem;color:#64748b;margin-bottom:36px">Sistema completo de controle de jornada de trabalho · 100% na nuvem · Brasil</p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:40px">
+      <div class="badge blue" style="font-size:.78rem;padding:7px 14px">GPS em tempo real</div>
+      <div class="badge green" style="font-size:.78rem;padding:7px 14px">Selfie no ponto</div>
+      <div class="badge purple" style="font-size:.78rem;padding:7px 14px">Assinatura digital</div>
+      <div class="badge orange" style="font-size:.78rem;padding:7px 14px">Relatórios automáticos</div>
+      <div class="badge gray" style="font-size:.78rem;padding:7px 14px">Auditoria completa</div>
+      <div class="badge blue" style="font-size:.78rem;padding:7px 14px">Multi-empresa</div>
+    </div>
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:16px;padding:24px 40px;display:inline-block;margin-bottom:36px">
+      <div style="font-size:.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">Acesse agora</div>
+      <div style="font-size:1.1rem;font-weight:800;color:#0f172a">ponto-eletronicoo.netlify.app</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px;max-width:700px;width:100%">
+      <div style="text-align:center"><div style="font-size:1.8rem;font-weight:800;color:#3b82f6">14</div><div style="font-size:.72rem;color:#64748b;margin-top:2px">Telas funcionais</div></div>
+      <div style="text-align:center"><div style="font-size:1.8rem;font-weight:800;color:#22c55e">3</div><div style="font-size:.72rem;color:#64748b;margin-top:2px">Planos disponíveis</div></div>
+      <div style="text-align:center"><div style="font-size:1.8rem;font-weight:800;color:#8b5cf6">4</div><div style="font-size:.72rem;color:#64748b;margin-top:2px">Evidências por ponto</div></div>
+      <div style="text-align:center"><div style="font-size:1.8rem;font-weight:800;color:#f59e0b">14d</div><div style="font-size:.72rem;color:#64748b;margin-top:2px">Trial gratuito</div></div>
+    </div>
+    <div style="position:absolute;bottom:20px;color:#cbd5e1;font-size:.7rem">© 2026 Ponto Eletrônico Corporativo · Apresentação Comercial · 22 slides</div>
+  </div>
+</div>
+
+</div><!-- /container -->
+</body>
+</html>
