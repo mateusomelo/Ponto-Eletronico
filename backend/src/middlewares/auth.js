@@ -37,7 +37,8 @@ async function authenticate(req, res, next) {
 
     // ── Verificação de status da empresa (skip para super_admin) ──
     let company_status = null;
-    if (user.role !== 'super_admin' && user.company_id) {
+    // Nota: Empresa com id=1 (empresa padrão) nunca é bloqueada
+    if (user.role !== 'super_admin' && user.company_id && user.company_id !== 1) {
       const [empRows] = await pool.query(
         'SELECT status FROM empresas WHERE id = ?',
         [user.company_id]

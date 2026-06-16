@@ -654,8 +654,30 @@ function empCard(e) {
   const pct   = total / (limit === 999 ? 9999 : limit);
   const uCls  = pct >= 1 ? 'up-full' : pct >= .8 ? 'up-warn' : 'up-ok';
   const uLbl  = `${total}/${limit === 999 ? '∞' : limit}`;
-  const since = new Date(e.criado_em).toLocaleDateString('pt-BR');
+  
+  // Formata datas corretamente
+  let since = '-';
+  let planoVence = '-';
+  if (e.criado_em) {
+    since = new Date(e.criado_em).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+  }
+  if (e.plano_expires_at) {
+    planoVence = new Date(e.plano_expires_at).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+  }
+  
   const diasTrial = trialDiasRestantes(e);
+  
+  // Informações de data embaixo do nome
+  let vencimentoHtml = '';
+  if (e.plano_expires_at) {
+    vencimentoHtml = `<div class="emp-meta" style="font-size:.75rem;color:#64748b;margin-top:4px">
+      <i class="fas fa-calendar-alt"></i> Criado: <strong>${since}</strong> | Plano até: <strong>${planoVence}</strong>
+    </div>`;
+  } else if (e.id > 1) {
+    vencimentoHtml = `<div class="emp-meta" style="font-size:.75rem;color:#64748b;margin-top:4px">
+      <i class="fas fa-calendar-alt"></i> Criado: <strong>${since}</strong>
+    </div>`;
+  }
 
   const logoHtml = e.logo
     ? `<img src="${e.logo}" class="emp-logo" alt="Logo" />`
@@ -668,7 +690,7 @@ function empCard(e) {
 
   const subDoc = e.documento
     ? `${e.tipo_documento?.toUpperCase() || 'CNPJ'}: ${e.documento}`
-    : (e.cnpj ? `CNPJ: ${e.cnpj}` : `Desde ${since}`);
+    : (e.cnpj ? `CNPJ: ${e.cnpj}` : '');
 
   return `
   <div class="emp-card">
@@ -678,7 +700,8 @@ function empCard(e) {
         <div style="flex:1;min-width:0">
           <div class="emp-nome">${e.nome}</div>
           ${e.nome_fantasia ? `<div class="emp-fantasia">${e.nome_fantasia}</div>` : ''}
-          <div class="emp-cnpj">${subDoc}</div>
+          ${subDoc ? `<div class="emp-cnpj">${subDoc}</div>` : ''}
+          ${vencimentoHtml}
           ${trialBadgeHtml}
         </div>
       </div>

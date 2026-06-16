@@ -44,17 +44,17 @@ document.addEventListener('click', e => {
 // ── Formatação ─────────────────────────────────────────────
 function fmtData(dt) {
   if (!dt) return '-';
-  return new Date(dt).toLocaleDateString('pt-BR');
+  return new Date(dt).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
 }
 
 function fmtDataHora(dt) {
   if (!dt) return '-';
-  return new Date(dt).toLocaleString('pt-BR');
+  return new Date(dt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
 }
 
 function fmtHora(dt) {
   if (!dt) return '-';
-  return new Date(dt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  return new Date(dt).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
 function fmtCPF(cpf) {

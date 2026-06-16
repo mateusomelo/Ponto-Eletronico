@@ -87,6 +87,10 @@ function fmtMoeda(centavos) {
 function fmtData(ts) {
   return new Date(ts * 1000).toLocaleDateString('pt-BR');
 }
+function fmtDataStr(dateStr) {
+  if (!dateStr) return '-';
+  return new Date(dateStr).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+}
 function invLabel(s) {
   return { paid: 'Paga', open: 'Em aberto', void: 'Cancelada', uncollectible: 'Irrecuperável', draft: 'Rascunho' }[s] || s;
 }
@@ -118,7 +122,8 @@ function renderPagamentos(el, data) {
             <i class="${info.icon}" style="font-size:1.8rem;color:#fff"></i>
           </div>
           <h2 style="margin-bottom:6px">Plano ${info.label}</h2>
-          <p style="color:var(--text-muted);margin-bottom:28px">Sua empresa ainda não possui uma assinatura ativa.<br>Entre em contato com o suporte para ativar.</p>
+          <p style="color:var(--text-muted);margin-bottom:12px">Sua empresa ainda não possui uma assinatura ativa.<br>Entre em contato com o suporte para ativar.</p>
+          ${data.plano_expires_at ? `<p style="color:#64748b;font-size:.85rem;margin-bottom:28px"><i class="fas fa-clock"></i> Plano válido até: <strong>${fmtDataStr(data.plano_expires_at)}</strong></p>` : `<p style="color:var(--text-muted);margin-bottom:28px"></p>`}
           <ul class="plan-features" style="text-align:left;max-width:280px;margin:0 auto">
             ${info.features.map(f => `<li><i class="fas fa-check"></i> ${f}</li>`).join('')}
           </ul>
@@ -196,6 +201,7 @@ function renderPagamentos(el, data) {
         <div class="pay-meta">
           ${sub.current_period_end  ? `<div><i class="fas fa-calendar-check"></i> Próxima cobrança: <strong>${fmtData(sub.current_period_end)}</strong></div>` : ''}
           ${sub.current_period_start ? `<div><i class="fas fa-calendar-alt"></i> Período atual desde: ${fmtData(sub.current_period_start)}</div>` : ''}
+          ${data.plano_expires_at ? `<div><i class="fas fa-clock"></i> Plano válido até: <strong>${fmtDataStr(data.plano_expires_at)}</strong></div>` : ''}
           <div><i class="fas fa-building"></i> Empresa: <strong>${data.empresa}</strong></div>
           ${sub.cancel_at_period_end ? `<div style="color:#fde68a"><i class="fas fa-exclamation-triangle"></i> Cancelamento agendado para o fim do período</div>` : ''}
         </div>

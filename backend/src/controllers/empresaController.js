@@ -183,6 +183,12 @@ async function editar(req, res) {
       );
     }
 
+    // Atualiza data de vencimento do plano para 30 dias a partir de hoje
+    const planoExpires = new Date();
+    planoExpires.setDate(planoExpires.getDate() + 30);
+    const planoExpiresAt = planoExpires.toISOString().slice(0, 19).replace('T', ' ');
+    await pool.query('UPDATE empresas SET plano_expires_at = ? WHERE id = ?', [planoExpiresAt, id]);
+
     // Sincroniza configurações
     await pool.query("UPDATE configuracoes SET valor=? WHERE chave='empresa_nome' AND company_id=?", [nome, id]);
     if (cnpj || documento) {
@@ -420,17 +426,23 @@ async function cadastrarEmpresa(req, res) {
       return res.status(409).json({ erro: 'Este e-mail já está cadastrado. Faça login ou use outro e-mail.' });
     }
 
-    // Cria empresa com trial de 14 dias
-    const trialDias = 14;
+    // Cria empresa com trial de 7 dias
+    const trialDias = 7;
     const trialDate = new Date();
     trialDate.setDate(trialDate.getDate() + trialDias);
     const trialEndsAt = trialDate.toISOString().slice(0, 19).replace('T', ' ');
+    
+    // Data de vencimento do plano: 7 dias + trial (total 14 dias)
+    const planoExpires = new Date();
+    planoExpires.setDate(planoExpires.getDate() + 14);
+    const planoExpiresAt = planoExpires.toISOString().slice(0, 19).replace('T', ' ');
+    
     const planoFinal  = ['basico', 'profissional', 'enterprise'].includes(plano) ? plano : 'basico';
 
     const [empResult] = await pool.query(
-      `INSERT INTO empresas (nome, email, telefone, plano, status, trial_ends_at)
-       VALUES (?, ?, ?, ?, 'trial', ?)`,
-      [nome_empresa.trim(), emailNorm, telefone || null, planoFinal, trialEndsAt]
+      `INSERT INTO empresas (nome, email, telefone, plano, status, trial_ends_at, plano_expires_at)
+       VALUES (?, ?, ?, ?, 'trial', ?, ?)`,
+      [nome_empresa.trim(), emailNorm, telefone || null, planoFinal, trialEndsAt, planoExpiresAt]
     );
     const empresaId = empResult.insertId;
 

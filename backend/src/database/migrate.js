@@ -354,6 +354,7 @@ async function runIncrementalMigrations(conn) {
   if (!empNames2.includes('tipo_documento'))    empAlter2.push("ADD COLUMN tipo_documento   ENUM('cpf','cnpj') NULL DEFAULT 'cnpj'");
   if (!empNames2.includes('logo'))              empAlter2.push('ADD COLUMN logo             VARCHAR(500) NULL');
   if (!empNames2.includes('trial_ends_at'))     empAlter2.push('ADD COLUMN trial_ends_at    DATETIME     NULL');
+  if (!empNames2.includes('plano_expires_at'))  empAlter2.push('ADD COLUMN plano_expires_at DATETIME     NULL COMMENT "quando o plano atual vence"');
   if (!empNames2.includes('tolerancia_dias'))   empAlter2.push('ADD COLUMN tolerancia_dias  TINYINT UNSIGNED NOT NULL DEFAULT 3 COMMENT "dias de tolerância após vencimento"');
   if (!empNames2.includes('inadimplente_desde'))empAlter2.push('ADD COLUMN inadimplente_desde DATETIME NULL COMMENT "quando entrou em past_due"');
   if (empAlter2.length) {
@@ -370,6 +371,14 @@ async function runIncrementalMigrations(conn) {
     `);
     console.log('[Migration] empresas: status ENUM expandido com trial');
   }
+
+  // Preenche plano_expires_at para empresas existentes que ainda não têm
+  await conn.query(`
+    UPDATE empresas 
+    SET plano_expires_at = DATE_ADD(NOW(), INTERVAL 30 DAY)
+    WHERE plano_expires_at IS NULL AND status != 'suspended'
+  `);
+  console.log('[Migration] empresas: plano_expires_at preenchido com valor padrão');
 
   // ── Fase 5b: tabela plano_historico ──────────────────────
   await conn.query(`

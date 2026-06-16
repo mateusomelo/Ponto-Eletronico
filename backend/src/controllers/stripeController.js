@@ -152,14 +152,14 @@ async function minhaAssinatura(req, res) {
 
   try {
     const [rows] = await pool.query(
-      'SELECT stripe_customer_id, stripe_subscription_id, stripe_status, plano, nome FROM empresas WHERE id = ?',
+      'SELECT stripe_customer_id, stripe_subscription_id, stripe_status, plano, nome, plano_expires_at FROM empresas WHERE id = ?',
       [company_id]
     );
     if (!rows.length) return res.status(404).json({ erro: 'Empresa não encontrada.' });
     const emp = rows[0];
 
     if (!emp.stripe_subscription_id) {
-      return res.json({ empresa: emp.nome, plano: emp.plano, assinatura: null, faturas: [], portal_url: null });
+      return res.json({ empresa: emp.nome, plano: emp.plano, plano_expires_at: emp.plano_expires_at, assinatura: null, faturas: [], portal_url: null });
     }
 
     const stripe = getStripe();
@@ -181,6 +181,7 @@ async function minhaAssinatura(req, res) {
     return res.json({
       empresa: emp.nome,
       plano:   emp.plano,
+      plano_expires_at: emp.plano_expires_at,
       assinatura: {
         id:                   sub.id,
         status:               sub.status,

@@ -43,9 +43,10 @@ async function verificarSuspensaoAutomatica() {
     }
 
     // Empresas em trial expirado → mudar para suspended (trial_ends_at < NOW)
+    // Nota: Empresa com id=1 (empresa padrão) nunca é suspensa automaticamente
     const [triaisExpirados] = await pool.query(`
       SELECT id, nome FROM empresas
-      WHERE status = 'trial' AND trial_ends_at IS NOT NULL AND trial_ends_at < NOW()
+      WHERE id != 1 AND status = 'trial' AND trial_ends_at IS NOT NULL AND trial_ends_at < NOW()
     `);
 
     for (const empresa of triaisExpirados) {

@@ -34,7 +34,8 @@ async function login(req, res) {
     );
 
     // Verificar status da empresa (antes de validar senha para retornar erro claro)
-    if (rows.length && rows[0].role !== 'super_admin' && rows[0].company_id) {
+    // Nota: Empresa com id=1 (empresa padrão) nunca é bloqueada
+    if (rows.length && rows[0].role !== 'super_admin' && rows[0].company_id && rows[0].company_id !== 1) {
       const [empRows] = await pool.query('SELECT status FROM empresas WHERE id = ?', [rows[0].company_id]);
       const emp = empRows[0];
       if (!emp || emp.status === 'suspended') {
