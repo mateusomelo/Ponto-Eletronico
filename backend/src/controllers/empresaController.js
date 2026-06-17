@@ -63,6 +63,20 @@ async function seedEmpresaDefaults(empresaId, empresaNome, empresaCnpj) {
     ['foto_obrigatoria_mobile','true',              'boolean', 'Exigir foto em dispositivos móveis'],
     ['max_raio_metros',        '500',               'number',  'Raio máximo em metros para registro'],
     ['fuso_horario',           'America/Sao_Paulo', 'string',  'Fuso horário do sistema'],
+    // EmailJS / Comprovantes
+    ['emailjs_public_key',           '',      'string',  'Chave pública do EmailJS (Public Key)'],
+    ['emailjs_service_id',           '',      'string',  'ID do serviço EmailJS (Service ID)'],
+    ['emailjs_template_entrada_id',  '',      'string',  'ID do template de entrada no EmailJS'],
+    ['emailjs_template_saida_id',    '',      'string',  'ID do template de saída no EmailJS'],
+    ['emailjs_from_name',            'Ponto Eletrônico', 'string', 'Nome do remetente no e-mail'],
+    ['emailjs_reply_to',             '',      'string',  'E-mail de resposta (reply-to)'],
+    ['comprovante_enviar_entrada',   'false', 'boolean', 'Enviar comprovante por e-mail após entrada'],
+    ['comprovante_enviar_saida',     'false', 'boolean', 'Enviar comprovante por e-mail após saída'],
+    ['comprovante_incluir_foto',     'true',  'boolean', 'Incluir foto no comprovante'],
+    ['comprovante_incluir_gps',      'true',  'boolean', 'Incluir localização GPS no comprovante'],
+    ['comprovante_incluir_dispositivo', 'true', 'boolean', 'Incluir informações do dispositivo'],
+    ['comprovante_incluir_protocolo',   'true', 'boolean', 'Incluir protocolo único do registro'],
+    ['comprovante_incluir_logo',        'true', 'boolean', 'Incluir logo da empresa no e-mail'],
   ];
   for (const [chave, valor, tipo, descricao] of configs) {
     await pool.query(

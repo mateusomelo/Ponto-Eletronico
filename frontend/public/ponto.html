@@ -6,6 +6,7 @@
   <title>Registrar Ponto — Ponto Eletrônico</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" />
   <link rel="stylesheet" href="css/main.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <style>
     .ponto-center {
       display: flex;
@@ -328,6 +329,7 @@ let fotoBlob    = null;
 let statusAtual = null;
 let isMobile    = false;   // dispositivo móvel (Android/iPhone/iPad)
 let temCamera   = false;   // câmera disponível e autorizada
+let emailjsCfg  = null;    // config EmailJS carregada no init
 
 // ── Inicialização ─────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
@@ -359,6 +361,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Detecção e permissões (aguarda câmera antes de liberar botões)
   await inicializarPermissoes();
   iniciarGPS();
+
+  // Carrega config EmailJS em background (não bloqueia a UI)
+  API.get('/ponto/email-config').then(cfg => { emailjsCfg = cfg; }).catch(() => {});
 
   await carregarStatus();
   await carregarHoje();
@@ -721,6 +726,11 @@ async function enviarRegistro(tipo, foto) {
     // Para o watchPosition após registro bem-sucedido
     pararGPS();
 
+    // Envia comprovante por e-mail (somente entrada e saída, fire-and-forget)
+    if (tipo === 'entrada' || tipo === 'saida') {
+      enviarComprovante(tipo, data.registro);
+    }
+
     // Fecha modal se estiver aberto
     pararCamera();
     closeModal('modalCamera');
@@ -754,6 +764,115 @@ async function enviarRegistro(tipo, foto) {
   } finally {
     btnC.disabled = false;
     btnC.innerHTML = `<i class="fas fa-check"></i> <span id="btnConfirmarLabel">${tipo === 'entrada' ? 'Registrar Entrada' : 'Registrar Saída'}</span>`;
+  }
+}
+
+// ── Comprovante por e-mail (EmailJS) ──────────────────────
+function gerarProtocolo(dataHora, id) {
+  const d = new Date(dataHora);
+  const fmt = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  });
+  const parts = fmt.formatToParts(d);
+  const year  = parts.find(p => p.type === 'year').value;
+  const month = parts.find(p => p.type === 'month').value;
+  const day   = parts.find(p => p.type === 'day').value;
+  return `PT-${year}${month}${day}-${String(id).padStart(6, '0')}`;
+}
+
+async function enviarComprovante(tipo, registro) {
+  try {
+    if (!emailjsCfg || !emailjsCfg.habilitado) return;
+    if (tipo === 'entrada' && !emailjsCfg.enviarEntrada) return;
+    if (tipo === 'saida'   && !emailjsCfg.enviarSaida)   return;
+
+    const templateId = tipo === 'entrada'
+      ? emailjsCfg.templateEntradaId
+      : emailjsCfg.templateSaidaId;
+    if (!templateId) return;
+
+    const user = Auth.getUsuario();
+    if (!user?.email) return;
+
+    const protocolo = emailjsCfg.incluirProtocolo
+      ? gerarProtocolo(registro.data_hora, registro.id)
+      : '';
+
+    // URL absoluta da foto (backend expõe /uploads/...)
+    let fotoUrl = '';
+    if (emailjsCfg.incluirFoto && registro.foto_registro) {
+      const base = emailjsCfg.backendUrl || window.location.origin;
+      fotoUrl = base + registro.foto_registro;
+    }
+
+    // Logo da empresa
+    let logoUrl = '';
+    if (emailjsCfg.incluirLogo && emailjsCfg.empresaLogo) {
+      const base = emailjsCfg.backendUrl || window.location.origin;
+      logoUrl = base + emailjsCfg.empresaLogo;
+    }
+
+    const d = new Date(registro.data_hora);
+    const data = d.toLocaleDateString('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+      weekday: 'long', year: 'numeric', month: 'long', day: '2-digit',
+    });
+    const hora = d.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+
+    const params = {
+      to_name:           user.nome,
+      to_email:          user.email,
+      funcionario_nome:  user.nome,
+      funcionario_cargo: user.cargo_nome || '',
+      empresa_nome:      emailjsCfg.empresaNome || '',
+      empresa_logo:      logoUrl,
+      data,
+      hora,
+      tipo_registro:     tipo === 'entrada' ? 'ENTRADA' : 'SAÍDA',
+      status_msg:        tipo === 'entrada'
+                           ? 'ENTRADA REGISTRADA COM SUCESSO'
+                           : 'SAÍDA REGISTRADA COM SUCESSO',
+      latitude:          emailjsCfg.incluirGps && registro.latitude
+                           ? String(parseFloat(registro.latitude).toFixed(6))
+                           : 'Não disponível',
+      longitude:         emailjsCfg.incluirGps && registro.longitude
+                           ? String(parseFloat(registro.longitude).toFixed(6))
+                           : 'Não disponível',
+      protocolo,
+      foto_url:          fotoUrl,
+      ip:                emailjsCfg.incluirDispositivo && registro.ip
+                           ? registro.ip
+                           : 'Não disponível',
+      navegador:         emailjsCfg.incluirDispositivo ? (registro.navegador || 'Desconhecido') : '',
+      dispositivo:       emailjsCfg.incluirDispositivo ? (registro.dispositivo || 'Desconhecido') : '',
+      enviado_em:        new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+      reply_to:          emailjsCfg.replyTo || user.email,
+      from_name:         emailjsCfg.fromName || 'Ponto Eletrônico',
+    };
+
+    await emailjs.send(
+      emailjsCfg.serviceId,
+      templateId,
+      params,
+      emailjsCfg.publicKey
+    );
+
+    // Log de sucesso (fire-and-forget)
+    API.post(`/ponto/${registro.id}/log-comprovante`, {
+      sucesso: true, emailPara: user.email, reenviado: false,
+    }).catch(() => {});
+
+    toast(`Comprovante enviado para ${user.email}`, 'success');
+  } catch (err) {
+    const erroMsg = err?.text || (typeof err === 'string' ? err : JSON.stringify(err)) || 'Erro desconhecido';
+    const user = Auth.getUsuario();
+    if (user?.email && registro?.id) {
+      API.post(`/ponto/${registro.id}/log-comprovante`, {
+        sucesso: false, emailPara: user.email, erroMsg, reenviado: false,
+      }).catch(() => {});
+    }
+    console.warn('[EmailJS] Falha ao enviar comprovante:', erroMsg);
   }
 }
 

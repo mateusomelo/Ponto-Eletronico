@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Histórico de Ponto — Ponto Eletrônico</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="css/main.css" />
   <style>
@@ -129,6 +130,10 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modalDetalhes')">Fechar</button>
+      <button class="btn btn-outline" id="btnReenviarComprovante" style="display:none"
+              onclick="reenviarComprovante()">
+        <i class="fas fa-paper-plane"></i> Reenviar Comprovante
+      </button>
     </div>
   </div>
 </div>
@@ -138,11 +143,13 @@
 <script src="js/utils.js"></script>
 <script src="js/layout.js"></script>
 <script>
-let estado       = { pagina: 1, por_pagina: 20 };
-let ehGestor     = false;
-let temDetalhes  = false;
-let _cache       = [];
-let _mapInstance = null;
+let estado        = { pagina: 1, por_pagina: 20 };
+let ehGestor      = false;
+let temDetalhes   = false;
+let _cache        = [];
+let _mapInstance  = null;
+let emailjsCfg    = null;
+let _registroAtual = null; // registro aberto no modal (para reenvio)
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (!Auth.requireAuth()) return;
@@ -158,6 +165,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (!Auth.hasPermission('relatorios.exportar')) {
     document.getElementById('exportBtns').style.display = 'none';
+  }
+
+  // Carrega config EmailJS para reenvio (apenas admins)
+  if (Auth.isSupervisor()) {
+    API.get('/ponto/email-config').then(cfg => { emailjsCfg = cfg; }).catch(() => {});
   }
 
   if (!ehGestor) {
@@ -235,6 +247,13 @@ function renderTabela(registros) {
 function verDetalhes(idx) {
   const r = _cache[idx];
   if (!r) return;
+  _registroAtual = r;
+
+  // Mostra botão de reenvio só para supervisores/admins quando EmailJS está configurado
+  const btnReenviar = document.getElementById('btnReenviarComprovante');
+  btnReenviar.style.display =
+    (ehGestor && emailjsCfg?.habilitado && (r.tipo === 'entrada' || r.tipo === 'saida'))
+      ? '' : 'none';
 
   // Selfie
   const selfieWrap = document.getElementById('selfieWrap');
@@ -302,6 +321,111 @@ function verDetalhes(idx) {
     </div>`).join('');
 
   openModal('modalDetalhes');
+}
+
+// ── Reenvio de comprovante via EmailJS ────────────────────
+function gerarProtocolo(dataHora, id) {
+  const d = new Date(dataHora);
+  const fmt = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  });
+  const parts = fmt.formatToParts(d);
+  const year  = parts.find(p => p.type === 'year').value;
+  const month = parts.find(p => p.type === 'month').value;
+  const day   = parts.find(p => p.type === 'day').value;
+  return `PT-${year}${month}${day}-${String(id).padStart(6, '0')}`;
+}
+
+async function reenviarComprovante() {
+  const r = _registroAtual;
+  if (!r || !emailjsCfg?.habilitado) return;
+
+  const tipo = r.tipo;
+  const templateId = tipo === 'entrada'
+    ? emailjsCfg.templateEntradaId
+    : emailjsCfg.templateSaidaId;
+
+  if (!templateId) {
+    toast('Template EmailJS não configurado para ' + tipo + '.', 'error');
+    return;
+  }
+
+  const emailPara = r.usuario_email;
+  if (!emailPara) {
+    toast('E-mail do funcionário não disponível.', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('btnReenviarComprovante');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner" style="width:12px;height:12px;border-width:2px"></span> Enviando...';
+
+  try {
+    const protocolo = emailjsCfg.incluirProtocolo
+      ? gerarProtocolo(r.data_hora, r.id)
+      : '';
+
+    const base = emailjsCfg.backendUrl || window.location.origin;
+    const fotoUrl = emailjsCfg.incluirFoto && r.foto_registro
+      ? base + r.foto_registro
+      : '';
+    const logoUrl = emailjsCfg.incluirLogo && emailjsCfg.empresaLogo
+      ? base + emailjsCfg.empresaLogo
+      : '';
+
+    const d = new Date(r.data_hora);
+    const data = d.toLocaleDateString('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+      weekday: 'long', year: 'numeric', month: 'long', day: '2-digit',
+    });
+    const hora = d.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+
+    await emailjs.send(emailjsCfg.serviceId, templateId, {
+      to_name:           r.usuario_nome || emailPara,
+      to_email:          emailPara,
+      funcionario_nome:  r.usuario_nome || '',
+      funcionario_cargo: r.cargo_nome || '',
+      empresa_nome:      emailjsCfg.empresaNome || '',
+      empresa_logo:      logoUrl,
+      data,
+      hora,
+      tipo_registro:     tipo === 'entrada' ? 'ENTRADA' : 'SAÍDA',
+      status_msg:        tipo === 'entrada'
+                           ? 'ENTRADA REGISTRADA COM SUCESSO'
+                           : 'SAÍDA REGISTRADA COM SUCESSO',
+      latitude:  emailjsCfg.incluirGps && r.latitude
+                   ? String(parseFloat(r.latitude).toFixed(6))
+                   : 'Não disponível',
+      longitude: emailjsCfg.incluirGps && r.longitude
+                   ? String(parseFloat(r.longitude).toFixed(6))
+                   : 'Não disponível',
+      protocolo,
+      foto_url:   fotoUrl,
+      ip:         emailjsCfg.incluirDispositivo && r.ip ? r.ip : 'Não disponível',
+      navegador:  emailjsCfg.incluirDispositivo ? (r.navegador || 'Desconhecido') : '',
+      dispositivo: emailjsCfg.incluirDispositivo ? (r.dispositivo || 'Desconhecido') : '',
+      enviado_em: new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+      reply_to:   emailjsCfg.replyTo || emailPara,
+      from_name:  emailjsCfg.fromName || 'Ponto Eletrônico',
+    }, emailjsCfg.publicKey);
+
+    API.post(`/ponto/${r.id}/log-comprovante`, {
+      sucesso: true, emailPara, reenviado: true,
+    }).catch(() => {});
+
+    toast(`Comprovante reenviado para ${emailPara}`, 'success');
+  } catch (err) {
+    const erroMsg = err?.text || (typeof err === 'string' ? err : JSON.stringify(err)) || 'Erro';
+    API.post(`/ponto/${r.id}/log-comprovante`, {
+      sucesso: false, emailPara: r.usuario_email, erroMsg, reenviado: true,
+    }).catch(() => {});
+    toast(`Falha ao reenviar: ${erroMsg}`, 'error');
+    console.error('[EmailJS reenvio]', err);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-paper-plane"></i> Reenviar Comprovante';
+  }
 }
 
 document.getElementById('btnBuscar').addEventListener('click', () => { estado.pagina = 1; buscar(); });

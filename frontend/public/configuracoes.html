@@ -6,9 +6,103 @@
   <title>Configurações — Ponto Eletrônico</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" />
   <link rel="stylesheet" href="css/main.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <style>
     @media (max-width: 600px) {
       .form-row { grid-template-columns: 1fr !important; }
+    }
+
+    /* ── Seção EmailJS ────────────────────────────────────── */
+    .emailjs-section { margin-top: 32px; }
+
+    .emailjs-section .section-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .emailjs-section .section-desc {
+      font-size: .82rem;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Toggle switch */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .toggle-row:last-child { border-bottom: none; }
+    .toggle-label { font-size: .88rem; font-weight: 500; }
+    .toggle-desc  { font-size: .75rem; color: var(--text-muted); margin-top: 2px; }
+
+    .toggle-switch {
+      position: relative;
+      width: 44px; height: 24px;
+      flex-shrink: 0;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: #cbd5e1;
+      border-radius: 24px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 18px; height: 18px;
+      left: 3px; top: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform .2s;
+      box-shadow: 0 1px 4px rgba(0,0,0,.2);
+    }
+    .toggle-switch input:checked + .toggle-slider { background: var(--primary); }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+    .emailjs-creds {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 18px;
+      margin-top: 18px;
+    }
+    .emailjs-creds .creds-title {
+      font-size: .85rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      margin-bottom: 14px;
+    }
+    .emailjs-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: .8rem;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+    }
+    .emailjs-status.ativo   { background: #dcfce7; color: #166534; }
+    .emailjs-status.inativo { background: #fef3c7; color: #92400e; }
+    .emailjs-status.nao-cfg { background: #fee2e2; color: #991b1b; }
+
+    .btn-test-email {
+      font-size: .82rem;
+      padding: 6px 14px;
     }
   </style>
 </head>
@@ -23,6 +117,164 @@
         <button class="btn btn-primary" id="btnSalvar"><i class="fas fa-save"></i> Salvar</button>
       </div>
       <div id="cfgBody"><div class="page-loader"><span class="spinner"></span></div></div>
+    </div>
+
+    <!-- Card: Comprovantes de Ponto (EmailJS) -->
+    <div class="card" style="max-width:720px;margin-top:24px" id="cardEmailJS">
+      <div class="card-header">
+        <span class="card-title"><i class="fas fa-envelope-open-text" style="color:#8b5cf6"></i> Comprovantes de Ponto</span>
+        <button class="btn btn-primary" id="btnSalvarEmailJS"><i class="fas fa-save"></i> Salvar</button>
+      </div>
+      <div style="padding:24px">
+
+        <p style="font-size:.88rem;color:var(--text-muted);margin-bottom:20px">
+          Envie comprovantes automáticos por e-mail sempre que um funcionário registrar entrada ou saída.
+          Integração via <strong>EmailJS</strong> — os e-mails são enviados diretamente do navegador do funcionário.
+        </p>
+
+        <!-- Status EmailJS -->
+        <div id="emailjsStatusBadge"></div>
+
+        <!-- Toggles de opção -->
+        <div style="margin-bottom:20px">
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label"><i class="fas fa-sign-in-alt" style="color:#16a34a;margin-right:6px"></i> Enviar comprovante após Entrada</div>
+              <div class="toggle-desc">Envia e-mail automático ao funcionário ao registrar entrada</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" data-chave="comprovante_enviar_entrada" id="tog_enviar_entrada" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label"><i class="fas fa-sign-out-alt" style="color:#dc2626;margin-right:6px"></i> Enviar comprovante após Saída</div>
+              <div class="toggle-desc">Envia e-mail automático ao funcionário ao registrar saída</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" data-chave="comprovante_enviar_saida" id="tog_enviar_saida" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label"><i class="fas fa-camera" style="color:#3b82f6;margin-right:6px"></i> Incluir foto no comprovante</div>
+              <div class="toggle-desc">A selfie capturada aparece no corpo do e-mail</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" data-chave="comprovante_incluir_foto" id="tog_foto" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label"><i class="fas fa-map-marker-alt" style="color:#f59e0b;margin-right:6px"></i> Incluir localização GPS</div>
+              <div class="toggle-desc">Latitude e longitude do registro aparecem no comprovante</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" data-chave="comprovante_incluir_gps" id="tog_gps" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label"><i class="fas fa-desktop" style="color:#6366f1;margin-right:6px"></i> Incluir informações do dispositivo</div>
+              <div class="toggle-desc">IP, navegador e tipo de dispositivo</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" data-chave="comprovante_incluir_dispositivo" id="tog_dispositivo" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label"><i class="fas fa-barcode" style="color:#0ea5e9;margin-right:6px"></i> Incluir protocolo do registro</div>
+              <div class="toggle-desc">Código único de rastreio (ex: PT-20260616-000042)</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" data-chave="comprovante_incluir_protocolo" id="tog_protocolo" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label"><i class="fas fa-building" style="color:#64748b;margin-right:6px"></i> Incluir logo da empresa</div>
+              <div class="toggle-desc">Logo da empresa aparece no cabeçalho do e-mail</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" data-chave="comprovante_incluir_logo" id="tog_logo" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Credenciais EmailJS -->
+        <div class="emailjs-creds">
+          <div class="creds-title"><i class="fas fa-key"></i> Credenciais EmailJS</div>
+          <div class="form-row" style="grid-template-columns:1fr 1fr;gap:14px">
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Public Key <span style="color:#dc2626">*</span></label>
+              <input type="text" class="form-control" data-chave="emailjs_public_key" id="ej_public_key"
+                     placeholder="user_xxxxxxxxxxxxxxx" autocomplete="off" />
+              <div class="text-sm text-muted mt-1">EmailJS → Account → API Keys</div>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Service ID <span style="color:#dc2626">*</span></label>
+              <input type="text" class="form-control" data-chave="emailjs_service_id" id="ej_service_id"
+                     placeholder="service_xxxxxxx" autocomplete="off" />
+              <div class="text-sm text-muted mt-1">EmailJS → Email Services</div>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Template ID — Entrada <span style="color:#dc2626">*</span></label>
+              <input type="text" class="form-control" data-chave="emailjs_template_entrada_id" id="ej_tpl_entrada"
+                     placeholder="template_xxxxxxx" autocomplete="off" />
+              <div class="text-sm text-muted mt-1">Template usado no registro de entrada</div>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Template ID — Saída <span style="color:#dc2626">*</span></label>
+              <input type="text" class="form-control" data-chave="emailjs_template_saida_id" id="ej_tpl_saida"
+                     placeholder="template_xxxxxxx" autocomplete="off" />
+              <div class="text-sm text-muted mt-1">Template usado no registro de saída</div>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Nome do remetente</label>
+              <input type="text" class="form-control" data-chave="emailjs_from_name" id="ej_from_name"
+                     placeholder="Ponto Eletrônico" />
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">E-mail de resposta (reply-to)</label>
+              <input type="email" class="form-control" data-chave="emailjs_reply_to" id="ej_reply_to"
+                     placeholder="rh@empresa.com" />
+            </div>
+          </div>
+
+          <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <button class="btn btn-outline btn-test-email" id="btnTestarEmailJS" title="Envia um e-mail de teste para o seu e-mail">
+              <i class="fas fa-paper-plane"></i> Testar configuração
+            </button>
+            <a href="https://www.emailjs.com/docs/" target="_blank" rel="noopener"
+               style="font-size:.8rem;color:var(--primary)">
+              <i class="fas fa-external-link-alt"></i> Documentação EmailJS
+            </a>
+            <span style="font-size:.78rem;color:var(--text-muted);margin-left:auto">
+              Os e-mails são enviados diretamente do navegador — nenhuma chave de servidor é exposta.
+            </span>
+          </div>
+        </div>
+
+        <!-- Histórico de envios -->
+        <div style="margin-top:24px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <span style="font-size:.9rem;font-weight:700"><i class="fas fa-history" style="color:#3b82f6"></i> Histórico de Envios</span>
+            <button class="btn btn-sm btn-outline" id="btnRecarregarLogs"><i class="fas fa-sync-alt"></i></button>
+          </div>
+          <div id="comprovantesLogs">
+            <div class="text-sm text-muted" style="text-align:center;padding:16px">Carregando...</div>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
 </div>
@@ -110,6 +362,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     cfgData = await API.get('/configuracoes');
     renderCfg();
+    carregarEmailJSForm();
+    carregarLogsComprovantes();
   } catch {
     toast('Erro ao carregar as configurações.', 'error');
   }
@@ -161,6 +415,183 @@ document.getElementById('btnSalvar').addEventListener('click', async () => {
     btn.disabled = false;
   }
 });
+
+// ── EmailJS / Comprovantes ────────────────────────────────────
+const EMAILJS_TOGGLES = [
+  'comprovante_enviar_entrada', 'comprovante_enviar_saida',
+  'comprovante_incluir_foto', 'comprovante_incluir_gps',
+  'comprovante_incluir_dispositivo', 'comprovante_incluir_protocolo',
+  'comprovante_incluir_logo',
+];
+const EMAILJS_FIELDS = [
+  'emailjs_public_key', 'emailjs_service_id',
+  'emailjs_template_entrada_id', 'emailjs_template_saida_id',
+  'emailjs_from_name', 'emailjs_reply_to',
+];
+
+function renderEmailJSStatus(cfg) {
+  const badge = document.getElementById('emailjsStatusBadge');
+  const pk = cfg.emailjs_public_key?.valor || '';
+  const sid = cfg.emailjs_service_id?.valor || '';
+  const tpE = cfg.emailjs_template_entrada_id?.valor || '';
+  const tpS = cfg.emailjs_template_saida_id?.valor || '';
+  const envE = cfg.comprovante_enviar_entrada?.valor === 'true';
+  const envS = cfg.comprovante_enviar_saida?.valor === 'true';
+
+  let cls = 'nao-cfg', icon = 'fa-times-circle', txt = 'Não configurado';
+  if (pk && sid && tpE && tpS) {
+    if (envE || envS) { cls = 'ativo'; icon = 'fa-check-circle'; txt = 'Ativo'; }
+    else { cls = 'inativo'; icon = 'fa-pause-circle'; txt = 'Configurado (envio desativado)'; }
+  }
+  badge.innerHTML = `<div class="emailjs-status ${cls}"><i class="fas ${icon}"></i> ${txt}</div>`;
+}
+
+function carregarEmailJSForm() {
+  // Preenche toggles
+  EMAILJS_TOGGLES.forEach(chave => {
+    const el = document.querySelector(`[data-chave="${chave}"]`);
+    if (el) el.checked = (cfgData[chave]?.valor === 'true');
+  });
+  // Preenche campos de texto
+  EMAILJS_FIELDS.forEach(chave => {
+    const el = document.querySelector(`[data-chave="${chave}"]`);
+    if (el) el.value = cfgData[chave]?.valor || '';
+  });
+  renderEmailJSStatus(cfgData);
+}
+
+document.getElementById('btnSalvarEmailJS').addEventListener('click', async () => {
+  const updates = {};
+  // Toggles
+  EMAILJS_TOGGLES.forEach(chave => {
+    const el = document.querySelector(`[data-chave="${chave}"]`);
+    if (el) updates[chave] = el.checked ? 'true' : 'false';
+  });
+  // Campos de texto
+  EMAILJS_FIELDS.forEach(chave => {
+    const el = document.querySelector(`[data-chave="${chave}"]`);
+    if (el) updates[chave] = el.value.trim();
+  });
+
+  const btn = document.getElementById('btnSalvarEmailJS');
+  btn.disabled = true;
+  try {
+    await API.put('/configuracoes', updates);
+    // Atualiza cache local
+    Object.entries(updates).forEach(([k, v]) => {
+      if (!cfgData[k]) cfgData[k] = {};
+      cfgData[k].valor = v;
+    });
+    renderEmailJSStatus(cfgData);
+    toast('Configurações de comprovantes salvas!', 'success');
+  } catch (err) {
+    toast(err.data?.erro || 'Erro ao salvar.', 'error');
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// Botão de teste
+document.getElementById('btnTestarEmailJS').addEventListener('click', async () => {
+  const pk  = document.getElementById('ej_public_key').value.trim();
+  const sid = document.getElementById('ej_service_id').value.trim();
+  const tpE = document.getElementById('ej_tpl_entrada').value.trim();
+  if (!pk || !sid || !tpE) {
+    toast('Preencha Public Key, Service ID e Template de Entrada antes de testar.', 'error');
+    return;
+  }
+
+  const user = Auth.getUsuario();
+  if (!user?.email) { toast('Usuário sem e-mail.', 'error'); return; }
+
+  if (!window.emailjs) {
+    toast('SDK do EmailJS não carregado. Recarregue a página.', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('btnTestarEmailJS');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner" style="width:12px;height:12px;border-width:2px"></span> Enviando...';
+
+  try {
+    await emailjs.send(sid, tpE, {
+      to_name:          user.nome,
+      to_email:         user.email,
+      funcionario_nome: user.nome,
+      funcionario_cargo: user.cargo_nome || 'Administrador',
+      empresa_nome:     cfgData.empresa_nome?.valor || 'Minha Empresa',
+      empresa_logo:     '',
+      data:             new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', weekday:'long', year:'numeric', month:'long', day:'2-digit' }),
+      hora:             new Date().toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+      tipo_registro:    'TESTE',
+      status_msg:       'E-MAIL DE TESTE — CONFIGURAÇÃO OK',
+      latitude:         '-23.550520',
+      longitude:        '-46.633308',
+      protocolo:        'PT-TESTE-000000',
+      foto_url:         '',
+      ip:               '127.0.0.1',
+      navegador:        'Chrome',
+      dispositivo:      'Desktop',
+      enviado_em:       new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+      reply_to:         document.getElementById('ej_reply_to').value.trim() || user.email,
+      from_name:        document.getElementById('ej_from_name').value.trim() || 'Ponto Eletrônico',
+    }, pk);
+    toast(`E-mail de teste enviado para ${user.email}!`, 'success');
+  } catch (err) {
+    const msg = err?.text || JSON.stringify(err) || 'Erro desconhecido';
+    toast(`Falha no teste: ${msg}`, 'error');
+    console.error('[EmailJS Teste]', err);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-paper-plane"></i> Testar configuração';
+  }
+});
+
+// Histórico de envios
+async function carregarLogsComprovantes() {
+  const el = document.getElementById('comprovantesLogs');
+  try {
+    const data = await API.get('/ponto/comprovantes', { por_pagina: 15 });
+    if (!data.registros.length) {
+      el.innerHTML = '<div class="text-sm text-muted" style="text-align:center;padding:16px">Nenhum envio registrado.</div>';
+      return;
+    }
+    el.innerHTML = `
+      <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+        <thead>
+          <tr style="background:#f1f5f9">
+            <th style="padding:6px 8px;text-align:left;font-weight:600">Funcionário</th>
+            <th style="padding:6px 8px;text-align:left;font-weight:600">Tipo</th>
+            <th style="padding:6px 8px;text-align:left;font-weight:600">E-mail</th>
+            <th style="padding:6px 8px;text-align:left;font-weight:600">Enviado em</th>
+            <th style="padding:6px 8px;text-align:center;font-weight:600">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.registros.map(r => `
+            <tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:6px 8px">${r.usuario_nome || '-'}</td>
+              <td style="padding:6px 8px">
+                <span class="badge ${r.tipo === 'entrada' ? 'badge-success' : 'badge-danger'}">${r.tipo}</span>
+                ${r.reenviado ? '<span style="font-size:.72rem;color:var(--text-muted);margin-left:4px">(reenvio)</span>' : ''}
+              </td>
+              <td style="padding:6px 8px">${r.email_para}</td>
+              <td style="padding:6px 8px">${fmtDataHora(r.enviado_em)}</td>
+              <td style="padding:6px 8px;text-align:center">
+                ${r.sucesso
+                  ? '<span style="color:#16a34a"><i class="fas fa-check-circle"></i> Enviado</span>'
+                  : `<span style="color:#dc2626" title="${r.erro_msg || ''}"><i class="fas fa-times-circle"></i> Falhou</span>`}
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+      ${data.total > 15 ? `<div class="text-sm text-muted" style="margin-top:8px;text-align:right">Exibindo 15 de ${data.total} envios</div>` : ''}`;
+  } catch {
+    el.innerHTML = '<div class="text-sm text-muted" style="text-align:center;padding:16px">Erro ao carregar histórico.</div>';
+  }
+}
+
+document.getElementById('btnRecarregarLogs').addEventListener('click', carregarLogsComprovantes);
 </script>
 </body>
 </html>

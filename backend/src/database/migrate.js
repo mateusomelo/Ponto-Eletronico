@@ -176,6 +176,20 @@ async function seedConfiguracoes(conn) {
     ['foto_obrigatoria_mobile','true',         'boolean', 'Exigir foto em dispositivos móveis'],
     ['max_raio_metros',       '500',           'number',  'Raio máximo em metros para registro'],
     ['fuso_horario',          'America/Sao_Paulo', 'string', 'Fuso horário do sistema (ex: America/Sao_Paulo)'],
+    // EmailJS / Comprovantes
+    ['emailjs_public_key',           '',      'string',  'Chave pública do EmailJS (Public Key)'],
+    ['emailjs_service_id',           '',      'string',  'ID do serviço EmailJS (Service ID)'],
+    ['emailjs_template_entrada_id',  '',      'string',  'ID do template de entrada no EmailJS'],
+    ['emailjs_template_saida_id',    '',      'string',  'ID do template de saída no EmailJS'],
+    ['emailjs_from_name',            'Ponto Eletrônico', 'string', 'Nome do remetente no e-mail'],
+    ['emailjs_reply_to',             '',      'string',  'E-mail de resposta (reply-to)'],
+    ['comprovante_enviar_entrada',   'false', 'boolean', 'Enviar comprovante por e-mail após entrada'],
+    ['comprovante_enviar_saida',     'false', 'boolean', 'Enviar comprovante por e-mail após saída'],
+    ['comprovante_incluir_foto',     'true',  'boolean', 'Incluir foto no comprovante'],
+    ['comprovante_incluir_gps',      'true',  'boolean', 'Incluir localização GPS no comprovante'],
+    ['comprovante_incluir_dispositivo', 'true', 'boolean', 'Incluir informações do dispositivo'],
+    ['comprovante_incluir_protocolo',   'true', 'boolean', 'Incluir protocolo único do registro'],
+    ['comprovante_incluir_logo',        'true', 'boolean', 'Incluir logo da empresa no e-mail'],
   ];
   for (const [chave, valor, tipo, descricao] of configs) {
     await conn.query(
@@ -396,6 +410,57 @@ async function runIncrementalMigrations(conn) {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
   console.log('[Migration] plano_historico: tabela verificada.');
+
+  // ── Comprovantes de e-mail (tabela de log de envios EmailJS) ─────────────
+  await conn.query(`
+    CREATE TABLE IF NOT EXISTS comprovantes_email (
+      id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      registro_id  INT UNSIGNED NOT NULL,
+      usuario_id   INT UNSIGNED NOT NULL,
+      company_id   INT UNSIGNED NOT NULL,
+      email_para   VARCHAR(150) NOT NULL,
+      tipo         ENUM('entrada','saida') NOT NULL,
+      sucesso      TINYINT(1) NOT NULL DEFAULT 0,
+      erro_msg     TEXT NULL,
+      enviado_em   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      reenviado    TINYINT(1) NOT NULL DEFAULT 0,
+      PRIMARY KEY (id),
+      INDEX idx_ce_registro  (registro_id),
+      INDEX idx_ce_usuario   (usuario_id),
+      INDEX idx_ce_company   (company_id),
+      INDEX idx_ce_enviado   (enviado_em)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+  console.log('[Migration] comprovantes_email: tabela verificada.');
+
+  // ── Configs EmailJS — garante existência para todas as empresas ───────────
+  const emailjsConfigs = [
+    ['emailjs_public_key',           '',      'string',  'Chave pública do EmailJS (Public Key)'],
+    ['emailjs_service_id',           '',      'string',  'ID do serviço EmailJS (Service ID)'],
+    ['emailjs_template_entrada_id',  '',      'string',  'ID do template de entrada no EmailJS'],
+    ['emailjs_template_saida_id',    '',      'string',  'ID do template de saída no EmailJS'],
+    ['emailjs_from_name',            'Ponto Eletrônico', 'string', 'Nome do remetente no e-mail'],
+    ['emailjs_reply_to',             '',      'string',  'E-mail de resposta (reply-to)'],
+    ['comprovante_enviar_entrada',   'false', 'boolean', 'Enviar comprovante por e-mail após entrada'],
+    ['comprovante_enviar_saida',     'false', 'boolean', 'Enviar comprovante por e-mail após saída'],
+    ['comprovante_incluir_foto',     'true',  'boolean', 'Incluir foto no comprovante'],
+    ['comprovante_incluir_gps',      'true',  'boolean', 'Incluir localização GPS no comprovante'],
+    ['comprovante_incluir_dispositivo', 'true', 'boolean', 'Incluir informações do dispositivo'],
+    ['comprovante_incluir_protocolo',   'true', 'boolean', 'Incluir protocolo único do registro'],
+    ['comprovante_incluir_logo',        'true', 'boolean', 'Incluir logo da empresa no e-mail'],
+  ];
+
+  // Busca todas as empresas existentes
+  const [todasEmpresas] = await conn.query('SELECT id FROM empresas');
+  for (const emp of todasEmpresas) {
+    for (const [chave, valor, tipo, descricao] of emailjsConfigs) {
+      await conn.query(
+        `INSERT IGNORE INTO configuracoes (chave, valor, tipo, descricao, company_id) VALUES (?, ?, ?, ?, ?)`,
+        [chave, valor, tipo, descricao, emp.id]
+      );
+    }
+  }
+  console.log('[Migration] configs EmailJS: verificadas para todas as empresas.');
 
   // ── Fase 3: UNIQUE constraints compostos (nome+company_id, chave+company_id) ──
   // Tenta remover índices antigos (single-column) — ignora se já não existirem

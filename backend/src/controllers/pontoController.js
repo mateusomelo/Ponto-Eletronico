@@ -246,4 +246,156 @@ async function status(req, res) {
   }
 }
 
-module.exports = { registrar, historico, hoje, status };
+// GET /api/ponto/email-config
+// Retorna as configs EmailJS da empresa (acessível a qualquer usuário autenticado)
+async function emailConfig(req, res) {
+  try {
+    const cid = req.user.company_id;
+    if (!cid) {
+      // super_admin não tem empresa — retorna configuração vazia
+      return res.json({ habilitado: false });
+    }
+
+    const emailjsKeys = [
+      'emailjs_public_key', 'emailjs_service_id',
+      'emailjs_template_entrada_id', 'emailjs_template_saida_id',
+      'emailjs_from_name', 'emailjs_reply_to',
+      'comprovante_enviar_entrada', 'comprovante_enviar_saida',
+      'comprovante_incluir_foto', 'comprovante_incluir_gps',
+      'comprovante_incluir_dispositivo', 'comprovante_incluir_protocolo',
+      'comprovante_incluir_logo',
+    ];
+
+    const [rows] = await pool.query(
+      `SELECT chave, valor FROM configuracoes WHERE company_id = ? AND chave IN (?)`,
+      [cid, emailjsKeys]
+    );
+
+    const cfg = {};
+    rows.forEach(r => { cfg[r.chave] = r.valor; });
+
+    // Busca dados da empresa (nome e logo) para incluir no comprovante
+    const [empRows] = await pool.query(
+      'SELECT nome, logo FROM empresas WHERE id = ?', [cid]
+    );
+    const empresa = empRows[0] || {};
+
+    const backendUrl = (process.env.BACKEND_URL || '').replace(/\/$/, '');
+
+    return res.json({
+      habilitado:         !!(cfg.emailjs_public_key && cfg.emailjs_service_id),
+      publicKey:          cfg.emailjs_public_key          || '',
+      serviceId:          cfg.emailjs_service_id          || '',
+      templateEntradaId:  cfg.emailjs_template_entrada_id || '',
+      templateSaidaId:    cfg.emailjs_template_saida_id   || '',
+      fromName:           cfg.emailjs_from_name            || 'Ponto Eletrônico',
+      replyTo:            cfg.emailjs_reply_to             || '',
+      enviarEntrada:      cfg.comprovante_enviar_entrada   === 'true',
+      enviarSaida:        cfg.comprovante_enviar_saida     === 'true',
+      incluirFoto:        cfg.comprovante_incluir_foto     !== 'false',
+      incluirGps:         cfg.comprovante_incluir_gps      !== 'false',
+      incluirDispositivo: cfg.comprovante_incluir_dispositivo !== 'false',
+      incluirProtocolo:   cfg.comprovante_incluir_protocolo   !== 'false',
+      incluirLogo:        cfg.comprovante_incluir_logo        !== 'false',
+      backendUrl,
+      empresaNome:        empresa.nome || '',
+      empresaLogo:        empresa.logo || '',
+    });
+  } catch (err) {
+    console.error('[Ponto] emailConfig:', err);
+    return res.status(500).json({ erro: 'Erro interno.' });
+  }
+}
+
+// POST /api/ponto/:id/log-comprovante
+async function logComprovante(req, res) {
+  const registroId = parseInt(req.params.id);
+  const { sucesso, erroMsg, emailPara, reenviado = false } = req.body;
+
+  if (!emailPara) {
+    return res.status(400).json({ erro: 'emailPara é obrigatório.' });
+  }
+
+  try {
+    // Verifica que o registro existe e pertence à empresa do usuário
+    const [rows] = await pool.query(
+      `SELECT rp.id, rp.usuario_id, rp.tipo, u.company_id
+       FROM registros_ponto rp
+       JOIN usuarios u ON u.id = rp.usuario_id
+       WHERE rp.id = ?`,
+      [registroId]
+    );
+    if (!rows.length) return res.status(404).json({ erro: 'Registro não encontrado.' });
+
+    const registro = rows[0];
+
+    // Segurança: deve ser da mesma empresa (super_admin passa livre)
+    if (req.user.company_id && req.user.company_id !== registro.company_id) {
+      return res.status(403).json({ erro: 'Sem permissão.' });
+    }
+
+    await pool.query(
+      `INSERT INTO comprovantes_email
+         (registro_id, usuario_id, company_id, email_para, tipo, sucesso, erro_msg, reenviado)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        registroId, registro.usuario_id, registro.company_id,
+        emailPara, registro.tipo,
+        sucesso ? 1 : 0,
+        erroMsg || null,
+        reenviado ? 1 : 0,
+      ]
+    );
+
+    const acao = reenviado ? 'email.comprovante.reenvio' : 'email.comprovante';
+    const desc = `Comprovante de ${registro.tipo} ${sucesso ? 'enviado' : 'falhou'} → ${emailPara}`;
+    await LogAcesso.registrar({
+      usuario_id: req.user.id,
+      acao,
+      descricao:  desc,
+      ip:         getClientIp(req),
+      user_agent: req.headers['user-agent'] || '',
+    });
+
+    return res.json({ mensagem: 'Log registrado.' });
+  } catch (err) {
+    console.error('[Ponto] logComprovante:', err);
+    return res.status(500).json({ erro: 'Erro interno.' });
+  }
+}
+
+// GET /api/ponto/comprovantes
+async function listarComprovantes(req, res) {
+  try {
+    const cid = req.user.company_id;
+    const { pagina = 1, por_pagina = 30 } = req.query;
+    const pg     = Math.max(1, parseInt(pagina) || 1);
+    const pp     = Math.min(100, parseInt(por_pagina) || 30);
+    const offset = (pg - 1) * pp;
+
+    const params = [];
+    let where = 'WHERE 1=1';
+    if (cid) { where += ' AND ce.company_id = ?'; params.push(cid); }
+
+    const [[{ total }]] = await pool.query(
+      `SELECT COUNT(*) AS total FROM comprovantes_email ce ${where}`, params
+    );
+
+    const [rows] = await pool.query(
+      `SELECT ce.*, u.nome AS usuario_nome, u.email AS usuario_email
+       FROM comprovantes_email ce
+       JOIN usuarios u ON u.id = ce.usuario_id
+       ${where}
+       ORDER BY ce.enviado_em DESC
+       LIMIT ${pp} OFFSET ${offset}`,
+      params
+    );
+
+    return res.json({ total, pagina: pg, por_pagina: pp, registros: rows });
+  } catch (err) {
+    console.error('[Ponto] listarComprovantes:', err);
+    return res.status(500).json({ erro: 'Erro interno.' });
+  }
+}
+
+module.exports = { registrar, historico, hoje, status, emailConfig, logComprovante, listarComprovantes };
