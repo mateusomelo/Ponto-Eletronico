@@ -892,7 +892,7 @@ async function carregarHoje() {
           <div class="registro-tipo">${r.tipo}</div>
           <div class="registro-hora">${hora} &middot; <span style="text-transform:capitalize">${diaSemana}</span></div>
         </div>
-        ${r.foto_registro ? `<img src="${r.foto_registro}" alt="selfie" style="width:40px;height:40px;border-radius:8px;object-fit:cover;flex-shrink:0;" />` : ''}
+        ${r.foto_registro ? `<img src="${r.foto_registro}" alt="selfie" style="width:40px;height:40px;border-radius:8px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'" />` : ''}
       </div>`;
     }).join('');
   } catch {}
