@@ -330,6 +330,7 @@ let statusAtual = null;
 let isMobile    = false;   // dispositivo móvel (Android/iPhone/iPad)
 let temCamera   = false;   // câmera disponível e autorizada
 let emailjsCfg  = null;    // config EmailJS carregada no init
+let empresaTZ   = 'America/Sao_Paulo'; // fuso da empresa (atualizado após carregar emailConfig)
 
 // ── Inicialização ─────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
@@ -348,14 +349,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('pontoCargo').textContent = user.cargo_nome || '';
   }
 
-  // Relógio
+  // Relógio — usa empresaTZ (atualizado após emailConfig carregar)
   (function tick() {
     const now = new Date();
     document.getElementById('pontoClock').textContent = now.toLocaleTimeString('pt-BR', {
-      timeZone: 'America/Sao_Paulo',
+      timeZone: empresaTZ,
     });
     document.getElementById('pontoDate').textContent  = now.toLocaleDateString('pt-BR', {
-      timeZone: 'America/Sao_Paulo',
+      timeZone: empresaTZ,
       weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
     });
     setTimeout(tick, 1000);
@@ -365,8 +366,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   await inicializarPermissoes();
   iniciarGPS();
 
-  // Carrega config EmailJS em background (não bloqueia a UI)
-  API.get('/ponto/email-config').then(cfg => { emailjsCfg = cfg; }).catch(() => {});
+  // Carrega config EmailJS + fuso_horario da empresa em background
+  API.get('/ponto/email-config').then(cfg => {
+    emailjsCfg = cfg;
+    if (cfg && cfg.fuso_horario) empresaTZ = cfg.fuso_horario;
+  }).catch(() => {});
 
   await carregarStatus();
   await carregarHoje();
@@ -774,7 +778,7 @@ async function enviarRegistro(tipo, foto) {
 function gerarProtocolo(dataHora, id) {
   const d = new Date(dataHora);
   const fmt = new Intl.DateTimeFormat('pt-BR', {
-    timeZone: 'America/Sao_Paulo',
+    timeZone: empresaTZ,
     year: 'numeric', month: '2-digit', day: '2-digit',
   });
   const parts = fmt.formatToParts(d);
@@ -810,10 +814,10 @@ async function enviarComprovante(tipo, registro) {
 
     const d = new Date(registro.data_hora);
     const data = d.toLocaleDateString('pt-BR', {
-      timeZone: 'America/Sao_Paulo',
+      timeZone: empresaTZ,
       weekday: 'long', year: 'numeric', month: 'long', day: '2-digit',
     });
-    const hora = d.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    const hora = d.toLocaleTimeString('pt-BR', { timeZone: empresaTZ });
 
     const params = {
       to_name:           user.nome,
@@ -841,7 +845,7 @@ async function enviarComprovante(tipo, registro) {
                            : 'Não disponível',
       navegador:         emailjsCfg.incluirDispositivo ? (registro.navegador || 'Desconhecido') : '',
       dispositivo:       emailjsCfg.incluirDispositivo ? (registro.dispositivo || 'Desconhecido') : '',
-      enviado_em:        new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+      enviado_em:        new Date().toLocaleString('pt-BR', { timeZone: empresaTZ }),
       reply_to:          emailjsCfg.replyTo || user.email,
       from_name:         emailjsCfg.fromName || 'Ponto Eletrônico',
     };
@@ -879,8 +883,8 @@ async function carregarHoje() {
 
     el.innerHTML = registros.map(r => {
       const d = new Date(r.data_hora);
-      const diaSemana = d.toLocaleDateString('pt-BR', { weekday: 'long', timeZone: 'America/Sao_Paulo' });
-      const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
+      const diaSemana = d.toLocaleDateString('pt-BR', { weekday: 'long', timeZone: empresaTZ });
+      const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: empresaTZ });
       return `
       <div class="registro-item">
         <div class="registro-dot ${r.tipo}"></div>

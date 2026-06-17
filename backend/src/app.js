@@ -13,7 +13,7 @@ const { globalLimiter } = require('./middlewares/rateLimiter');
 const app = express();
 
 // ── Segurança ────────────────────────────────────────────
-app.set('trust proxy', 1);
+app.set('trust proxy', true); // Railway usa proxy chain; true = confiar em todos os hops
 app.use(helmet({
   // HSTS desabilitado: o app roda em HTTP puro (sem HTTPS).
   // Com HSTS ativo, o browser força https:// em IPs da rede local e quebra todos os recursos.

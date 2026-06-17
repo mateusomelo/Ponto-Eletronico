@@ -5,6 +5,46 @@ const LogAcesso = require('../models/LogAcesso');
 
 const { getClientIp } = require('../utils/ip');
 
+// ── Helpers de fuso horário ───────────────────────────────────
+// Retorna data local no fuso informado como 'YYYY-MM-DD' (ex: '2025-01-15')
+function todayInTZ(tz) {
+  return new Date().toLocaleDateString('sv', { timeZone: tz || 'America/Sao_Paulo' });
+}
+
+// Retorna mês local no fuso como 'YYYY-MM'
+function monthInTZ(tz) {
+  return todayInTZ(tz).slice(0, 7);
+}
+
+// Retorna [inicioUTC, fimUTC] em formato 'YYYY-MM-DD HH:MM:SS' cobrindo
+// um dia inteiro (00:00–23:59:59) no fuso dado.
+// Funciona para qualquer fuso, inclusive fusos com DST.
+function dayBoundsUTC(dateStr, tz) {
+  // Calcula o offset UTC no meio-dia desse dia (evita ambiguidade de DST na meia-noite)
+  const noonUTC   = new Date(`${dateStr}T12:00:00Z`);
+  const noonLocal = new Date(noonUTC.toLocaleString('en-US', { timeZone: tz || 'America/Sao_Paulo' }));
+  const offsetMs  = noonLocal.getTime() - noonUTC.getTime(); // ex: -10800000 para BRT (-3h)
+
+  // Meia-noite local = meia-noite UTC deslocada pelo offset
+  const midnightMs = new Date(`${dateStr}T00:00:00Z`).getTime() - offsetMs;
+  const toSQL = ms => new Date(ms).toISOString().slice(0, 19).replace('T', ' ');
+  return [toSQL(midnightMs), toSQL(midnightMs + 86400000)];
+}
+
+// Lê fuso_horario da empresa no banco de configuracoes
+async function getCompanyTZ(company_id) {
+  if (!company_id) return 'America/Sao_Paulo';
+  try {
+    const [[row]] = await pool.query(
+      "SELECT valor FROM configuracoes WHERE company_id = ? AND chave = 'fuso_horario' LIMIT 1",
+      [company_id]
+    );
+    return (row && row.valor) || 'America/Sao_Paulo';
+  } catch {
+    return 'America/Sao_Paulo';
+  }
+}
+
 function isMobileDevice(ua) {
   return /Android.*Mobile|iPhone|iPad|iPod/i.test(ua) ||
          (/Android/i.test(ua) && !/Windows/i.test(ua));
@@ -88,10 +128,9 @@ async function registrar(req, res) {
   }
 
   try {
-    // Verificar se o período atual está fechado definitivamente para este funcionário
-    const agora = new Date();
-    const brt   = new Date(agora.getTime() - 3 * 3600000);
-    const competenciaAtual = `${brt.getUTCFullYear()}-${String(brt.getUTCMonth()+1).padStart(2,'0')}`;
+    // Fuso da empresa — usado para competência e queries de data
+    const tz = await getCompanyTZ(req.user.company_id);
+    const competenciaAtual = monthInTZ(tz);
     const [[periodoClosed]] = await pool.query(
       `SELECT id FROM fechamentos_folha
        WHERE usuario_id = ? AND status = 'fechado' AND competencia = ? LIMIT 1`,
@@ -119,13 +158,17 @@ async function registrar(req, res) {
       }
     }
 
+    // IP do socket (Netlify/proxy direto) vs. IP real do cliente (X-Forwarded-For)
+    const ip_publico = getClientIp(req);
+    const ip_socket  = (req.socket?.remoteAddress || '').replace(/^::ffff:/i, '') || ip_publico;
+
     const [result] = await pool.query(
       `INSERT INTO registros_ponto
          (usuario_id, tipo, data_hora, ip, ip_publico, latitude, longitude, precisao,
           foto_registro, dispositivo, so, navegador, user_agent)
        VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        req.user.id, tipo, ip, ip,
+        req.user.id, tipo, ip_socket, ip_publico,
         parseFloat(latitude), parseFloat(longitude),
         precisao ? parseFloat(precisao) : null,
         fotoUrl, dispositivo, so, navegador, ua,
@@ -141,7 +184,7 @@ async function registrar(req, res) {
       usuario_id: req.user.id,
       acao:       `ponto.${tipo}`,
       descricao:  `Registro de ${tipo} — GPS: ${latitude},${longitude}`,
-      ip,
+      ip:         ip_publico,
       user_agent: ua,
     });
 
@@ -170,14 +213,21 @@ async function historico(req, res) {
     const temDetalhes = req.user.cargo_nivel <= 2 || req.user.permissoes.includes('registros.detalhes');
 
     const cid    = req.user.company_id;
+    const tz     = await getCompanyTZ(cid);
     const params = [];
     let where = 'WHERE 1=1';
 
-    if (cid)         { where += ' AND u.company_id = ?'; params.push(cid); }
-    if (uid)         { where += ' AND r.usuario_id = ?'; params.push(uid); }
-    if (tipo)        { where += ' AND r.tipo = ?';       params.push(tipo); }
-    if (data_inicio) { where += ' AND DATE(r.data_hora) >= ?'; params.push(data_inicio); }
-    if (data_fim)    { where += ' AND DATE(r.data_hora) <= ?'; params.push(data_fim); }
+    if (cid)  { where += ' AND u.company_id = ?'; params.push(cid); }
+    if (uid)  { where += ' AND r.usuario_id = ?'; params.push(uid); }
+    if (tipo) { where += ' AND r.tipo = ?';        params.push(tipo); }
+    if (data_inicio) {
+      const [startUTC] = dayBoundsUTC(data_inicio, tz);
+      where += ' AND r.data_hora >= ?'; params.push(startUTC);
+    }
+    if (data_fim) {
+      const [, endUTC] = dayBoundsUTC(data_fim, tz);
+      where += ' AND r.data_hora < ?';  params.push(endUTC);
+    }
     if (busca && req.user.cargo_nivel < 3) {
       where += ' AND (u.nome LIKE ? OR u.email LIKE ?)';
       params.push(`%${busca}%`, `%${busca}%`);
@@ -216,11 +266,13 @@ async function historico(req, res) {
 async function hoje(req, res) {
   try {
     const temDetalhes = req.user.cargo_nivel <= 2 || req.user.permissoes.includes('registros.detalhes');
+    const tz = await getCompanyTZ(req.user.company_id);
+    const [startUTC, endUTC] = dayBoundsUTC(todayInTZ(tz), tz);
     const [rows] = await pool.query(
       `SELECT * FROM registros_ponto
-       WHERE usuario_id = ? AND DATE(data_hora) = CURDATE()
+       WHERE usuario_id = ? AND data_hora >= ? AND data_hora < ?
        ORDER BY data_hora ASC`,
-      [req.user.id]
+      [req.user.id, startUTC, endUTC]
     );
     return res.json({ registros: rows.map(r => filtrarRegistro(r, temDetalhes)) });
   } catch (err) {
@@ -231,12 +283,14 @@ async function hoje(req, res) {
 // GET /api/ponto/status
 async function status(req, res) {
   try {
-    // Considera apenas registros de hoje — entrada de ontem não conta como "trabalhando"
+    // Considera apenas registros de hoje no fuso da empresa — entrada de ontem não conta
+    const tz = await getCompanyTZ(req.user.company_id);
+    const [startUTC, endUTC] = dayBoundsUTC(todayInTZ(tz), tz);
     const [rows] = await pool.query(
       `SELECT tipo, data_hora FROM registros_ponto
-       WHERE usuario_id = ? AND DATE(data_hora) = CURDATE()
+       WHERE usuario_id = ? AND data_hora >= ? AND data_hora < ?
        ORDER BY data_hora DESC LIMIT 1`,
-      [req.user.id]
+      [req.user.id, startUTC, endUTC]
     );
     const ultimo  = rows.length ? rows[0] : null;
     const proximo = !ultimo || ultimo.tipo === 'saida' ? 'entrada' : 'saida';
@@ -261,6 +315,7 @@ async function emailConfig(req, res) {
       // Configuração global via env vars — sempre ativo, sem precisar de UI
       let empresaNome = '';
       let empresaLogo = '';
+      const fusoHorario = await getCompanyTZ(cid);
       if (cid) {
         const [empRows] = await pool.query('SELECT nome, logo FROM empresas WHERE id = ?', [cid]);
         const emp = empRows[0] || {};
@@ -284,6 +339,7 @@ async function emailConfig(req, res) {
         backendUrl,
         empresaNome,
         empresaLogo,
+        fuso_horario: fusoHorario,
       });
     }
 

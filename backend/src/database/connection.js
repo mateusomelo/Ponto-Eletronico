@@ -11,7 +11,7 @@ const pool = mysql.createPool({
   queueLimit:         0,
   enableKeepAlive:    true,
   keepAliveInitialDelay: 0,
-  timezone:           '-03:00',
+  timezone:           'Z',       // Railway MySQL está em UTC; 'Z' = correto
   charset:            'utf8mb4',
 });
 
