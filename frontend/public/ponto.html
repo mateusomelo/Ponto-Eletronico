@@ -351,8 +351,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Relógio
   (function tick() {
     const now = new Date();
-    document.getElementById('pontoClock').textContent = now.toLocaleTimeString('pt-BR');
+    document.getElementById('pontoClock').textContent = now.toLocaleTimeString('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+    });
     document.getElementById('pontoDate').textContent  = now.toLocaleDateString('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
       weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
     });
     setTimeout(tick, 1000);
@@ -787,9 +790,7 @@ async function enviarComprovante(tipo, registro) {
     if (tipo === 'entrada' && !emailjsCfg.enviarEntrada) return;
     if (tipo === 'saida'   && !emailjsCfg.enviarSaida)   return;
 
-    const templateId = tipo === 'entrada'
-      ? emailjsCfg.templateEntradaId
-      : emailjsCfg.templateSaidaId;
+    const templateId = emailjsCfg.templateId;
     if (!templateId) return;
 
     const user = Auth.getUsuario();
@@ -799,19 +800,13 @@ async function enviarComprovante(tipo, registro) {
       ? gerarProtocolo(registro.data_hora, registro.id)
       : '';
 
-    // URL absoluta da foto (backend expõe /uploads/...)
-    let fotoUrl = '';
-    if (emailjsCfg.incluirFoto && registro.foto_registro) {
-      const base = emailjsCfg.backendUrl || window.location.origin;
-      fotoUrl = base + registro.foto_registro;
-    }
-
-    // Logo da empresa
-    let logoUrl = '';
-    if (emailjsCfg.incluirLogo && emailjsCfg.empresaLogo) {
-      const base = emailjsCfg.backendUrl || window.location.origin;
-      logoUrl = base + emailjsCfg.empresaLogo;
-    }
+    const base = emailjsCfg.backendUrl || window.location.origin;
+    const fotoUrl = emailjsCfg.incluirFoto && registro.foto_registro
+      ? base + registro.foto_registro
+      : '';
+    const logoUrl = emailjsCfg.incluirLogo && emailjsCfg.empresaLogo
+      ? base + emailjsCfg.empresaLogo
+      : '';
 
     const d = new Date(registro.data_hora);
     const data = d.toLocaleDateString('pt-BR', {
@@ -851,21 +846,17 @@ async function enviarComprovante(tipo, registro) {
       from_name:         emailjsCfg.fromName || 'Ponto Eletrônico',
     };
 
-    await emailjs.send(
-      emailjsCfg.serviceId,
-      templateId,
-      params,
-      emailjsCfg.publicKey
-    );
+    // Inicializa com a chave pública antes de enviar
+    emailjs.init({ publicKey: emailjsCfg.publicKey });
+    await emailjs.send(emailjsCfg.serviceId, templateId, params);
 
-    // Log de sucesso (fire-and-forget)
     API.post(`/ponto/${registro.id}/log-comprovante`, {
       sucesso: true, emailPara: user.email, reenviado: false,
     }).catch(() => {});
 
     toast(`Comprovante enviado para ${user.email}`, 'success');
   } catch (err) {
-    const erroMsg = err?.text || (typeof err === 'string' ? err : JSON.stringify(err)) || 'Erro desconhecido';
+    const erroMsg = err?.text || err?.message || (typeof err === 'string' ? err : JSON.stringify(err)) || 'Erro desconhecido';
     const user = Auth.getUsuario();
     if (user?.email && registro?.id) {
       API.post(`/ponto/${registro.id}/log-comprovante`, {
@@ -889,8 +880,8 @@ async function carregarHoje() {
 
     el.innerHTML = registros.map(r => {
       const d = new Date(r.data_hora);
-      const diaSemana = d.toLocaleDateString('pt-BR', { weekday: 'long' });
-      const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      const diaSemana = d.toLocaleDateString('pt-BR', { weekday: 'long', timeZone: 'America/Sao_Paulo' });
+      const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
       return `
       <div class="registro-item">
         <div class="registro-dot ${r.tipo}"></div>

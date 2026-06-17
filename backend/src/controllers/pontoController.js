@@ -247,14 +247,48 @@ async function status(req, res) {
 }
 
 // GET /api/ponto/email-config
-// Retorna as configs EmailJS da empresa (acessível a qualquer usuário autenticado)
+// Retorna config EmailJS — lê env vars (oculto/automático) ou fallback no banco
 async function emailConfig(req, res) {
   try {
-    const cid = req.user.company_id;
-    if (!cid) {
-      // super_admin não tem empresa — retorna configuração vazia
-      return res.json({ habilitado: false });
+    const cid        = req.user.company_id;
+    const backendUrl = (process.env.BACKEND_URL || '').replace(/\/$/, '');
+
+    const envPublicKey  = (process.env.EMAILJS_PUBLIC_KEY  || '').trim();
+    const envServiceId  = (process.env.EMAILJS_SERVICE_ID  || '').trim();
+    const envTemplateId = (process.env.EMAILJS_TEMPLATE_ID || '').trim();
+
+    if (envPublicKey && envServiceId && envTemplateId) {
+      // Configuração global via env vars — sempre ativo, sem precisar de UI
+      let empresaNome = '';
+      let empresaLogo = '';
+      if (cid) {
+        const [empRows] = await pool.query('SELECT nome, logo FROM empresas WHERE id = ?', [cid]);
+        const emp = empRows[0] || {};
+        empresaNome = emp.nome || '';
+        empresaLogo = emp.logo || '';
+      }
+      return res.json({
+        habilitado: true,
+        publicKey:  envPublicKey,
+        serviceId:  envServiceId,
+        templateId: envTemplateId,
+        enviarEntrada: true,
+        enviarSaida:   true,
+        incluirFoto:        true,
+        incluirGps:         true,
+        incluirDispositivo: true,
+        incluirProtocolo:   true,
+        incluirLogo:        true,
+        fromName:   'Ponto Eletrônico',
+        replyTo:    '',
+        backendUrl,
+        empresaNome,
+        empresaLogo,
+      });
     }
+
+    // Fallback: lê do banco por empresa (configuração manual via DB)
+    if (!cid) return res.json({ habilitado: false });
 
     const emailjsKeys = [
       'emailjs_public_key', 'emailjs_service_id',
@@ -274,22 +308,20 @@ async function emailConfig(req, res) {
     const cfg = {};
     rows.forEach(r => { cfg[r.chave] = r.valor; });
 
-    // Busca dados da empresa (nome e logo) para incluir no comprovante
-    const [empRows] = await pool.query(
-      'SELECT nome, logo FROM empresas WHERE id = ?', [cid]
-    );
+    const [empRows] = await pool.query('SELECT nome, logo FROM empresas WHERE id = ?', [cid]);
     const empresa = empRows[0] || {};
 
-    const backendUrl = (process.env.BACKEND_URL || '').replace(/\/$/, '');
+    const pk = cfg.emailjs_public_key || '';
+    const si = cfg.emailjs_service_id || '';
+    const ti = cfg.emailjs_template_entrada_id || cfg.emailjs_template_saida_id || '';
 
     return res.json({
-      habilitado:         !!(cfg.emailjs_public_key && cfg.emailjs_service_id),
-      publicKey:          cfg.emailjs_public_key          || '',
-      serviceId:          cfg.emailjs_service_id          || '',
-      templateEntradaId:  cfg.emailjs_template_entrada_id || '',
-      templateSaidaId:    cfg.emailjs_template_saida_id   || '',
-      fromName:           cfg.emailjs_from_name            || 'Ponto Eletrônico',
-      replyTo:            cfg.emailjs_reply_to             || '',
+      habilitado:         !!(pk && si && ti),
+      publicKey:          pk,
+      serviceId:          si,
+      templateId:         ti,
+      fromName:           cfg.emailjs_from_name || 'Ponto Eletrônico',
+      replyTo:            cfg.emailjs_reply_to  || '',
       enviarEntrada:      cfg.comprovante_enviar_entrada   === 'true',
       enviarSaida:        cfg.comprovante_enviar_saida     === 'true',
       incluirFoto:        cfg.comprovante_incluir_foto     !== 'false',
