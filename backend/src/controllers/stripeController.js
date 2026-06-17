@@ -79,14 +79,13 @@ async function assinar(req, res) {
     const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 
     const session = await stripe.checkout.sessions.create({
-      customer:                  customerId,
-      automatic_payment_methods: { enabled: true },
-      line_items:                [{ price: priceId, quantity: 1 }],
-      mode:                      'subscription',
-      success_url:               `${baseUrl}/admin.html?checkout=success&empresa_id=${id}`,
-      cancel_url:                `${baseUrl}/admin.html?checkout=cancel`,
-      metadata:                  { empresa_id: String(id) },
-      subscription_data:         { metadata: { empresa_id: String(id) } },
+      customer:          customerId,
+      line_items:        [{ price: priceId, quantity: 1 }],
+      mode:              'subscription',
+      success_url:       `${baseUrl}/admin.html?checkout=success&empresa_id=${id}`,
+      cancel_url:        `${baseUrl}/admin.html?checkout=cancel`,
+      metadata:          { empresa_id: String(id) },
+      subscription_data: { metadata: { empresa_id: String(id) } },
     });
 
     return res.json({ checkout_url: session.url });
