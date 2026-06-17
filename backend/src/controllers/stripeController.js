@@ -48,7 +48,24 @@ async function assinar(req, res) {
     }
 
     // Criar ou reutilizar customer Stripe
+    // Se o customer salvo é de modo teste e estamos em live (ou vice-versa), recria
     let customerId = empresa.stripe_customer_id;
+    if (customerId) {
+      try {
+        await stripe.customers.retrieve(customerId);
+      } catch (custErr) {
+        // Customer não existe neste modo (teste→live ou live→teste) — recria
+        if (custErr.code === 'resource_missing') {
+          customerId = null;
+          await pool.query(
+            'UPDATE empresas SET stripe_customer_id = NULL, stripe_subscription_id = NULL WHERE id = ?',
+            [id]
+          );
+        } else {
+          throw custErr;
+        }
+      }
+    }
     if (!customerId) {
       const customer = await stripe.customers.create({
         name:     empresa.nome,
