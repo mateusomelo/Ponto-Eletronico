@@ -846,8 +846,7 @@ async function enviarComprovante(tipo, registro) {
       from_name:         emailjsCfg.fromName || 'Ponto Eletrônico',
     };
 
-    // Inicializa com a chave pública antes de enviar
-    emailjs.init({ publicKey: emailjsCfg.publicKey });
+    emailjs.init(emailjsCfg.publicKey);
     await emailjs.send(emailjsCfg.serviceId, templateId, params);
 
     API.post(`/ponto/${registro.id}/log-comprovante`, {
