@@ -819,15 +819,32 @@ async function enviarComprovante(tipo, registro) {
     });
     const hora = d.toLocaleTimeString('pt-BR', { timeZone: empresaTZ });
 
+    const nome      = user.nome      || '';
+    const cargo     = user.cargo_nome || '';
+    const empresa   = emailjsCfg.empresaNome || '';
+    const ipExibir  = emailjsCfg.incluirDispositivo
+                        ? (registro.ip_publico || registro.ip || 'Não disponível')
+                        : 'Não disponível';
+
     const params = {
-      to_name:           user.nome,
+      // ── nomes usados pelo template EmailJS ──────────────────
+      nome_funcionario:  nome,
+      cargo,
+      empresa,
+      horario_completo:  hora,
+      data_envio:        new Date().toLocaleString('pt-BR', { timeZone: empresaTZ }),
+      foto_registro:     fotoUrl,
+
+      // ── campos padrão / aliases de compatibilidade ──────────
+      to_name:           nome,
       to_email:          user.email,
-      funcionario_nome:  user.nome,
-      funcionario_cargo: user.cargo_nome || '',
-      empresa_nome:      emailjsCfg.empresaNome || '',
+      funcionario_nome:  nome,
+      funcionario_cargo: cargo,
+      empresa_nome:      empresa,
       empresa_logo:      logoUrl,
       data,
       hora,
+      horario:           hora,
       tipo_registro:     tipo === 'entrada' ? 'ENTRADA' : 'SAÍDA',
       status_msg:        tipo === 'entrada'
                            ? 'ENTRADA REGISTRADA COM SUCESSO'
@@ -840,9 +857,7 @@ async function enviarComprovante(tipo, registro) {
                            : 'Não disponível',
       protocolo,
       foto_url:          fotoUrl,
-      ip:                emailjsCfg.incluirDispositivo && registro.ip
-                           ? registro.ip
-                           : 'Não disponível',
+      ip:                ipExibir,
       navegador:         emailjsCfg.incluirDispositivo ? (registro.navegador || 'Desconhecido') : '',
       dispositivo:       emailjsCfg.incluirDispositivo ? (registro.dispositivo || 'Desconhecido') : '',
       enviado_em:        new Date().toLocaleString('pt-BR', { timeZone: empresaTZ }),
