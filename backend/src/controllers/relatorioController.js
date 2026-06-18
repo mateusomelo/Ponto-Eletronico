@@ -76,53 +76,123 @@ async function dados(req, res) {
 // GET /api/relatorios/pdf
 async function exportarPDF(req, res) {
   try {
-    const [rows, tz] = await Promise.all([buscarRegistros(req), getTimezone(req.user.company_id)]);
+    const cid = req.user.company_id;
+    const [rows, tz] = await Promise.all([buscarRegistros(req), getTimezone(cid)]);
 
-    const doc = new PDFDocument({ margin: 40, size: 'A4', layout: 'landscape' });
+    let empresaNome = 'Empresa';
+    if (cid) {
+      const [[emp]] = await pool.query('SELECT nome FROM empresas WHERE id = ? LIMIT 1', [cid]);
+      if (emp) empresaNome = emp.nome;
+    }
+
+    // A4 landscape: 841 × 595 pt — margens 40 → área útil 761 × 515
+    const MARGIN   = 40;
+    const PAGE_W   = 841;
+    const PAGE_H   = 595;
+    const USABLE_W = PAGE_W - MARGIN * 2;
+    const HEADER_H = 18;
+    const ROW_H    = 15;
+    const PAD      = 4;
+    const MAX_Y    = PAGE_H - 45;
+
+    // Colunas: soma das larguras + 6 gaps de 4 = 717 + 24 = 741 ≤ 761 ✓
+    const colDefs = [
+      { label: 'Data/Hora',   w: 122 },
+      { label: 'Funcionário', w: 138 },
+      { label: 'Cargo',       w: 86  },
+      { label: 'Tipo',        w: 46  },
+      { label: 'IP Público',  w: 96  },
+      { label: 'Localização', w: 153 },
+      { label: 'Dispositivo', w: 76  },
+    ];
+    let cx = MARGIN;
+    colDefs.forEach(col => { col.x = cx; cx += col.w + 4; });
+
+    const doc = new PDFDocument({ margin: MARGIN, size: 'A4', layout: 'landscape', bufferPages: true });
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename="relatorio-ponto.pdf"');
     doc.pipe(res);
 
-    cabecalhoPDF(doc, 'Relatório de Registro de Ponto');
+    // ── Cabeçalho da primeira página ─────────────────────────────
+    doc.fontSize(18).fillColor('#1e3a5f').text(empresaNome, MARGIN, MARGIN, { width: USABLE_W, align: 'center' });
+    doc.fontSize(11).fillColor('#444444').text('Relatório de Registro de Ponto', { width: USABLE_W, align: 'center' });
+    doc.fontSize(8).fillColor('#999999').text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, { width: USABLE_W, align: 'center' });
+    doc.moveDown(0.4);
+    doc.moveTo(MARGIN, doc.y).lineTo(PAGE_W - MARGIN, doc.y).strokeColor('#1e3a5f').lineWidth(0.8).stroke();
+    doc.moveDown(0.5);
 
-    // A4 landscape: 841 x 595, margens 40 → área útil ≈ 761pt
-    const cols    = [40, 135, 235, 300, 345, 435, 555];
-    const headers = ['Data/Hora', 'Funcionário', 'Cargo', 'Tipo', 'IP Público', 'Endereço', 'Dispositivo'];
-    const pageW   = 801; // 841 - 40 margem direita
-    doc.fontSize(9).fillColor('#fff');
-    doc.rect(40, doc.y, pageW - 40, 16).fill('#1e3a5f');
-    headers.forEach((h, i) => {
-      const x = cols[i];
-      const w = (cols[i + 1] || pageW) - x - 4;
-      doc.fillColor('#fff').text(h, x, doc.y - 14, { width: w });
-    });
-    doc.moveDown(0.3);
+    const trunc = (s, max) => {
+      if (!s) return '-';
+      s = String(s).trim();
+      return s.length > max ? s.slice(0, max - 1) + '…' : s;
+    };
+
+    const truncAddr = (addr) => {
+      if (!addr) return '-';
+      const parts = addr.split(',').map(p => p.trim()).filter(Boolean);
+      // Rua + Bairro, máximo 30 chars
+      return trunc(parts.slice(0, 2).join(', '), 30);
+    };
+
+    const drawTableHeader = (y) => {
+      doc.rect(MARGIN, y, USABLE_W, HEADER_H).fill('#1e3a5f');
+      doc.fontSize(8).fillColor('#ffffff');
+      colDefs.forEach(col => {
+        doc.text(col.label, col.x + PAD, y + 5, { width: col.w - PAD * 2, lineBreak: false });
+      });
+      return y + HEADER_H + 1;
+    };
+
+    let y = drawTableHeader(doc.y);
 
     rows.forEach((r, idx) => {
-      if (doc.y > 530) doc.addPage();
-      const bg   = idx % 2 === 0 ? '#f0f4ff' : '#ffffff';
-      const yRow = doc.y;
-      doc.rect(40, yRow, pageW - 40, 14).fill(bg);
-      doc.fillColor('#333').fontSize(8);
+      if (y > MAX_Y) {
+        doc.addPage();
+        y = MARGIN;
+        y = drawTableHeader(y);
+      }
+
+      const bg = idx % 2 === 0 ? '#eef2ff' : '#ffffff';
+      doc.rect(MARGIN, y, USABLE_W, ROW_H).fill(bg);
+
+      const tipo      = (r.tipo || '').toLowerCase();
+      const tipoLabel = tipo === 'entrada' ? 'Entrada' : tipo === 'saida' ? 'Saída' : tipo;
+      const tipoColor = tipo === 'entrada' ? '#166534' : '#991b1b';
+
       const vals = [
-        fmtDataHora(r.data_hora, tz),
-        r.usuario_nome    || '-',
-        r.cargo_nome      || '-',
-        r.tipo.charAt(0).toUpperCase() + r.tipo.slice(1),
-        r.ip_publico      || r.ip || '-',
-        r.endereco_aprox  || '-',
-        r.dispositivo     || '-',
+        trunc(fmtDataHora(r.data_hora, tz), 22),
+        trunc(r.usuario_nome, 22),
+        trunc(r.cargo_nome, 14),
+        { text: tipoLabel, color: tipoColor, bold: true },
+        r.ip_publico || r.ip || '-',
+        truncAddr(r.endereco_aprox),
+        r.dispositivo || '-',
       ];
-      vals.forEach((v, i) => {
-        const x = cols[i];
-        const w = (cols[i + 1] || pageW) - x - 4;
-        doc.text(v, x, yRow + 2, { width: w, lineBreak: false });
+
+      doc.fontSize(7.5);
+      colDefs.forEach((col, i) => {
+        const val   = vals[i];
+        const text  = typeof val === 'object' ? val.text : val;
+        const color = typeof val === 'object' ? val.color : '#222222';
+        doc.fillColor(color).text(text, col.x + PAD, y + 4, { width: col.w - PAD * 2, lineBreak: false });
       });
-      doc.moveDown(0.15);
+
+      y += ROW_H;
     });
 
-    doc.moveDown(1);
-    doc.fontSize(9).fillColor('#888').text(`Total de registros: ${rows.length}`, { align: 'right' });
+    // ── Rodapé com total ─────────────────────────────────────────
+    y += 8;
+    doc.fontSize(8).fillColor('#555555')
+       .text(`Total de registros: ${rows.length}`, MARGIN, y, { width: USABLE_W, align: 'right' });
+
+    // ── Numeração de páginas ──────────────────────────────────────
+    const range = doc.bufferedPageRange();
+    for (let i = range.start; i < range.start + range.count; i++) {
+      doc.switchToPage(i);
+      doc.fontSize(7).fillColor('#aaaaaa')
+         .text(`Página ${i - range.start + 1} de ${range.count}`, MARGIN, PAGE_H - 28, { width: USABLE_W, align: 'center' });
+    }
+
     doc.end();
   } catch (err) {
     console.error('[Relatorio PDF]', err);
