@@ -103,7 +103,7 @@ function filtrarRegistro(r, temDetalhes) {
 
 // POST /api/ponto/registrar  (multipart/form-data)
 async function registrar(req, res) {
-  const { tipo, latitude, longitude, precisao } = req.body;
+  const { tipo, latitude, longitude, precisao, ip_local } = req.body;
   const fotoFile = req.file;
   const ip       = getClientIp(req);
   const ua       = req.headers['user-agent'] || '';
@@ -164,11 +164,12 @@ async function registrar(req, res) {
 
     const [result] = await pool.query(
       `INSERT INTO registros_ponto
-         (usuario_id, tipo, data_hora, ip, ip_publico, latitude, longitude, precisao,
+         (usuario_id, tipo, data_hora, ip, ip_publico, ip_local, latitude, longitude, precisao,
           foto_registro, dispositivo, so, navegador, user_agent)
-       VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         req.user.id, tipo, ip_socket, ip_publico,
+        ip_local || null,
         parseFloat(latitude), parseFloat(longitude),
         precisao ? parseFloat(precisao) : null,
         fotoUrl, dispositivo, so, navegador, ua,

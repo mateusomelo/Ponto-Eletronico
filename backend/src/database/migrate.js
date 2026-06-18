@@ -258,6 +258,7 @@ async function runIncrementalMigrations(conn) {
 
   const rAlter = [];
   if (!rNames.includes('ip_publico'))     rAlter.push('ADD COLUMN ip_publico     VARCHAR(45) NULL');
+  if (!rNames.includes('ip_local'))       rAlter.push('ADD COLUMN ip_local       VARCHAR(45) NULL');
   if (!rNames.includes('precisao'))       rAlter.push('ADD COLUMN precisao       DECIMAL(8,2) NULL');
   if (!rNames.includes('foto_registro'))  rAlter.push('ADD COLUMN foto_registro  VARCHAR(500) NULL');
   if (!rNames.includes('so'))             rAlter.push('ADD COLUMN so             VARCHAR(80) NULL');
