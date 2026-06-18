@@ -211,7 +211,13 @@ async function solicitarReset(req, res) {
   if (!email) return res.status(400).json({ erro: 'E-mail obrigatório.' });
 
   try {
-    const [rows] = await pool.query('SELECT id, nome FROM usuarios WHERE email = ? AND ativo = 1', [email.toLowerCase().trim()]);
+    const [rows] = await pool.query(
+      `SELECT u.id, u.nome, COALESCE(e.nome, 'Ponto Eletrônico') AS empresa_nome
+       FROM usuarios u
+       LEFT JOIN empresas e ON e.id = u.company_id
+       WHERE u.email = ? AND u.ativo = 1 LIMIT 1`,
+      [email.toLowerCase().trim()]
+    );
 
     // Resposta genérica por segurança
     if (!rows.length) {
@@ -219,22 +225,27 @@ async function solicitarReset(req, res) {
     }
 
     const token = crypto.randomBytes(32).toString('hex');
-    const expires = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2h
+    const expires = new Date(Date.now() + 60 * 60 * 1000); // 60 minutos
 
     await pool.query(
       'UPDATE usuarios SET reset_token = ?, reset_expires = ? WHERE id = ?',
       [token, expires, rows[0].id]
     );
 
-    await LogAcesso.registrar({ usuario_id: rows[0].id, acao: 'senha.reset_solicitado', ip: getClientIp(req) });
+    const ip = getClientIp(req);
+    await LogAcesso.registrar({ usuario_id: rows[0].id, acao: 'senha.reset_solicitado', ip });
 
+    const emailNorm = email.toLowerCase().trim();
     // Envia e-mail de reset: tenta EmailJS primeiro, depois SMTP como fallback
-    emailService.enviarResetSenhaEmailJS(email.toLowerCase().trim(), rows[0].nome, token)
+    emailService.enviarResetSenhaEmailJS(emailNorm, rows[0].nome, token, {
+      empresaNome: rows[0].empresa_nome,
+      ip,
+    })
       .catch(() => false)
       .then(ok => {
         if (ok) return;
-        emailService.enviarResetSenha(email.toLowerCase().trim(), rows[0].nome, token)
-          .then(ok2 => { if (!ok2) console.log(`[Auth] Reset token (EmailJS+SMTP indisponíveis) para ${email}: ${token}`); })
+        emailService.enviarResetSenha(emailNorm, rows[0].nome, token)
+          .then(ok2 => { if (!ok2) console.log(`[Auth] Reset token (EmailJS+SMTP indisponíveis) para ${emailNorm}: ${token}`); })
           .catch(() => {});
       });
 

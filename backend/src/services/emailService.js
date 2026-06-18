@@ -69,7 +69,7 @@ async function enviarEmail({ para, assunto, html, texto }) {
   }
 }
 
-async function enviarResetSenhaEmailJS(email, nome, token) {
+async function enviarResetSenhaEmailJS(email, nome, token, { empresaNome, ip } = {}) {
   const serviceId  = process.env.EMAILJS_SERVICE_ID;
   const templateId = process.env.EMAILJS_TEMPLATE_RESET_ID;
   const publicKey  = process.env.EMAILJS_PUBLIC_KEY;
@@ -80,6 +80,11 @@ async function enviarResetSenhaEmailJS(email, nome, token) {
     return false;
   }
 
+  const now = new Date();
+  const tz  = 'America/Sao_Paulo';
+  const data = now.toLocaleDateString('pt-BR', { timeZone: tz });
+  const hora = now.toLocaleTimeString('pt-BR', { timeZone: tz, hour: '2-digit', minute: '2-digit' });
+
   const url = `${BASE_URL()}/redefinir-senha.html?token=${token}`;
   const payload = JSON.stringify({
     service_id:  serviceId,
@@ -87,10 +92,15 @@ async function enviarResetSenhaEmailJS(email, nome, token) {
     user_id:     publicKey,
     ...(privateKey ? { accessToken: privateKey } : {}),
     template_params: {
-      to_email:  email,
-      to_name:   nome,
-      reset_url: url,
-      expiry:    '2 horas',
+      to_email:          email,
+      to_name:           nome,
+      nome_usuario:      nome,
+      empresa_nome:      empresaNome || 'Ponto Eletrônico',
+      reset_link:        url,
+      reset_url:         url,
+      data_solicitacao:  data,
+      hora_solicitacao:  hora,
+      ip_usuario:        ip || 'Não disponível',
     },
   });
 
