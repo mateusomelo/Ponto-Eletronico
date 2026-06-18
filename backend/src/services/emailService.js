@@ -69,6 +69,50 @@ async function enviarEmail({ para, assunto, html, texto }) {
   }
 }
 
+async function enviarResetSenhaEmailJS(email, nome, token) {
+  const serviceId  = process.env.EMAILJS_SERVICE_ID;
+  const templateId = process.env.EMAILJS_TEMPLATE_RESET_ID;
+  const publicKey  = process.env.EMAILJS_PUBLIC_KEY;
+  const privateKey = process.env.EMAILJS_PRIVATE_KEY;
+
+  if (!serviceId || !templateId || !publicKey) {
+    console.log('[Email] EmailJS reset: EMAILJS_SERVICE_ID / EMAILJS_TEMPLATE_RESET_ID / EMAILJS_PUBLIC_KEY não configurados');
+    return false;
+  }
+
+  const url = `${BASE_URL()}/redefinir-senha.html?token=${token}`;
+  const payload = JSON.stringify({
+    service_id:  serviceId,
+    template_id: templateId,
+    user_id:     publicKey,
+    ...(privateKey ? { accessToken: privateKey } : {}),
+    template_params: {
+      to_email:  email,
+      to_name:   nome,
+      reset_url: url,
+      expiry:    '2 horas',
+    },
+  });
+
+  try {
+    const resp = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    payload,
+    });
+    if (resp.ok) {
+      console.log(`[Email] Reset via EmailJS enviado → ${email}`);
+      return true;
+    }
+    const txt = await resp.text();
+    console.error(`[Email] EmailJS reset falhou (${resp.status}): ${txt}`);
+    return false;
+  } catch (err) {
+    console.error('[Email] EmailJS reset erro:', err.message);
+    return false;
+  }
+}
+
 async function enviarResetSenha(email, nome, token) {
   const url = `${BASE_URL()}/redefinir-senha.html?token=${token}`;
   return enviarEmail({
@@ -169,6 +213,7 @@ async function enviarBoasVindas(email, nomeAdmin, nomeEmpresa, trialDias) {
 module.exports = {
   enviarEmail,
   enviarResetSenha,
+  enviarResetSenhaEmailJS,
   enviarAlertaFatura,
   enviarEmpresaSuspensa,
   enviarEmpresaReativada,

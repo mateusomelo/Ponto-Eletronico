@@ -228,10 +228,15 @@ async function solicitarReset(req, res) {
 
     await LogAcesso.registrar({ usuario_id: rows[0].id, acao: 'senha.reset_solicitado', ip: getClientIp(req) });
 
-    // Envia e-mail de reset (silencioso se SMTP não configurado)
-    emailService.enviarResetSenha(email.toLowerCase().trim(), rows[0].nome, token)
-      .then(ok => { if (!ok) console.log(`[Auth] Reset token (SMTP indisponível) para ${email}: ${token}`); })
-      .catch(() => {});
+    // Envia e-mail de reset: tenta EmailJS primeiro, depois SMTP como fallback
+    emailService.enviarResetSenhaEmailJS(email.toLowerCase().trim(), rows[0].nome, token)
+      .catch(() => false)
+      .then(ok => {
+        if (ok) return;
+        emailService.enviarResetSenha(email.toLowerCase().trim(), rows[0].nome, token)
+          .then(ok2 => { if (!ok2) console.log(`[Auth] Reset token (EmailJS+SMTP indisponíveis) para ${email}: ${token}`); })
+          .catch(() => {});
+      });
 
     return res.json({ mensagem: 'Se o e-mail existir, você receberá as instruções.' });
   } catch (err) {
