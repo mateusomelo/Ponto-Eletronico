@@ -97,25 +97,6 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', ts: new Date().toISOString(), env: process.env.NODE_ENV });
 });
 
-// ── DEBUG TEMPORÁRIO: inspeciona headers de IP reais (remover após diagnóstico) ──
-app.get('/api/debug-ip', (req, res) => {
-  const { getClientIp } = require('./utils/ip');
-  res.json({
-    headers: {
-      'x-forwarded-for':          req.headers['x-forwarded-for']          || null,
-      'x-real-ip':                req.headers['x-real-ip']                || null,
-      'x-nf-client-connection-ip':req.headers['x-nf-client-connection-ip']|| null,
-      'x-nf-request-id':          req.headers['x-nf-request-id']          || null,
-      'cf-connecting-ip':         req.headers['cf-connecting-ip']         || null,
-      'true-client-ip':           req.headers['true-client-ip']           || null,
-    },
-    'req.ip':                req.ip,
-    'req.ips':                req.ips,
-    'socket.remoteAddress':   req.socket?.remoteAddress || null,
-    'getClientIp()_resultado':getClientIp(req),
-  });
-});
-
 // ── SPA fallback ─────────────────────────────────────────
 app.get('*', (req, res) => {
   if (req.path.startsWith('/api/')) {
