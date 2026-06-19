@@ -20,13 +20,22 @@ function cleanIp(ip) {
 /**
  * Extrai o IP público real do cliente da requisição Express.
  * Verifica os cabeçalhos de proxy em ordem de confiabilidade:
- *   1. X-Forwarded-For (padrão Netlify / Railway / nginx)
- *   2. X-Real-IP (nginx, alguns proxies)
- *   3. req.ip do Express (respeita trust proxy)
- *   4. socket.remoteAddress (fallback final)
+ *   1. X-Nf-Client-Connection-Ip — header do Netlify, SEMPRE o IP real do
+ *      visitante. Necessário porque o proxy redirect do Netlify (_redirects
+ *      /api/* -> Railway) substitui o X-Forwarded-For pelo IP de saída do
+ *      próprio Netlify (confirmado em teste real: XFF trazia IP da AWS
+ *      enquanto o IP real do cliente só aparecia nesse header).
+ *   2. X-Forwarded-For (fallback quando não vem via Netlify, ex: acesso direto ao Railway)
+ *   3. X-Real-IP (nginx, alguns proxies)
+ *   4. req.ip do Express (respeita trust proxy)
+ *   5. socket.remoteAddress (fallback final)
  */
 function getClientIp(req) {
-  // 1. X-Forwarded-For: pode ter lista "client, proxy1, proxy2"
+  // 1. Netlify: IP real do visitante, garantido pela plataforma
+  const nfIp = cleanIp(req.headers['x-nf-client-connection-ip']);
+  if (nfIp) return nfIp;
+
+  // 2. X-Forwarded-For: pode ter lista "client, proxy1, proxy2"
   const xff = req.headers['x-forwarded-for'];
   if (xff) {
     const ips = xff.split(',').map(s => cleanIp(s)).filter(Boolean);
@@ -35,18 +44,18 @@ function getClientIp(req) {
     if (ips[0]) return ips[0]; // retorna o primeiro mesmo sendo privado (rede local)
   }
 
-  // 2. X-Real-IP
+  // 3. X-Real-IP
   const realIp = cleanIp(req.headers['x-real-ip']);
   if (realIp) {
     if (!isPrivate(realIp)) return realIp;
     return realIp;
   }
 
-  // 3. req.ip do Express (definido corretamente quando trust proxy está ativo)
+  // 4. req.ip do Express (definido corretamente quando trust proxy está ativo)
   const expressIp = cleanIp(req.ip);
   if (expressIp && expressIp !== '::1') return expressIp;
 
-  // 4. Socket direto (último recurso)
+  // 5. Socket direto (último recurso)
   return cleanIp(req.socket?.remoteAddress) || 'desconhecido';
 }
 
