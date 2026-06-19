@@ -701,33 +701,6 @@ async function confirmarRegistro() {
   await enviarRegistro(tipoAtual, fotoBlob);
 }
 
-// ── Captura IP local via WebRTC (LAN) ─────────────────────
-function getLocalIP() {
-  return new Promise((resolve) => {
-    try {
-      const pc = new RTCPeerConnection({ iceServers: [] });
-      const found = new Set();
-      pc.createDataChannel('');
-      pc.onicecandidate = (e) => {
-        if (!e || !e.candidate || !e.candidate.candidate) {
-          try { pc.close(); } catch {}
-          resolve(found.size ? [...found][0] : null);
-          return;
-        }
-        const m = e.candidate.candidate.match(/(\d{1,3}(?:\.\d{1,3}){3})/);
-        if (m && m[1] !== '127.0.0.1') found.add(m[1]);
-      };
-      pc.createOffer()
-        .then(o => pc.setLocalDescription(o))
-        .catch(() => resolve(null));
-      setTimeout(() => {
-        try { pc.close(); } catch {}
-        resolve(found.size ? [...found][0] : null);
-      }, 2500);
-    } catch { resolve(null); }
-  });
-}
-
 // ── Enviar registro (com ou sem foto) ─────────────────────
 async function enviarRegistro(tipo, foto) {
   // Desabilita botões durante envio
@@ -742,14 +715,11 @@ async function enviarRegistro(tipo, foto) {
   }
 
   try {
-    const ipLocal = await getLocalIP();
-
     const fd = new FormData();
     fd.append('tipo',      tipo);
     fd.append('latitude',  geoCoords.latitude);
     fd.append('longitude', geoCoords.longitude);
     fd.append('precisao',  geoCoords.precisao || 0);
-    if (ipLocal) fd.append('ip_local', ipLocal);
     if (foto) fd.append('foto', foto, 'selfie.jpg');
 
     const res = await fetch('/api/ponto/registrar', {

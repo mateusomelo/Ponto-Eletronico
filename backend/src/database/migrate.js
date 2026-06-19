@@ -258,7 +258,6 @@ async function runIncrementalMigrations(conn) {
 
   const rAlter = [];
   if (!rNames.includes('ip_publico'))     rAlter.push('ADD COLUMN ip_publico     VARCHAR(45) NULL');
-  if (!rNames.includes('ip_local'))       rAlter.push('ADD COLUMN ip_local       VARCHAR(45) NULL');
   if (!rNames.includes('precisao'))       rAlter.push('ADD COLUMN precisao       DECIMAL(8,2) NULL');
   if (!rNames.includes('foto_registro'))  rAlter.push('ADD COLUMN foto_registro  VARCHAR(500) NULL');
   if (!rNames.includes('so'))             rAlter.push('ADD COLUMN so             VARCHAR(80) NULL');
@@ -267,6 +266,12 @@ async function runIncrementalMigrations(conn) {
   if (rAlter.length) {
     await conn.query(`ALTER TABLE registros_ponto ${rAlter.join(', ')}`);
     console.log('[Migration] registros_ponto: colunas adicionadas →', rAlter.length);
+  }
+
+  // Remove ip_local: captura via WebRTC se mostrou inviável (bloqueada pelo Chrome desde 2020)
+  if (rNames.includes('ip_local')) {
+    await conn.query('ALTER TABLE registros_ponto DROP COLUMN ip_local');
+    console.log('[Migration] registros_ponto: coluna ip_local removida (feature descontinuada)');
   }
 
   // fechamentos_folha: colunas adicionadas após schema inicial
