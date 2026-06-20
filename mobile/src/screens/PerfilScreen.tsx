@@ -3,7 +3,10 @@ import { ActivityIndicator, Alert, ScrollView, StyleSheet, Switch, Text, TextInp
 import { useAuth } from '../contexts/AuthContext';
 import { PerfilAPI } from '../api/perfil';
 import { ApiError } from '../api/client';
-import { autenticarComBiometria, biometriaDisponivel } from '../api/biometria';
+import * as LocalAuthentication from 'expo-local-authentication';
+import { autenticarComBiometria } from '../api/biometria';
+
+type BioStatus = 'verificando' | 'sem_hardware' | 'sem_cadastro' | 'ok' | 'erro';
 
 export default function PerfilScreen() {
   const { usuario, biometriaAtiva, alternarBiometria } = useAuth();
@@ -11,9 +14,22 @@ export default function PerfilScreen() {
   const [novaSenha, setNovaSenha] = useState('');
   const [confirmar, setConfirmar] = useState('');
   const [salvando, setSalvando] = useState(false);
-  const [temBiometria, setTemBiometria] = useState(false);
+  const [bioStatus, setBioStatus] = useState<BioStatus>('verificando');
+  const [bioErro, setBioErro] = useState('');
 
-  useEffect(() => { biometriaDisponivel().then(setTemBiometria); }, []);
+  useEffect(() => {
+    (async () => {
+      try {
+        const temHardware = await LocalAuthentication.hasHardwareAsync();
+        if (!temHardware) { setBioStatus('sem_hardware'); return; }
+        const temCadastro = await LocalAuthentication.isEnrolledAsync();
+        setBioStatus(temCadastro ? 'ok' : 'sem_cadastro');
+      } catch (err: any) {
+        setBioStatus('erro');
+        setBioErro(err?.message || String(err));
+      }
+    })();
+  }, []);
 
   async function alternarBiometriaToggle(ativar: boolean) {
     if (ativar) {
@@ -61,17 +77,21 @@ export default function PerfilScreen() {
       <Text style={styles.email}>{usuario?.email}</Text>
       <Text style={styles.cargo}>{usuario?.cargo_nome} · {usuario?.company_nome || 'Plataforma'}</Text>
 
-      {temBiometria && (
-        <View style={styles.card}>
-          <View style={styles.bioRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.bioLabel}>Login com biometria</Text>
-              <Text style={styles.bioDesc}>Use Face ID ou digital para entrar mais rápido</Text>
-            </View>
-            <Switch value={biometriaAtiva} onValueChange={alternarBiometriaToggle} />
+      <View style={styles.card}>
+        <View style={styles.bioRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.bioLabel}>Login com biometria</Text>
+            {bioStatus === 'ok' && <Text style={styles.bioDesc}>Use Face ID ou digital para entrar mais rápido</Text>}
+            {bioStatus === 'verificando' && <Text style={styles.bioDesc}>Verificando disponibilidade…</Text>}
+            {bioStatus === 'sem_hardware' && <Text style={styles.bioDescErro}>Este dispositivo não tem sensor biométrico.</Text>}
+            {bioStatus === 'sem_cadastro' && (
+              <Text style={styles.bioDescErro}>Nenhuma digital/Face ID cadastrado no celular. Cadastre nas configurações do Android primeiro.</Text>
+            )}
+            {bioStatus === 'erro' && <Text style={styles.bioDescErro}>Erro ao verificar biometria: {bioErro}</Text>}
           </View>
+          <Switch value={biometriaAtiva} onValueChange={alternarBiometriaToggle} disabled={bioStatus !== 'ok'} />
         </View>
-      )}
+      </View>
 
       <Text style={[styles.sectionTitle, { marginTop: 16 }]}>Alterar senha</Text>
       <View style={styles.card}>
@@ -104,6 +124,7 @@ const styles = StyleSheet.create({
   bioRow: { flexDirection: 'row', alignItems: 'center' },
   bioLabel: { fontSize: 14, fontWeight: '600', color: '#1e293b' },
   bioDesc: { fontSize: 11, color: '#94a3b8', marginTop: 2 },
+  bioDescErro: { fontSize: 11, color: '#dc2626', marginTop: 2 },
   card: { backgroundColor: '#fff', borderRadius: 12, padding: 16 },
   label: { fontSize: 12, color: '#475569', marginBottom: 4, marginTop: 10 },
   input: { borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14 },
