@@ -1,15 +1,30 @@
-import React, { useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { PerfilAPI } from '../api/perfil';
 import { ApiError } from '../api/client';
+import { autenticarComBiometria, biometriaDisponivel } from '../api/biometria';
 
 export default function PerfilScreen() {
-  const { usuario } = useAuth();
+  const { usuario, biometriaAtiva, alternarBiometria } = useAuth();
   const [senhaAtual, setSenhaAtual] = useState('');
   const [novaSenha, setNovaSenha] = useState('');
   const [confirmar, setConfirmar] = useState('');
   const [salvando, setSalvando] = useState(false);
+  const [temBiometria, setTemBiometria] = useState(false);
+
+  useEffect(() => { biometriaDisponivel().then(setTemBiometria); }, []);
+
+  async function alternarBiometriaToggle(ativar: boolean) {
+    if (ativar) {
+      const ok = await autenticarComBiometria();
+      if (!ok) {
+        Alert.alert('Não confirmado', 'Não foi possível confirmar sua biometria.');
+        return;
+      }
+    }
+    await alternarBiometria(ativar);
+  }
 
   async function alterarSenha() {
     if (!senhaAtual || !novaSenha) {
@@ -46,7 +61,19 @@ export default function PerfilScreen() {
       <Text style={styles.email}>{usuario?.email}</Text>
       <Text style={styles.cargo}>{usuario?.cargo_nome} · {usuario?.company_nome || 'Plataforma'}</Text>
 
-      <Text style={styles.sectionTitle}>Alterar senha</Text>
+      {temBiometria && (
+        <View style={styles.card}>
+          <View style={styles.bioRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.bioLabel}>Login com biometria</Text>
+              <Text style={styles.bioDesc}>Use Face ID ou digital para entrar mais rápido</Text>
+            </View>
+            <Switch value={biometriaAtiva} onValueChange={alternarBiometriaToggle} />
+          </View>
+        </View>
+      )}
+
+      <Text style={[styles.sectionTitle, { marginTop: 16 }]}>Alterar senha</Text>
       <View style={styles.card}>
         <Text style={styles.label}>Senha atual</Text>
         <TextInput style={styles.input} secureTextEntry value={senhaAtual} onChangeText={setSenhaAtual} />
@@ -74,6 +101,9 @@ const styles = StyleSheet.create({
   email: { fontSize: 13, color: '#64748b', textAlign: 'center' },
   cargo: { fontSize: 12, color: '#94a3b8', textAlign: 'center', marginBottom: 20 },
   sectionTitle: { fontSize: 14, fontWeight: '700', color: '#1e293b', marginBottom: 8 },
+  bioRow: { flexDirection: 'row', alignItems: 'center' },
+  bioLabel: { fontSize: 14, fontWeight: '600', color: '#1e293b' },
+  bioDesc: { fontSize: 11, color: '#94a3b8', marginTop: 2 },
   card: { backgroundColor: '#fff', borderRadius: 12, padding: 16 },
   label: { fontSize: 12, color: '#475569', marginBottom: 4, marginTop: 10 },
   input: { borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14 },

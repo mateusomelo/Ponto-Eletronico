@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { API, ApiError, clearToken, getToken, getUsuario, setToken, setUsuario } from '../api/client';
+import { autenticarComBiometria, biometriaHabilitada, setBiometriaHabilitada } from '../api/biometria';
+import { registrarPushToken } from '../api/push';
 
 export interface Usuario {
   id: number;
@@ -19,8 +21,12 @@ export interface Usuario {
 interface AuthContextValue {
   usuario: Usuario | null;
   carregando: boolean;
+  bloqueadoPorBiometria: boolean;
   login: (email: string, senha: string, lembrar?: boolean) => Promise<void>;
   logout: () => Promise<void>;
+  desbloquearComBiometria: () => Promise<boolean>;
+  biometriaAtiva: boolean;
+  alternarBiometria: (ativar: boolean) => Promise<void>;
   hasPermission: (perm: string) => boolean;
   isAdmin: () => boolean;
   isSupervisor: () => boolean;
@@ -33,42 +39,78 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [usuario, setUsuarioState] = useState<Usuario | null>(null);
   const [carregando, setCarregando] = useState(true);
+  const [bloqueadoPorBiometria, setBloqueadoPorBiometria] = useState(false);
+  const [biometriaAtiva, setBiometriaAtiva] = useState(false);
 
-  async function carregarSessao() {
-    const token = await getToken();
-    if (!token) { setCarregando(false); return; }
+  async function carregarUsuario() {
     try {
       const me = await API.get('/auth/me');
       setUsuarioState(me);
       await setUsuario(me);
+      registrarPushToken().catch(() => {});
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         await clearToken();
         setUsuarioState(null);
       } else {
-        // Sem conexão: usa o último usuário salvo localmente
         const cached = await getUsuario<Usuario>();
         if (cached) setUsuarioState(cached);
       }
-    } finally {
-      setCarregando(false);
     }
   }
 
+  async function carregarSessao() {
+    const token = await getToken();
+    if (!token) { setCarregando(false); return; }
+
+    const ativa = await biometriaHabilitada();
+    setBiometriaAtiva(ativa);
+
+    if (ativa) {
+      // Mostra o usuário em cache (UI de bloqueio pode exibir o nome) mas
+      // não libera o app até a biometria confirmar.
+      const cached = await getUsuario<Usuario>();
+      if (cached) setUsuarioState(cached);
+      setBloqueadoPorBiometria(true);
+      setCarregando(false);
+      return;
+    }
+
+    await carregarUsuario();
+    setCarregando(false);
+  }
+
   useEffect(() => { carregarSessao(); }, []);
+
+  async function desbloquearComBiometria() {
+    const ok = await autenticarComBiometria();
+    if (ok) {
+      setBloqueadoPorBiometria(false);
+      await carregarUsuario();
+    }
+    return ok;
+  }
+
+  async function alternarBiometria(ativar: boolean) {
+    await setBiometriaHabilitada(ativar);
+    setBiometriaAtiva(ativar);
+  }
 
   async function login(email: string, senha: string, lembrar = true) {
     const data = await API.post('/auth/login', { email, senha, lembrar });
     await setToken(data.token);
     await setUsuario(data.usuario);
     setUsuarioState(data.usuario);
+    setBloqueadoPorBiometria(false);
     // Busca permissões completas
-    await carregarSessao();
+    await carregarUsuario();
   }
 
   async function logout() {
     try { await API.post('/auth/logout'); } catch { /* ignora falha de rede no logout */ }
     await clearToken();
+    await setBiometriaHabilitada(false);
+    setBiometriaAtiva(false);
     setUsuarioState(null);
   }
 
@@ -81,7 +123,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ usuario, carregando, login, logout, hasPermission, isAdmin, isSupervisor, isSuperAdmin, refreshUsuario: carregarSessao }}
+      value={{
+        usuario, carregando, bloqueadoPorBiometria, login, logout, desbloquearComBiometria,
+        biometriaAtiva, alternarBiometria, hasPermission, isAdmin, isSupervisor, isSuperAdmin,
+        refreshUsuario: carregarSessao,
+      }}
     >
       {children}
     </AuthContext.Provider>

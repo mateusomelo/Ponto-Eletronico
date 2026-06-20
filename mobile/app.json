@@ -10,7 +10,8 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSCameraUsageDescription": "A câmera é usada para tirar a selfie obrigatória no registro de ponto.",
-        "NSLocationWhenInUseUsageDescription": "A localização é usada para validar o local do registro de ponto."
+        "NSLocationWhenInUseUsageDescription": "A localização é usada para validar o local do registro de ponto.",
+        "NSFaceIDUsageDescription": "O Face ID é usado para confirmar sua identidade ao entrar no app."
       }
     },
     "android": {
@@ -46,7 +47,14 @@
           "locationWhenInUsePermission": "A localização é usada para validar o local do registro de ponto."
         }
       ],
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#1e3a5f"
+        }
+      ]
     ],
     "extra": {
       "eas": {

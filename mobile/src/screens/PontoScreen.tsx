@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { PontoAPI, StatusPonto } from '../api/ponto';
 import { enviarComprovante } from '../api/comprovante';
 import { ApiError } from '../api/client';
+import { enfileirar, getFila, sincronizarFila } from '../api/offlineQueue';
 
 type GpsState = { lat: number; lng: number; precisao: number } | null;
 
@@ -20,6 +21,7 @@ export default function PontoScreen() {
   const [status, setStatus] = useState<StatusPonto | null>(null);
   const [modoCamera, setModoCamera] = useState(false);
   const [enviando, setEnviando] = useState(false);
+  const [pendentes, setPendentes] = useState(0);
   const cameraRef = useRef<CameraView>(null);
   const watchRef = useRef<Location.LocationSubscription | null>(null);
 
@@ -27,8 +29,21 @@ export default function PontoScreen() {
     carregarStatus();
     iniciarGPS();
     if (!camPerm?.granted) requestCamPerm();
+    sincronizarPendentes();
     return () => { watchRef.current?.remove(); };
   }, []);
+
+  async function sincronizarPendentes() {
+    const filaAntes = await getFila();
+    setPendentes(filaAntes.length);
+    if (!filaAntes.length) return;
+    const { enviados, restantes } = await sincronizarFila();
+    setPendentes(restantes);
+    if (enviados > 0) {
+      carregarStatus();
+      Alert.alert('Sincronizado', `${enviados} registro(s) pendente(s) enviado(s) com sucesso.`);
+    }
+  }
 
   async function carregarStatus() {
     try { setStatus(await PontoAPI.status()); } catch { /* mantém status anterior */ }
@@ -97,9 +112,18 @@ export default function PontoScreen() {
       await carregarStatus();
       Alert.alert('Sucesso', resp.mensagem || 'Ponto registrado com sucesso.');
     } catch (err: any) {
-      const msg = err instanceof ApiError
-        ? (err.data?.erro || 'Erro ao registrar ponto.')
-        : `Erro inesperado: ${err?.message || String(err)}`;
+      // Erro de rede (sem conexão) — guarda localmente e sincroniza depois.
+      const semConexao = !(err instanceof ApiError) || err.status === 0;
+      if (semConexao) {
+        await enfileirar({ tipo, latitude: gps.lat, longitude: gps.lng, precisao: gps.precisao, fotoUri });
+        const fila = await getFila();
+        setPendentes(fila.length);
+        watchRef.current?.remove();
+        setStatus({ ...status, no_trabalho: tipo === 'entrada', proximo_registro: tipo === 'entrada' ? 'saida' : 'entrada' });
+        Alert.alert('Sem conexão', 'Registro salvo no dispositivo. Será enviado automaticamente quando a internet voltar.');
+        return;
+      }
+      const msg = err instanceof ApiError ? (err.data?.erro || 'Erro ao registrar ponto.') : 'Erro inesperado.';
       Alert.alert('Erro', msg);
     } finally {
       setEnviando(false);
@@ -131,6 +155,14 @@ export default function PontoScreen() {
         <View style={[styles.statusBadge, status?.no_trabalho ? styles.badgeOn : styles.badgeOff]}>
           <Text style={styles.statusText}>{status?.no_trabalho ? 'Trabalhando' : 'Fora do trabalho'}</Text>
         </View>
+
+        {pendentes > 0 && (
+          <TouchableOpacity style={styles.pendBox} onPress={sincronizarPendentes}>
+            <Text style={styles.pendText}>
+              {pendentes} registro(s) pendente(s) de envio — tocar para tentar agora
+            </Text>
+          </TouchableOpacity>
+        )}
 
         <View style={[styles.permBox, gpsErro && styles.permBoxErr]}>
           <Text style={[styles.permText, gpsErro && styles.permTextErr]}>{gpsMsg}</Text>
@@ -170,6 +202,8 @@ const styles = StyleSheet.create({
   statusText: { fontWeight: '600', fontSize: 13, color: '#1e293b' },
   permBox: { backgroundColor: '#f8fafc', borderRadius: 8, padding: 10, marginBottom: 10 },
   permBoxErr: { backgroundColor: '#fef2f2', borderWidth: 1, borderColor: '#fecaca' },
+  pendBox: { backgroundColor: '#fef3c7', borderRadius: 8, padding: 10, marginBottom: 10, borderWidth: 1, borderColor: '#fde68a' },
+  pendText: { fontSize: 11, color: '#92400e', textAlign: 'center' },
   permText: { fontSize: 12, color: '#475569', textAlign: 'center' },
   permTextErr: { color: '#dc2626' },
   btn: { backgroundColor: '#3b82f6', borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginTop: 12 },

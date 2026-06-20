@@ -6,11 +6,12 @@ import { useAuth } from '../contexts/AuthContext';
 import LoginScreen from '../screens/LoginScreen';
 import EsqueciSenhaScreen from '../screens/EsqueciSenhaScreen';
 import MainTabs from './MainTabs';
+import BiometriaLockScreen from '../screens/BiometriaLockScreen';
 
 const Stack = createNativeStackNavigator();
 
 export default function RootNavigator() {
-  const { usuario, carregando } = useAuth();
+  const { usuario, carregando, bloqueadoPorBiometria } = useAuth();
 
   if (carregando) {
     return (
@@ -23,7 +24,9 @@ export default function RootNavigator() {
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {usuario ? (
+        {bloqueadoPorBiometria ? (
+          <Stack.Screen name="BiometriaLock" component={BiometriaLockScreen} />
+        ) : usuario ? (
           <Stack.Screen name="Main" component={MainTabs} />
         ) : (
           <>
