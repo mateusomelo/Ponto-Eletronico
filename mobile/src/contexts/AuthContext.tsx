@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { AppState, AppStateStatus } from 'react-native';
 import { API, ApiError, clearToken, getToken, getUsuario, setToken, setUsuario } from '../api/client';
 import { autenticarComBiometria, biometriaHabilitada, setBiometriaHabilitada } from '../api/biometria';
 import { registrarPushToken } from '../api/push';
@@ -81,6 +82,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => { carregarSessao(); }, []);
+
+  // Bloqueia novamente com biometria sempre que o app volta do background
+  // (não só no cold start) — mesmo comportamento de apps bancários.
+  const appStateRef = useRef(AppState.currentState);
+  const biometriaAtivaRef = useRef(biometriaAtiva);
+  const logadoRef = useRef(!!usuario);
+  biometriaAtivaRef.current = biometriaAtiva;
+  logadoRef.current = !!usuario;
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (next: AppStateStatus) => {
+      const veioDoBackground = appStateRef.current.match(/inactive|background/) && next === 'active';
+      if (veioDoBackground && biometriaAtivaRef.current && logadoRef.current) {
+        setBloqueadoPorBiometria(true);
+      }
+      appStateRef.current = next;
+    });
+    return () => sub.remove();
+  }, []);
 
   async function desbloquearComBiometria() {
     const ok = await autenticarComBiometria();
