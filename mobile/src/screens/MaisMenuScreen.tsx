@@ -3,14 +3,18 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import { useAuth } from '../contexts/AuthContext';
 
 export default function MaisMenuScreen({ navigation }: any) {
-  const { usuario, hasPermission, logout } = useAuth();
+  const { usuario, hasPermission, isAdmin, logout } = useAuth();
 
   const itens = [
-    { label: 'Relatórios',     perm: 'relatorios.visualizar', tela: 'Relatorios' },
-    { label: 'Usuários',       perm: 'usuarios.visualizar',   tela: 'Usuarios' },
-    { label: 'Cargos',         perm: null,                    tela: 'Cargos' },
-    { label: 'Configurações',  perm: 'sistema.configurar',    tela: 'Configuracoes' },
-  ].filter((i) => !i.perm || hasPermission(i.perm));
+    { label: 'Relatórios',     show: hasPermission('relatorios.visualizar'), tela: 'Relatorios' },
+    { label: 'Fechamentos',    show: hasPermission('fechamento.visualizar'), tela: 'Fechamentos' },
+    { label: 'Usuários',       show: hasPermission('usuarios.visualizar'),   tela: 'Usuarios' },
+    { label: 'Cargos',         show: true,                                  tela: 'Cargos' },
+    { label: 'Configurações',  show: hasPermission('sistema.configurar'),   tela: 'Configuracoes' },
+    { label: 'Logs de acesso', show: isAdmin(),                             tela: 'Logs' },
+    { label: 'Pagamentos',     show: hasPermission('pagamentos.visualizar'), tela: 'Pagamentos' },
+    { label: 'Perfil',         show: true,                                  tela: 'Perfil' },
+  ].filter((i) => i.show);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: 16 }}>
