@@ -4,9 +4,10 @@ const { authenticate } = require('../middlewares/auth');
 
 router.use(authenticate);
 
-router.get ('/',            ctrl.listar);
-router.get ('/nao-lidas',  ctrl.naoLidas);
-router.patch('/ler-todas', ctrl.marcarTodasLidas);
-router.patch('/:id/ler',   ctrl.marcarLida);
+router.get ('/',                ctrl.listar);
+router.get ('/nao-lidas',       ctrl.naoLidas);
+router.patch('/ler-todas',      ctrl.marcarTodasLidas);
+router.patch('/:id/ler',        ctrl.marcarLida);
+router.post('/registrar-device', ctrl.registrarDevice);
 
 module.exports = router;

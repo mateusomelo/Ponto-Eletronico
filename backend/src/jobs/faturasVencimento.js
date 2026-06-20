@@ -1,5 +1,6 @@
 const { pool }       = require('../database/connection');
 const emailService   = require('../services/emailService');
+const { enviarPush } = require('../services/pushService');
 
 // Avisa quando faltam 7, 3 ou 1 dia(s) para vencer
 const DIAS_AVISO = [7, 3, 1];
@@ -69,6 +70,7 @@ async function verificarFaturasVencimento() {
               `INSERT INTO notificacoes (usuario_id, tipo, titulo, mensagem) VALUES (?, 'fatura_vencimento', ?, ?)`,
               [u.id, titulo, mensagem]
             );
+            enviarPush(u.id, titulo, mensagem).catch(() => {});
 
             // E-mail de alerta (silencioso se SMTP não configurado)
             emailService.enviarAlertaFatura(u.email, u.nome, valor, dataVencStr, diasRestantes).catch(() => {});

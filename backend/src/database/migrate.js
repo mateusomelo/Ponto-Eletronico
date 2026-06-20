@@ -439,6 +439,21 @@ async function runIncrementalMigrations(conn) {
   `);
   console.log('[Migration] comprovantes_email: tabela verificada.');
 
+  // ── Push notifications: tokens de dispositivo (app mobile) ──────────────
+  await conn.query(`
+    CREATE TABLE IF NOT EXISTS device_tokens (
+      id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      usuario_id  INT UNSIGNED NOT NULL,
+      token       VARCHAR(255) NOT NULL,
+      plataforma  VARCHAR(20)  NULL,
+      criado_em   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      UNIQUE KEY uq_device_token (token),
+      INDEX idx_dt_usuario (usuario_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+  console.log('[Migration] device_tokens: tabela verificada.');
+
   // ── Configs EmailJS — garante existência para todas as empresas ───────────
   const emailjsConfigs = [
     ['emailjs_public_key',           '',      'string',  'Chave pública do EmailJS (Public Key)'],

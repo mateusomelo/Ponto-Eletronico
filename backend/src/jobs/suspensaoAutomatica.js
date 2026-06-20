@@ -1,5 +1,6 @@
 const { pool } = require('../database/connection');
 const email = require('../services/emailService');
+const { enviarPush } = require('../services/pushService');
 
 async function verificarSuspensaoAutomatica() {
   console.log('[Job:suspensao] Verificando empresas inadimplentes por tolerância...');
@@ -26,15 +27,14 @@ async function verificarSuspensaoAutomatica() {
       `, [empresa.id]);
 
       for (const admin of admins) {
+        const titulo = 'Acesso suspenso por inadimplência';
+        const mensagem = `O acesso foi suspenso após ${empresa.tolerancia_dias || 3} dias em atraso. Regularize o pagamento para reativar.`;
         // Notificação in-app
         await pool.query(
           `INSERT INTO notificacoes (usuario_id, tipo, titulo, mensagem) VALUES (?, 'sistema', ?, ?)`,
-          [
-            admin.id,
-            'Acesso suspenso por inadimplência',
-            `O acesso foi suspenso após ${empresa.tolerancia_dias || 3} dias em atraso. Regularize o pagamento para reativar.`,
-          ]
+          [admin.id, titulo, mensagem]
         );
+        enviarPush(admin.id, titulo, mensagem).catch(() => {});
         // E-mail
         await email.enviarEmpresaSuspensa(admin.email, admin.nome, empresa.nome);
       }
@@ -59,10 +59,13 @@ async function verificarSuspensaoAutomatica() {
       `, [empresa.id]);
 
       for (const admin of admins) {
+        const titulo = 'Período de teste encerrado';
+        const mensagem = `O período de teste gratuito da empresa ${empresa.nome} encerrou. Assine um plano para continuar.`;
         await pool.query(
           `INSERT INTO notificacoes (usuario_id, tipo, titulo, mensagem) VALUES (?, 'sistema', ?, ?)`,
-          [admin.id, 'Período de teste encerrado', `O período de teste gratuito da empresa ${empresa.nome} encerrou. Assine um plano para continuar.`]
+          [admin.id, titulo, mensagem]
         );
+        enviarPush(admin.id, titulo, mensagem).catch(() => {});
       }
       console.log(`[Job:suspensao] Trial expirado: empresa ${empresa.id} (${empresa.nome}) suspensa.`);
     }

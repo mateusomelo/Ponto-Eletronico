@@ -1,4 +1,5 @@
 const { pool } = require('../database/connection');
+const { registrarToken } = require('../services/pushService');
 
 // GET /api/notificacoes
 async function listar(req, res) {
@@ -69,4 +70,17 @@ async function marcarTodasLidas(req, res) {
   }
 }
 
-module.exports = { listar, naoLidas, marcarLida, marcarTodasLidas };
+// POST /api/notificacoes/registrar-device
+async function registrarDevice(req, res) {
+  const { token, plataforma } = req.body;
+  if (!token) return res.status(400).json({ erro: 'token é obrigatório.' });
+  try {
+    await registrarToken(req.user.id, token, plataforma);
+    return res.json({ mensagem: 'Dispositivo registrado.' });
+  } catch (err) {
+    console.error('[Notificacoes] registrarDevice:', err);
+    return res.status(500).json({ erro: 'Erro interno.' });
+  }
+}
+
+module.exports = { listar, naoLidas, marcarLida, marcarTodasLidas, registrarDevice };

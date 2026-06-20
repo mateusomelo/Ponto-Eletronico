@@ -3,6 +3,7 @@ const LogAcesso       = require('../models/LogAcesso');
 const PDFDocument     = require('pdfkit');
 const xl              = require('excel4node');
 const { getClientIp } = require('../utils/ip');
+const { enviarPush }  = require('../services/pushService');
 
 // ── Timezone helper (mysql2 com timezone:'-03:00' retorna Dates em UTC) ──
 function toBRT(dt) {
@@ -128,6 +129,7 @@ async function notificar(usuario_id, tipo, titulo, mensagem, fechamento_id = nul
      VALUES (?, ?, ?, ?, ?)`,
     [usuario_id, tipo, titulo, mensagem, fechamento_id]
   );
+  enviarPush(usuario_id, titulo, mensagem).catch(() => {});
 }
 
 async function notificarGestores(tipo, titulo, mensagem, fechamento_id, excluir_id = null, company_id = null) {
