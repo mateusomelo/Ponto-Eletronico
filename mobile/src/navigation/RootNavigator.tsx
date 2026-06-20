@@ -5,7 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../contexts/AuthContext';
 import LoginScreen from '../screens/LoginScreen';
 import EsqueciSenhaScreen from '../screens/EsqueciSenhaScreen';
-import HomeScreen from '../screens/HomeScreen';
+import MainTabs from './MainTabs';
 
 const Stack = createNativeStackNavigator();
 
@@ -24,7 +24,7 @@ export default function RootNavigator() {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {usuario ? (
-          <Stack.Screen name="Home" component={HomeScreen} />
+          <Stack.Screen name="Main" component={MainTabs} />
         ) : (
           <>
             <Stack.Screen name="Login" component={LoginScreen} />

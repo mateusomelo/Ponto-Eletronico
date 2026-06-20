@@ -81,10 +81,18 @@ export const API = {
     const token = await getToken();
     const headers: Record<string, string> = {};
     if (token) headers.Authorization = `Bearer ${token}`;
-    const res = await fetch(`${API_BASE}${path}`, { method: 'POST', headers, body: formData as any });
+
+    let res: Response;
+    try {
+      res = await fetch(`${API_BASE}${path}`, { method: 'POST', headers, body: formData as any });
+    } catch (err: any) {
+      throw new ApiError(0, { erro: `Erro de conexão no upload: ${err?.message || String(err)}` });
+    }
+
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json() : null;
-    if (!res.ok) throw new ApiError(res.status, data || { erro: 'Erro no upload.' });
+    let data: any = null;
+    try { data = ct.includes('application/json') ? await res.json() : null; } catch { /* corpo vazio/ inválido */ }
+    if (!res.ok) throw new ApiError(res.status, data || { erro: `Erro no upload (HTTP ${res.status}).` });
     return data;
   },
 };
