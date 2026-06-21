@@ -5,10 +5,13 @@ import {
 import { Picker } from '@react-native-picker/picker';
 import { CargosAPI, Permissao } from '../api/admin';
 import { ApiError } from '../api/client';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function CargoFormScreen({ route, navigation }: any) {
+  const { hasPermission } = useAuth();
   const cargoId: number | undefined = route.params?.id;
   const editando = !!cargoId;
+  const podeGerenciar = hasPermission(editando ? 'cargos.editar' : 'cargos.criar');
 
   const [permissoesTodas, setPermissoesTodas] = useState<Permissao[]>([]);
   const [selecionadas, setSelecionadas] = useState<Set<number>>(new Set());
@@ -49,6 +52,10 @@ export default function CargoFormScreen({ route, navigation }: any) {
   }
 
   async function salvar() {
+    if (!podeGerenciar) {
+      Alert.alert('Sem permissão', 'Você não tem permissão para esta ação.');
+      return;
+    }
     if (!nome) {
       Alert.alert('Atenção', 'Informe o nome do cargo.');
       return;
@@ -80,14 +87,14 @@ export default function CargoFormScreen({ route, navigation }: any) {
     <ScrollView style={styles.container} contentContainerStyle={{ padding: 16 }}>
       <View style={styles.card}>
         <Text style={styles.label}>Nome do cargo</Text>
-        <TextInput style={styles.input} value={nome} onChangeText={setNome} />
+        <TextInput style={styles.input} value={nome} onChangeText={setNome} editable={podeGerenciar} />
 
         <Text style={styles.label}>Descrição</Text>
-        <TextInput style={styles.input} value={descricao} onChangeText={setDescricao} />
+        <TextInput style={styles.input} value={descricao} onChangeText={setDescricao} editable={podeGerenciar} />
 
         <Text style={styles.label}>Nível (1 = mais alto)</Text>
         <View style={styles.pickerWrap}>
-          <Picker selectedValue={nivel} onValueChange={setNivel}>
+          <Picker selectedValue={nivel} onValueChange={setNivel} enabled={podeGerenciar}>
             <Picker.Item label="1 — Administrador" value={1} />
             <Picker.Item label="2 — Supervisor" value={2} />
             <Picker.Item label="3 — Funcionário" value={3} />
@@ -103,14 +110,16 @@ export default function CargoFormScreen({ route, navigation }: any) {
               <Text style={styles.permNome}>{p.nome}</Text>
               {p.descricao ? <Text style={styles.permDesc}>{p.descricao}</Text> : null}
             </View>
-            <Switch value={selecionadas.has(p.id)} onValueChange={() => alternarPermissao(p.id)} />
+            <Switch value={selecionadas.has(p.id)} onValueChange={() => alternarPermissao(p.id)} disabled={!podeGerenciar} />
           </View>
         ))}
       </View>
 
-      <TouchableOpacity style={styles.btn} onPress={salvar} disabled={salvando}>
-        {salvando ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Salvar</Text>}
-      </TouchableOpacity>
+      {podeGerenciar && (
+        <TouchableOpacity style={styles.btn} onPress={salvar} disabled={salvando}>
+          {salvando ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Salvar</Text>}
+        </TouchableOpacity>
+      )}
     </ScrollView>
   );
 }

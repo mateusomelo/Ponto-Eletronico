@@ -2,10 +2,13 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Image, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { PontoAPI, RegistroPonto } from '../api/ponto';
 import { API_BASE } from '../api/client';
+import { useAuth } from '../contexts/AuthContext';
 
 const BACKEND_ORIGIN = API_BASE.replace(/\/api$/, '');
 
 export default function HistoricoScreen() {
+  const { usuario, hasPermission } = useAuth();
+  const temDetalhes = (usuario?.cargo_nivel ?? 3) <= 2 || hasPermission('registros.detalhes');
   const [registros, setRegistros] = useState<RegistroPonto[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [atualizando, setAtualizando] = useState(false);
@@ -27,7 +30,10 @@ export default function HistoricoScreen() {
   const onRefresh = useCallback(() => { setAtualizando(true); carregar(); }, []);
 
   function formatarData(iso: string) {
-    return new Date(iso).toLocaleString('pt-BR');
+    return new Date(iso).toLocaleString('pt-BR', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+    });
   }
 
   if (carregando) {
@@ -56,7 +62,7 @@ export default function HistoricoScreen() {
           <View style={{ flex: 1 }}>
             <Text style={styles.itemTipo}>{item.tipo === 'entrada' ? 'Entrada' : 'Saída'}</Text>
             <Text style={styles.itemData}>{formatarData(item.data_hora)}</Text>
-            {item.endereco_aprox ? <Text style={styles.itemEndereco}>{item.endereco_aprox}</Text> : null}
+            {temDetalhes && item.endereco_aprox ? <Text style={styles.itemEndereco}>{item.endereco_aprox}</Text> : null}
           </View>
         </View>
       )}

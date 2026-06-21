@@ -1,8 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Cargo, CargosAPI } from '../api/admin';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function CargosScreen({ navigation }: any) {
+  const { hasPermission } = useAuth();
+  const podeCriar  = hasPermission('cargos.criar');
+  const podeEditar = hasPermission('cargos.editar');
   const [cargos, setCargos] = useState<Cargo[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [atualizando, setAtualizando] = useState(false);
@@ -29,9 +33,11 @@ export default function CargosScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.btnNovo} onPress={() => navigation.navigate('CargoForm', {})}>
-        <Text style={styles.btnNovoText}>+ Novo Cargo</Text>
-      </TouchableOpacity>
+      {podeCriar && (
+        <TouchableOpacity style={styles.btnNovo} onPress={() => navigation.navigate('CargoForm', {})}>
+          <Text style={styles.btnNovoText}>+ Novo Cargo</Text>
+        </TouchableOpacity>
+      )}
       <FlatList
         data={cargos}
         keyExtractor={(item) => String(item.id)}
@@ -39,7 +45,11 @@ export default function CargosScreen({ navigation }: any) {
         contentContainerStyle={{ padding: 16 }}
         ListEmptyComponent={<Text style={styles.empty}>Nenhum cargo cadastrado.</Text>}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('CargoForm', { id: item.id })}>
+          <TouchableOpacity
+            style={styles.card}
+            disabled={!podeEditar}
+            onPress={() => navigation.navigate('CargoForm', { id: item.id })}
+          >
             <View style={styles.cardHeader}>
               <Text style={styles.nome}>{item.nome}</Text>
               <Text style={styles.totalUsuarios}>{item.total_usuarios} usuário(s)</Text>

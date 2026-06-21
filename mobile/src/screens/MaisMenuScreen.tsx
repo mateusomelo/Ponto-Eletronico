@@ -17,7 +17,7 @@ export default function MaisMenuScreen({ navigation }: any) {
       label: 'Administração',
       itens: [
         { label: 'Usuários', icone: 'users', show: hasPermission('usuarios.visualizar'), tela: 'Usuarios' },
-        { label: 'Cargos & Permissões', icone: 'id-badge', show: true, tela: 'Cargos' },
+        { label: 'Cargos & Permissões', icone: 'id-badge', show: hasPermission('cargos.criar'), tela: 'Cargos' },
       ],
     },
     {

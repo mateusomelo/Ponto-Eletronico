@@ -240,7 +240,7 @@ function verDetalhes(idx) {
   // Selfie
   const selfieWrap = document.getElementById('selfieWrap');
   const selfieImg  = document.getElementById('selfieImg');
-  if (temDetalhes && r.foto_registro) {
+  if (r.foto_registro) {
     selfieImg.src = r.foto_registro;
     selfieWrap.style.display = 'block';
   } else {

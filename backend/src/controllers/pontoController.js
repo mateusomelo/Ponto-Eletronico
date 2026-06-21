@@ -97,7 +97,10 @@ async function geocodificar(id, lat, lng) {
 // Filtra campos sensíveis de acordo com permissões
 function filtrarRegistro(r, temDetalhes) {
   if (temDetalhes) return r;
-  const { ip, ip_publico, latitude, longitude, precisao, foto_registro, user_agent, ...pub } = r;
+  // foto_registro fica sempre visível — é a foto da própria pessoa.
+  // Só removemos metadados de localização/dispositivo, que não fazem sentido
+  // para o funcionário ver no histórico do próprio ponto.
+  const { ip, ip_publico, latitude, longitude, precisao, user_agent, ...pub } = r;
   return pub;
 }
 
