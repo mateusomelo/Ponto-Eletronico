@@ -2,7 +2,7 @@
   "name": "PontoControl — Controle Inteligente de Jornada",
   "short_name": "PontoControl",
   "description": "Sistema corporativo de registro de ponto, gestão de equipes e fechamento de folha.",
-  "start_url": "/index.html",
+  "start_url": "/login.html",
   "display": "standalone",
   "background_color": "#f0f4f8",
   "theme_color": "#1e3a5f",

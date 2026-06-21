@@ -35,4 +35,5 @@ Thumbs.db
 verify_local.js
 verify_site.js
 screenshots/
+!frontend/public/img/screenshots/
 *.apk

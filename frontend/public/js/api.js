@@ -52,7 +52,7 @@ async function request(method, path, body = null, options = {}) {
 
     if (res.status === 401) {
       clearToken();
-      window.location.href = '/index.html';
+      window.location.href = '/login.html';
       return;
     }
 
@@ -109,7 +109,7 @@ const API = {
 
 function requireAuth() {
   if (!getToken()) {
-    window.location.href = '/index.html';
+    window.location.href = '/login.html';
     return false;
   }
   return true;

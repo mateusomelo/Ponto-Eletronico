@@ -1,0 +1,215 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — PontoControl</title>
+  <meta name="description" content="PontoControl — Controle inteligente de jornada. Sistema corporativo de registro de ponto, gestão de equipes e fechamento de folha." />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta property="og:title" content="PontoControl" />
+  <meta property="og:description" content="Controle inteligente de jornada." />
+  <meta property="og:image" content="https://ponto-eletronicoo.netlify.app/img/logo.png" />
+  <meta property="og:type" content="website" />
+  <link rel="icon" type="image/png" href="/img/favicon-32x32.png" />
+  <link rel="apple-touch-icon" href="/img/apple-touch-icon.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/auth.css" />
+</head>
+<body>
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <img src="/img/logo.png" alt="PontoControl" class="auth-logo-img" />
+      <p>Sistema Corporativo de Registro de Ponto</p>
+    </div>
+
+    <div class="auth-error" id="authError">
+      <i class="fas fa-exclamation-circle"></i>
+      <span id="authErrorMsg"></span>
+    </div>
+
+    <form class="auth-form" id="loginForm" novalidate>
+      <div class="form-group">
+        <label class="form-label">E-mail corporativo</label>
+        <div class="input-group">
+          <i class="fas fa-envelope input-icon"></i>
+          <input type="email" class="form-control" id="email" name="email"
+                 placeholder="seu@empresa.com" autocomplete="email" required />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Senha</label>
+        <div class="input-group">
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" class="form-control" id="senha" name="senha"
+                 placeholder="••••••••" autocomplete="current-password" required />
+          <button type="button" class="password-toggle" id="toggleSenha">
+            <i class="fas fa-eye" id="toggleSenhaIcon"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="remember-row">
+        <label class="checkbox-label">
+          <input type="checkbox" id="lembrar" />
+          Lembrar-me por 7 dias
+        </label>
+        <a href="#" class="forgot-link" id="forgotLink">Esqueci a senha</a>
+      </div>
+
+      <button type="submit" class="btn-login" id="btnLogin">
+        <span id="btnLoginText"><i class="fas fa-sign-in-alt"></i> Entrar</span>
+        <span id="btnLoginLoader" style="display:none">
+          <span class="spinner" style="width:18px;height:18px;border-width:2px;border-color:rgba(255,255,255,.4);border-top-color:#fff"></span>
+          Autenticando...
+        </span>
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      <p style="margin-bottom:10px">
+        Não tem conta?
+        <a href="/cadastro.html" style="color:#3b82f6;font-weight:600;text-decoration:none">Cadastre sua empresa grátis</a>
+      </p>
+      <p>© 2026 PontoControl</p>
+      <p style="margin-top:4px">Acesso restrito a funcionários autorizados</p>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Recuperação de Senha -->
+<div class="modal-overlay" id="modalRecuperar">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fas fa-key" style="color:#3b82f6;margin-right:8px"></i>Recuperar Senha</h3>
+      <button class="modal-close" onclick="closeModal('modalRecuperar')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p class="recovery-info">Informe seu e-mail corporativo. Se existir no sistema, você receberá as instruções para redefinir a senha.</p>
+      <div id="recoveryMsg"></div>
+      <div class="form-group" id="recoveryEmailGroup">
+        <label class="form-label">E-mail</label>
+        <div class="input-group">
+          <i class="fas fa-envelope input-icon"></i>
+          <input type="email" class="form-control" id="recoveryEmail" placeholder="seu@empresa.com" />
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalRecuperar')">Cancelar</button>
+      <button class="btn btn-primary" id="btnRecuperar">
+        <i class="fas fa-paper-plane"></i> Enviar instruções
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script>
+  // Redirecionar se já logado (respeitando o role)
+  (function () {
+    if (!Auth.getToken()) return;
+    const user = Auth.getUsuario();
+    if (user && user.role === 'super_admin') window.location.href = '/admin.html';
+    else window.location.href = '/dashboard.html';
+  })();
+
+  // Enter no e-mail → foca a senha (em vez de tentar submeter o form vazio)
+  document.getElementById('email').addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      document.getElementById('senha').focus();
+    }
+  });
+
+  // Toggle senha
+  document.getElementById('toggleSenha').addEventListener('click', () => {
+    const input = document.getElementById('senha');
+    const icon  = document.getElementById('toggleSenhaIcon');
+    const show  = input.type === 'password';
+    input.type  = show ? 'text' : 'password';
+    icon.className = show ? 'fas fa-eye-slash' : 'fas fa-eye';
+  });
+
+  // Login
+  document.getElementById('loginForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const email  = document.getElementById('email').value.trim();
+    const senha  = document.getElementById('senha').value;
+    const lembrar = document.getElementById('lembrar').checked;
+
+    if (!email || !senha) {
+      showError('Preencha e-mail e senha.');
+      return;
+    }
+
+    setLoading(true);
+    hideError();
+
+    try {
+      const res = await API.post('/auth/login', { email, senha, lembrar });
+      Auth.setToken(res.token, lembrar);
+      Auth.setUsuario(res.usuario, lembrar);
+
+      // Carregar permissões completas
+      const me = await API.get('/auth/me');
+      Auth.setUsuario({ ...res.usuario, ...me }, lembrar);
+
+      toast('Bem-vindo, ' + res.usuario.nome.split(' ')[0] + '!', 'success');
+      const destino = me.role === 'super_admin' ? '/admin.html' : '/dashboard.html';
+      setTimeout(() => { window.location.href = destino; }, 500);
+    } catch (err) {
+      showError(err.data?.erro || 'Erro ao realizar login.');
+      setLoading(false);
+    }
+  });
+
+  function setLoading(v) {
+    document.getElementById('btnLoginText').style.display = v ? 'none' : 'flex';
+    document.getElementById('btnLoginLoader').style.display = v ? 'flex' : 'none';
+    document.getElementById('btnLogin').disabled = v;
+  }
+
+  function showError(msg) {
+    document.getElementById('authErrorMsg').textContent = msg;
+    document.getElementById('authError').classList.add('show');
+  }
+
+  function hideError() {
+    document.getElementById('authError').classList.remove('show');
+  }
+
+  // Recuperação de senha
+  document.getElementById('forgotLink').addEventListener('click', e => {
+    e.preventDefault();
+    openModal('modalRecuperar');
+  });
+
+  document.getElementById('btnRecuperar').addEventListener('click', async () => {
+    const email = document.getElementById('recoveryEmail').value.trim();
+    if (!email) { toast('Informe o e-mail.', 'error'); return; }
+
+    const btn = document.getElementById('btnRecuperar');
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    try {
+      await API.post('/auth/solicitar-reset', { email });
+      document.getElementById('recoveryEmailGroup').style.display = 'none';
+      document.getElementById('recoveryMsg').innerHTML =
+        '<div class="alert alert-success"><i class="fas fa-check-circle"></i> Se o e-mail existir no sistema, você receberá as instruções em breve.</div>';
+      btn.style.display = 'none';
+    } catch {
+      toast('Erro ao processar solicitação.', 'error');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar instruções';
+    }
+  });
+</script>
+</body>
+</html>
+

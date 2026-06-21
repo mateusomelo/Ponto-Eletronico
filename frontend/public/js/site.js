@@ -2,8 +2,8 @@
    PontoControl — Site Institucional — JS compartilhado
    ============================================================ */
 
-const SISTEMA_URL = 'https://ponto-eletronicoo.netlify.app/index.html';
-const CADASTRO_URL = 'https://ponto-eletronicoo.netlify.app/cadastro.html';
+const SISTEMA_URL = 'login.html';
+const CADASTRO_URL = 'cadastro.html';
 
 function renderNavbar(active) {
   const links = [

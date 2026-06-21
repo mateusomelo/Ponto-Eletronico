@@ -205,7 +205,7 @@ function initLogout() {
   document.getElementById('btnLogout')?.addEventListener('click', async () => {
     try { await API.post('/auth/logout'); } catch {}
     Auth.clearToken();
-    window.location.href = '/index.html';
+    window.location.href = '/login.html';
   });
 }
 

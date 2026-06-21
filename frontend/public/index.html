@@ -1,215 +1,153 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login — PontoControl</title>
-  <meta name="description" content="PontoControl — Controle inteligente de jornada. Sistema corporativo de registro de ponto, gestão de equipes e fechamento de folha." />
-  <meta name="robots" content="noindex, nofollow" />
-  <meta property="og:title" content="PontoControl" />
-  <meta property="og:description" content="Controle inteligente de jornada." />
+  <title>PontoControl — Controle Inteligente de Jornada</title>
+  <meta name="description" content="PontoControl é o sistema completo de registro de ponto, gestão de equipes e fechamento de folha — com app Android, assinatura digital e relatórios automáticos." />
+  <meta property="og:title" content="PontoControl — Controle Inteligente de Jornada" />
+  <meta property="og:description" content="Registro de ponto, gestão de equipes e fechamento de folha em um só sistema." />
   <meta property="og:image" content="https://ponto-eletronicoo.netlify.app/img/logo.png" />
   <meta property="og:type" content="website" />
-  <link rel="icon" type="image/png" href="/img/favicon-32x32.png" />
-  <link rel="apple-touch-icon" href="/img/apple-touch-icon.png" />
-  <link rel="manifest" href="/manifest.json" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" type="image/png" href="img/favicon-32x32.png" />
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="canonical" href="https://ponto-eletronicoo.netlify.app/" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" />
-  <link rel="stylesheet" href="css/main.css" />
-  <link rel="stylesheet" href="css/auth.css" />
+  <link rel="stylesheet" href="css/site.css" />
 </head>
-<body>
-<div class="auth-page">
-  <div class="auth-card">
-    <div class="auth-logo">
-      <img src="/img/logo.png" alt="PontoControl" class="auth-logo-img" />
-      <p>Sistema Corporativo de Registro de Ponto</p>
+<body data-page="inicio">
+<div id="navbarMount"></div>
+
+<section class="hero">
+  <div class="container hero-grid">
+    <div>
+      <span class="badge-soft"><i class="fas fa-bolt"></i> Usado por empresas em todo o Brasil</span>
+      <h1 style="margin-top:18px">Controle inteligente de jornada, do registro à folha de pagamento.</h1>
+      <p class="lead">PontoControl reúne registro de ponto com foto e GPS, gestão de equipes, fechamento de folha com assinatura digital e relatórios automáticos — tudo em um único sistema, na web e no celular.</p>
+      <div class="hero-actions">
+        <a href="cadastro.html" class="btn btn-primary btn-lg"><i class="fas fa-rocket"></i> Começar agora</a>
+        <a href="login.html" class="btn btn-outline btn-lg" style="border-color:rgba(255,255,255,.3);color:#fff"><i class="fas fa-sign-in-alt"></i> Acessar Sistema</a>
+      </div>
+      <div class="hero-trust">
+        <span><i class="fas fa-check-circle"></i> Sem cartão de crédito</span>
+        <span><i class="fas fa-mobile-alt"></i> App Android disponível</span>
+        <span><i class="fas fa-file-signature"></i> Assinatura digital</span>
+      </div>
     </div>
-
-    <div class="auth-error" id="authError">
-      <i class="fas fa-exclamation-circle"></i>
-      <span id="authErrorMsg"></span>
-    </div>
-
-    <form class="auth-form" id="loginForm" novalidate>
-      <div class="form-group">
-        <label class="form-label">E-mail corporativo</label>
-        <div class="input-group">
-          <i class="fas fa-envelope input-icon"></i>
-          <input type="email" class="form-control" id="email" name="email"
-                 placeholder="seu@empresa.com" autocomplete="email" required />
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Senha</label>
-        <div class="input-group">
-          <i class="fas fa-lock input-icon"></i>
-          <input type="password" class="form-control" id="senha" name="senha"
-                 placeholder="••••••••" autocomplete="current-password" required />
-          <button type="button" class="password-toggle" id="toggleSenha">
-            <i class="fas fa-eye" id="toggleSenhaIcon"></i>
-          </button>
-        </div>
-      </div>
-
-      <div class="remember-row">
-        <label class="checkbox-label">
-          <input type="checkbox" id="lembrar" />
-          Lembrar-me por 7 dias
-        </label>
-        <a href="#" class="forgot-link" id="forgotLink">Esqueci a senha</a>
-      </div>
-
-      <button type="submit" class="btn-login" id="btnLogin">
-        <span id="btnLoginText"><i class="fas fa-sign-in-alt"></i> Entrar</span>
-        <span id="btnLoginLoader" style="display:none">
-          <span class="spinner" style="width:18px;height:18px;border-width:2px;border-color:rgba(255,255,255,.4);border-top-color:#fff"></span>
-          Autenticando...
-        </span>
-      </button>
-    </form>
-
-    <div class="auth-footer">
-      <p style="margin-bottom:10px">
-        Não tem conta?
-        <a href="/cadastro.html" style="color:#3b82f6;font-weight:600;text-decoration:none">Cadastre sua empresa grátis</a>
-      </p>
-      <p>© 2026 PontoControl</p>
-      <p style="margin-top:4px">Acesso restrito a funcionários autorizados</p>
+    <div class="hero-shot">
+      <img src="img/screenshots/dashboard.png" alt="Dashboard do PontoControl" />
     </div>
   </div>
-</div>
+</section>
 
-<!-- Modal Recuperação de Senha -->
-<div class="modal-overlay" id="modalRecuperar">
-  <div class="modal">
-    <div class="modal-header">
-      <h3 class="modal-title"><i class="fas fa-key" style="color:#3b82f6;margin-right:8px"></i>Recuperar Senha</h3>
-      <button class="modal-close" onclick="closeModal('modalRecuperar')"><i class="fas fa-times"></i></button>
+<section class="trust-bar">
+  <div class="container">
+    <span><i class="fas fa-shield-alt"></i> Dados protegidos e criptografados</span>
+    <span><i class="fas fa-clock"></i> Registro com GPS e foto em tempo real</span>
+    <span><i class="fas fa-file-pdf"></i> Relatórios em PDF e Excel</span>
+    <span><i class="fas fa-headset"></i> Suporte em português</span>
+  </div>
+</section>
+
+<section>
+  <div class="container text-center">
+    <span class="eyebrow">O que o PontoControl resolve</span>
+    <h2 class="section-title">Tudo que sua empresa precisa para gerenciar jornada de trabalho</h2>
+    <p class="section-sub">Da entrada do funcionário ao fechamento da folha — sem planilhas, sem retrabalho, sem papel.</p>
+  </div>
+  <div class="container feature-grid">
+    <div class="feature-card">
+      <div class="feature-icon icon-blue"><i class="fas fa-clock"></i></div>
+      <h3>Registro de Ponto Digital</h3>
+      <p>Entrada e saída com foto, GPS e horário exato — direto do navegador ou do aplicativo Android.</p>
     </div>
-    <div class="modal-body">
-      <p class="recovery-info">Informe seu e-mail corporativo. Se existir no sistema, você receberá as instruções para redefinir a senha.</p>
-      <div id="recoveryMsg"></div>
-      <div class="form-group" id="recoveryEmailGroup">
-        <label class="form-label">E-mail</label>
-        <div class="input-group">
-          <i class="fas fa-envelope input-icon"></i>
-          <input type="email" class="form-control" id="recoveryEmail" placeholder="seu@empresa.com" />
-        </div>
-      </div>
+    <div class="feature-card">
+      <div class="feature-icon icon-green"><i class="fas fa-users"></i></div>
+      <h3>Gestão de Colaboradores</h3>
+      <p>Cadastre funcionários, defina cargos e permissões, e acompanhe presença em tempo real.</p>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('modalRecuperar')">Cancelar</button>
-      <button class="btn btn-primary" id="btnRecuperar">
-        <i class="fas fa-paper-plane"></i> Enviar instruções
-      </button>
+    <div class="feature-card">
+      <div class="feature-icon icon-purple"><i class="fas fa-file-invoice-dollar"></i></div>
+      <h3>Fechamento de Folha</h3>
+      <p>Banco de horas, faltas e atrasos calculados automaticamente, com workflow completo de aprovação.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon icon-yellow"><i class="fas fa-file-signature"></i></div>
+      <h3>Assinatura Digital</h3>
+      <p>Colaborador e responsável assinam o fechamento desenhando na tela — documento com validade jurídica.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon icon-red"><i class="fas fa-envelope"></i></div>
+      <h3>Comprovantes Automáticos</h3>
+      <p>Todo registro de ponto gera um comprovante enviado automaticamente por e-mail ao colaborador.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon icon-navy"><i class="fas fa-chart-line"></i></div>
+      <h3>Relatórios Completos</h3>
+      <p>Exporte em PDF ou Excel com um clique — histórico, presença, horas extras e muito mais.</p>
     </div>
   </div>
-</div>
+</section>
 
-<script src="js/api.js"></script>
-<script src="js/utils.js"></script>
-<script>
-  // Redirecionar se já logado (respeitando o role)
-  (function () {
-    if (!Auth.getToken()) return;
-    const user = Auth.getUsuario();
-    if (user && user.role === 'super_admin') window.location.href = '/admin.html';
-    else window.location.href = '/dashboard.html';
-  })();
+<section style="background:var(--bg)">
+  <div class="container showcase">
+    <div>
+      <span class="eyebrow">Registro de ponto</span>
+      <h2 class="section-title" style="font-size:1.7rem">Cada registro é uma evidência completa</h2>
+      <p style="color:var(--text-muted)">Selfie obrigatória, localização GPS e horário do servidor — eliminando fraudes e dando segurança jurídica para a empresa e para o colaborador.</p>
+      <ul class="showcase-list">
+        <li><i class="fas fa-check-circle"></i> Foto obrigatória em dispositivos móveis</li>
+        <li><i class="fas fa-check-circle"></i> Localização GPS validada no momento do registro</li>
+        <li><i class="fas fa-check-circle"></i> Funciona offline no app e sincroniza automaticamente</li>
+        <li><i class="fas fa-check-circle"></i> Comprovante por e-mail a cada entrada e saída</li>
+      </ul>
+    </div>
+    <div class="showcase-img"><img src="img/screenshots/ponto.png" alt="Tela de registro de ponto" /></div>
+  </div>
+</section>
 
-  // Enter no e-mail → foca a senha (em vez de tentar submeter o form vazio)
-  document.getElementById('email').addEventListener('keydown', e => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      document.getElementById('senha').focus();
-    }
-  });
+<section>
+  <div class="container showcase reverse">
+    <div class="showcase-img"><img src="img/screenshots/fechamento.png" alt="Fechamento de folha com assinatura digital" /></div>
+    <div>
+      <span class="eyebrow">Fechamento de folha</span>
+      <h2 class="section-title" style="font-size:1.7rem">Assinatura digital de ponta a ponta</h2>
+      <p style="color:var(--text-muted)">O colaborador revisa e assina o relatório do período; o responsável assina por último, finalizando o documento — que é enviado automaticamente por e-mail em PDF.</p>
+      <ul class="showcase-list">
+        <li><i class="fas fa-check-circle"></i> Banco de horas, faltas e atrasos calculados automaticamente</li>
+        <li><i class="fas fa-check-circle"></i> Assinatura desenhada com o dedo, mouse ou caneta touch</li>
+        <li><i class="fas fa-check-circle"></i> Histórico completo de quem assinou e quando</li>
+        <li><i class="fas fa-check-circle"></i> PDF final enviado automaticamente ao colaborador</li>
+      </ul>
+    </div>
+  </div>
+</section>
 
-  // Toggle senha
-  document.getElementById('toggleSenha').addEventListener('click', () => {
-    const input = document.getElementById('senha');
-    const icon  = document.getElementById('toggleSenhaIcon');
-    const show  = input.type === 'password';
-    input.type  = show ? 'text' : 'password';
-    icon.className = show ? 'fas fa-eye-slash' : 'fas fa-eye';
-  });
+<section style="background:var(--bg)">
+  <div class="container text-center">
+    <span class="eyebrow">Disponível onde você precisar</span>
+    <h2 class="section-title">Web e Android, sempre sincronizados</h2>
+    <p class="section-sub">A mesma experiência, os mesmos dados, em qualquer dispositivo. Versão iPhone em desenvolvimento.</p>
+    <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
+      <a href="aplicativo.html" class="btn btn-outline"><i class="fab fa-android" style="color:#3ddc84"></i> Ver Aplicativo Android</a>
+      <a href="downloads.html" class="btn btn-outline"><i class="fas fa-download"></i> Baixar APK</a>
+    </div>
+  </div>
+</section>
 
-  // Login
-  document.getElementById('loginForm').addEventListener('submit', async e => {
-    e.preventDefault();
-    const email  = document.getElementById('email').value.trim();
-    const senha  = document.getElementById('senha').value;
-    const lembrar = document.getElementById('lembrar').checked;
+<section>
+  <div class="container">
+    <div class="cta-final">
+      <h2 class="section-title">Pronto para digitalizar o controle de ponto da sua empresa?</h2>
+      <p>Comece gratuitamente, sem cartão de crédito. Configure sua empresa em poucos minutos.</p>
+      <a href="cadastro.html" class="btn btn-white btn-lg"><i class="fas fa-rocket"></i> Criar conta gratuita</a>
+    </div>
+  </div>
+</section>
 
-    if (!email || !senha) {
-      showError('Preencha e-mail e senha.');
-      return;
-    }
-
-    setLoading(true);
-    hideError();
-
-    try {
-      const res = await API.post('/auth/login', { email, senha, lembrar });
-      Auth.setToken(res.token, lembrar);
-      Auth.setUsuario(res.usuario, lembrar);
-
-      // Carregar permissões completas
-      const me = await API.get('/auth/me');
-      Auth.setUsuario({ ...res.usuario, ...me }, lembrar);
-
-      toast('Bem-vindo, ' + res.usuario.nome.split(' ')[0] + '!', 'success');
-      const destino = me.role === 'super_admin' ? '/admin.html' : '/dashboard.html';
-      setTimeout(() => { window.location.href = destino; }, 500);
-    } catch (err) {
-      showError(err.data?.erro || 'Erro ao realizar login.');
-      setLoading(false);
-    }
-  });
-
-  function setLoading(v) {
-    document.getElementById('btnLoginText').style.display = v ? 'none' : 'flex';
-    document.getElementById('btnLoginLoader').style.display = v ? 'flex' : 'none';
-    document.getElementById('btnLogin').disabled = v;
-  }
-
-  function showError(msg) {
-    document.getElementById('authErrorMsg').textContent = msg;
-    document.getElementById('authError').classList.add('show');
-  }
-
-  function hideError() {
-    document.getElementById('authError').classList.remove('show');
-  }
-
-  // Recuperação de senha
-  document.getElementById('forgotLink').addEventListener('click', e => {
-    e.preventDefault();
-    openModal('modalRecuperar');
-  });
-
-  document.getElementById('btnRecuperar').addEventListener('click', async () => {
-    const email = document.getElementById('recoveryEmail').value.trim();
-    if (!email) { toast('Informe o e-mail.', 'error'); return; }
-
-    const btn = document.getElementById('btnRecuperar');
-    btn.disabled = true;
-    btn.textContent = 'Enviando...';
-
-    try {
-      await API.post('/auth/solicitar-reset', { email });
-      document.getElementById('recoveryEmailGroup').style.display = 'none';
-      document.getElementById('recoveryMsg').innerHTML =
-        '<div class="alert alert-success"><i class="fas fa-check-circle"></i> Se o e-mail existir no sistema, você receberá as instruções em breve.</div>';
-      btn.style.display = 'none';
-    } catch {
-      toast('Erro ao processar solicitação.', 'error');
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar instruções';
-    }
-  });
-</script>
+<div id="footerMount"></div>
+<script src="js/site.js"></script>
 </body>
 </html>
-
