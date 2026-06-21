@@ -395,6 +395,122 @@ async function emailConfig(req, res) {
   }
 }
 
+function gerarProtocolo(dataHora, id, tz) {
+  const d = new Date(dataHora);
+  const fmt = new Intl.DateTimeFormat('pt-BR', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' });
+  const parts = fmt.formatToParts(d);
+  const year  = parts.find(p => p.type === 'year').value;
+  const month = parts.find(p => p.type === 'month').value;
+  const day   = parts.find(p => p.type === 'day').value;
+  return `PT-${year}${month}${day}-${String(id).padStart(6, '0')}`;
+}
+
+// POST /api/ponto/:id/comprovante
+// Envia o comprovante por e-mail via EmailJS direto do servidor (usa a Private
+// Key, configurada só no backend). Necessário para o app mobile: chamadas
+// fora de um navegador são bloqueadas pelo "strict mode" do EmailJS, que só
+// aceita a Public Key quando a origem é validável (como no navegador web).
+async function enviarComprovante(req, res) {
+  const registroId = parseInt(req.params.id);
+  try {
+    const [[registro]] = await pool.query(
+      `SELECT r.*, u.nome AS usuario_nome, u.email AS usuario_email, u.id AS usuario_id,
+              c.nome AS cargo_nome, u.company_id
+       FROM registros_ponto r
+       JOIN usuarios u ON u.id = r.usuario_id
+       JOIN cargos c ON c.id = u.cargo_id
+       WHERE r.id = ?`,
+      [registroId]
+    );
+    if (!registro) return res.status(404).json({ erro: 'Registro não encontrado.' });
+    if (req.user.company_id && req.user.company_id !== registro.company_id) {
+      return res.status(403).json({ erro: 'Sem permissão.' });
+    }
+
+    const cid = registro.company_id;
+    const envPublicKey  = (process.env.EMAILJS_PUBLIC_KEY  || '').trim();
+    const envServiceId  = (process.env.EMAILJS_SERVICE_ID  || '').trim();
+    const envTemplateId = (process.env.EMAILJS_TEMPLATE_ID || '').trim();
+    const privateKey    = (process.env.EMAILJS_PRIVATE_KEY || '').trim();
+
+    if (!envPublicKey || !envServiceId || !envTemplateId) {
+      return res.json({ enviado: false, motivo: 'EmailJS não configurado.' });
+    }
+
+    const tz = await getCompanyTZ(cid);
+    let empresaNome = '', empresaLogo = '';
+    if (cid) {
+      const [[emp]] = await pool.query('SELECT nome, logo FROM empresas WHERE id = ?', [cid]);
+      if (emp) { empresaNome = emp.nome || ''; empresaLogo = emp.logo || ''; }
+    }
+
+    const backendUrl = (process.env.BACKEND_URL || '').replace(/\/$/, '');
+    const tipo = registro.tipo;
+    const d = new Date(registro.data_hora);
+    const dataFmt = d.toLocaleDateString('pt-BR', { timeZone: tz, weekday: 'long', year: 'numeric', month: 'long', day: '2-digit' });
+    const horaFmt = d.toLocaleTimeString('pt-BR', { timeZone: tz });
+    const fotoUrl = registro.foto_registro ? backendUrl + registro.foto_registro : '';
+    const logoUrl = empresaLogo ? backendUrl + empresaLogo : '';
+    const protocolo = gerarProtocolo(registro.data_hora, registro.id, tz);
+
+    const params = {
+      nome_funcionario: registro.usuario_nome,
+      cargo: registro.cargo_nome,
+      empresa: empresaNome,
+      horario_completo: horaFmt,
+      data_envio: new Date().toLocaleString('pt-BR', { timeZone: tz }),
+      foto_registro: fotoUrl,
+      to_name: registro.usuario_nome,
+      to_email: registro.usuario_email,
+      funcionario_nome: registro.usuario_nome,
+      funcionario_cargo: registro.cargo_nome,
+      empresa_nome: empresaNome,
+      empresa_logo: logoUrl,
+      data: dataFmt, hora: horaFmt,
+      horario: horaFmt,
+      tipo_registro: tipo === 'entrada' ? 'ENTRADA' : 'SAÍDA',
+      status_msg: tipo === 'entrada' ? 'ENTRADA REGISTRADA COM SUCESSO' : 'SAÍDA REGISTRADA COM SUCESSO',
+      latitude: registro.latitude ? String(parseFloat(registro.latitude).toFixed(6)) : 'Não disponível',
+      longitude: registro.longitude ? String(parseFloat(registro.longitude).toFixed(6)) : 'Não disponível',
+      protocolo,
+      foto_url: fotoUrl,
+      ip: registro.ip_publico || registro.ip || 'Não disponível',
+      navegador: registro.navegador || 'App Mobile',
+      dispositivo: registro.dispositivo || 'Mobile',
+      enviado_em: new Date().toLocaleString('pt-BR', { timeZone: tz }),
+      reply_to: registro.usuario_email,
+      from_name: 'Ponto Eletrônico',
+    };
+
+    const resp = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        service_id:  envServiceId,
+        template_id: envTemplateId,
+        user_id:     envPublicKey,
+        ...(privateKey ? { accessToken: privateKey } : {}),
+        template_params: params,
+      }),
+    });
+
+    const sucesso = resp.ok;
+    const erroMsg = sucesso ? null : await resp.text();
+
+    await pool.query(
+      `INSERT INTO comprovantes_email (registro_id, usuario_id, company_id, email_para, tipo, sucesso, erro_msg)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [registroId, registro.usuario_id, cid, registro.usuario_email, tipo, sucesso ? 1 : 0, erroMsg]
+    );
+
+    if (!sucesso) console.error(`[Ponto] EmailJS comprovante falhou (registro ${registroId}):`, erroMsg);
+    return res.json({ enviado: sucesso });
+  } catch (err) {
+    console.error('[Ponto] enviarComprovante:', err);
+    return res.status(500).json({ erro: 'Erro interno.' });
+  }
+}
+
 // POST /api/ponto/:id/log-comprovante
 async function logComprovante(req, res) {
   const registroId = parseInt(req.params.id);
@@ -486,4 +602,4 @@ async function listarComprovantes(req, res) {
   }
 }
 
-module.exports = { registrar, historico, hoje, status, emailConfig, logComprovante, listarComprovantes };
+module.exports = { registrar, historico, hoje, status, emailConfig, enviarComprovante, logComprovante, listarComprovantes };

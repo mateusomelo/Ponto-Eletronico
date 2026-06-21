@@ -23,5 +23,6 @@ router.get ('/status',                             authorize('ponto.registrar'),
 router.get ('/email-config',                       authorize('ponto.registrar'),  ctrl.emailConfig);
 router.get ('/comprovantes',                       authorize('sistema.configurar'), ctrl.listarComprovantes);
 router.post('/:id/log-comprovante',               authorize('ponto.registrar'),  ctrl.logComprovante);
+router.post('/:id/comprovante',                    authorize('ponto.registrar'),  ctrl.enviarComprovante);
 
 module.exports = router;
