@@ -85,7 +85,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Bloqueia novamente com biometria sempre que o app volta do background
   // (não só no cold start) — mesmo comportamento de apps bancários.
+  // Importante: diálogos de permissão (câmera, GPS) e o próprio uso da
+  // câmera disparam transições rápidas de AppState para 'inactive'/
+  // 'background' e voltam em menos de 1s — isso NÃO deve contar como
+  // "usuário saiu do app". Só bloqueia se ficou afastado por tempo real.
+  const LIMIAR_BACKGROUND_MS = 15000;
   const appStateRef = useRef(AppState.currentState);
+  const saiuEmRef = useRef<number | null>(null);
   const biometriaAtivaRef = useRef(biometriaAtiva);
   const logadoRef = useRef(!!usuario);
   biometriaAtivaRef.current = biometriaAtiva;
@@ -93,10 +99,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (next: AppStateStatus) => {
-      const veioDoBackground = appStateRef.current.match(/inactive|background/) && next === 'active';
-      if (veioDoBackground && biometriaAtivaRef.current && logadoRef.current) {
-        setBloqueadoPorBiometria(true);
+      const estavaFora = appStateRef.current.match(/inactive|background/);
+
+      if (estavaFora && next === 'active') {
+        const tempoFora = saiuEmRef.current ? Date.now() - saiuEmRef.current : 0;
+        if (tempoFora >= LIMIAR_BACKGROUND_MS && biometriaAtivaRef.current && logadoRef.current) {
+          setBloqueadoPorBiometria(true);
+        }
+        saiuEmRef.current = null;
+      } else if (next.match(/inactive|background/) && !saiuEmRef.current) {
+        saiuEmRef.current = Date.now();
       }
+
       appStateRef.current = next;
     });
     return () => sub.remove();
