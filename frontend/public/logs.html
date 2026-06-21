@@ -7,9 +7,6 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" />
   <link rel="stylesheet" href="css/main.css" />
   <style>
-    @media (max-width: 768px) {
-      .col-ip { display: none !important; }
-    }
     @media (max-width: 480px) {
       .col-desc { display: none !important; }
     }
@@ -80,12 +77,11 @@
               <th>Usuário</th>
               <th>Ação</th>
               <th class="col-desc">Descrição</th>
-              <th class="col-ip">IP</th>
               <th>Detalhes</th>
             </tr>
           </thead>
           <tbody id="tblLogs">
-            <tr><td colspan="6" class="table-empty"><span class="spinner"></span></td></tr>
+            <tr><td colspan="5" class="table-empty"><span class="spinner"></span></td></tr>
           </tbody>
         </table>
       </div>
@@ -145,7 +141,7 @@ async function buscar() {
 
   try {
     document.getElementById('tblLogs').innerHTML =
-      '<tr><td colspan="6" class="table-empty"><span class="spinner"></span></td></tr>';
+      '<tr><td colspan="5" class="table-empty"><span class="spinner"></span></td></tr>';
 
     const data = await API.get('/logs', params);
     window._logsCache = data.registros;
@@ -188,7 +184,7 @@ const acaoCores = {
 function renderTabela(logs) {
   const tb = document.getElementById('tblLogs');
   if (!logs.length) {
-    tb.innerHTML = '<tr><td colspan="6" class="table-empty">Nenhum log encontrado.</td></tr>';
+    tb.innerHTML = '<tr><td colspan="5" class="table-empty">Nenhum log encontrado.</td></tr>';
     return;
   }
 
@@ -201,7 +197,6 @@ function renderTabela(logs) {
         <td>${l.usuario_nome || '<span class="text-muted">Sistema</span>'}</td>
         <td><span class="badge ${cor}">${l.acao}</span></td>
         <td class="text-sm col-desc">${l.descricao || '-'}</td>
-        <td class="text-sm text-muted col-ip">${l.ip || '-'}</td>
         <td>
           <button class="btn btn-xs btn-outline" onclick="verDetalhes(${i})" title="Ver detalhes">
             <i class="fas fa-eye"></i>
@@ -234,7 +229,6 @@ function verDetalhes(idx) {
   html += row('Ação',      `<span class="badge ${acaoCores[l.acao] || 'badge-gray'}">${l.acao}</span>`);
   html += row('Usuário',   l.usuario_nome || '<em>Sistema</em>');
   html += row('Data/Hora', fmtDataHora(l.created_at));
-  html += row('IP',        l.ip || '-');
   if (l.user_agent) html += row('Navegador', l.user_agent);
   if (l.descricao)  html += row('Descrição', l.descricao);
 

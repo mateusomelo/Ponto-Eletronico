@@ -48,7 +48,7 @@ async function buscarRegistros(req) {
   if (data_fim)    { where += ' AND DATE(r.data_hora) <= ?'; params.push(data_fim + ' 23:59:59'); }
 
   const [rows] = await pool.query(
-    `SELECT r.id, r.tipo, r.data_hora, r.ip, r.ip_publico, r.latitude, r.longitude,
+    `SELECT r.id, r.tipo, r.data_hora, r.latitude, r.longitude,
             r.dispositivo, r.navegador, r.observacao, r.endereco_aprox,
             u.nome AS usuario_nome, u.email AS usuario_email, u.cpf AS usuario_cpf,
             c.nome AS cargo_nome
@@ -97,13 +97,12 @@ async function exportarPDF(req, res) {
 
     // Colunas: soma das larguras + 6 gaps de 4 = 717 + 24 = 741 ≤ 761 ✓
     const colDefs = [
-      { label: 'Data/Hora',   w: 122 },
-      { label: 'Funcionário', w: 138 },
-      { label: 'Cargo',       w: 86  },
-      { label: 'Tipo',        w: 46  },
-      { label: 'IP Público',  w: 96  },
-      { label: 'Localização', w: 153 },
-      { label: 'Dispositivo', w: 76  },
+      { label: 'Data/Hora',   w: 130 },
+      { label: 'Funcionário', w: 150 },
+      { label: 'Cargo',       w: 92  },
+      { label: 'Tipo',        w: 50  },
+      { label: 'Localização', w: 215 },
+      { label: 'Dispositivo', w: 104 },
     ];
     let cx = MARGIN;
     colDefs.forEach(col => { col.x = cx; cx += col.w + 4; });
@@ -164,7 +163,6 @@ async function exportarPDF(req, res) {
         trunc(r.usuario_nome, 22),
         trunc(r.cargo_nome, 14),
         { text: tipoLabel, color: tipoColor, bold: true },
-        r.ip_publico || r.ip || '-',
         truncAddr(r.endereco_aprox),
         r.dispositivo || '-',
       ];
@@ -218,7 +216,7 @@ async function exportarExcel(req, res) {
       fill: { type: 'pattern', patternType: 'solid', fgColor: '#EEF2FF' },
     });
 
-    const headers = ['ID','Data/Hora','Funcionário','E-mail','CPF','Cargo','Tipo','IP Público','IP Interno','Endereço','Latitude','Longitude','Dispositivo','Navegador','Observação'];
+    const headers = ['ID','Data/Hora','Funcionário','E-mail','CPF','Cargo','Tipo','Endereço','Latitude','Longitude','Dispositivo','Navegador','Observação'];
     headers.forEach((h, i) => ws.cell(1, i + 1).string(h).style(headerStyle));
 
     rows.forEach((r, idx) => {
@@ -231,17 +229,15 @@ async function exportarExcel(req, res) {
       ws.cell(row,  5).string(r.usuario_cpf     || '').style(style);
       ws.cell(row,  6).string(r.cargo_nome      || '').style(style);
       ws.cell(row,  7).string(r.tipo            || '').style(style);
-      ws.cell(row,  8).string(r.ip_publico      || '').style(style);
-      ws.cell(row,  9).string(r.ip              || '').style(style);
-      ws.cell(row, 10).string(r.endereco_aprox  || '').style(style);
-      ws.cell(row, 11).string(r.latitude  ? String(r.latitude)  : '').style(style);
-      ws.cell(row, 12).string(r.longitude ? String(r.longitude) : '').style(style);
-      ws.cell(row, 13).string(r.dispositivo     || '').style(style);
-      ws.cell(row, 14).string(r.navegador       || '').style(style);
-      ws.cell(row, 15).string(r.observacao      || '').style(style);
+      ws.cell(row,  8).string(r.endereco_aprox  || '').style(style);
+      ws.cell(row,  9).string(r.latitude  ? String(r.latitude)  : '').style(style);
+      ws.cell(row, 10).string(r.longitude ? String(r.longitude) : '').style(style);
+      ws.cell(row, 11).string(r.dispositivo     || '').style(style);
+      ws.cell(row, 12).string(r.navegador       || '').style(style);
+      ws.cell(row, 13).string(r.observacao      || '').style(style);
     });
 
-    [8,20,25,28,16,18,10,16,12,40,12,12,12,12,20].forEach((w, i) => ws.column(i + 1).setWidth(w));
+    [8,20,25,28,16,18,10,40,12,12,12,12,20].forEach((w, i) => ws.column(i + 1).setWidth(w));
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', 'attachment; filename="relatorio-ponto.xlsx"');

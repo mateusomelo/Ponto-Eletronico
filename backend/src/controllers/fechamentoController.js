@@ -118,8 +118,11 @@ async function buscarRegistrosFechamento(f, req) {
     params
   );
 
-  if (temDetalhes) return rows;
-  return rows.map(({ ip, ip_publico, latitude, longitude, precisao, foto_registro, ...pub }) => pub);
+  // IP nunca é exposto, nem para quem tem permissão de detalhes — fica só
+  // no banco para auditoria técnica interna.
+  const semIp = rows.map(({ ip, ip_publico, ...pub }) => pub);
+  if (temDetalhes) return semIp;
+  return semIp.map(({ latitude, longitude, precisao, ...pub }) => pub);
 }
 
 // ── Notificação helper ────────────────────────────────────
@@ -160,6 +163,14 @@ const SELECT_FECHAMENTO = `
   LEFT JOIN cargos c     ON c.id   = fu.cargo_id
   LEFT JOIN usuarios ep  ON ep.id  = f.enviado_por
   LEFT JOIN usuarios fdp ON fdp.id = f.fechado_definitivo_por`;
+
+// assinado_ip fica só no banco para auditoria técnica interna — nunca é
+// exposto via API.
+function semIpFechamento(f) {
+  if (!f) return f;
+  const { assinado_ip, ...resto } = f;
+  return resto;
+}
 
 // ══════════════════════════════════════════════════════════
 // ENDPOINTS
@@ -203,7 +214,7 @@ async function listar(req, res) {
       params
     );
 
-    return res.json({ total, pagina: pg, por_pagina: pp, fechamentos: rows });
+    return res.json({ total, pagina: pg, por_pagina: pp, fechamentos: rows.map(semIpFechamento) });
   } catch (err) {
     console.error('[Fechamento] listar:', err);
     return res.status(500).json({ erro: 'Erro interno.' });
@@ -251,7 +262,7 @@ async function detalhe(req, res) {
     const registros = await buscarRegistrosFechamento(f, req);
     const resumo    = calcularResumo(registros, f.competencia);
 
-    return res.json({ fechamento: f, registros, resumo });
+    return res.json({ fechamento: semIpFechamento(f), registros, resumo });
   } catch (err) {
     console.error('[Fechamento] detalhe:', err);
     return res.status(500).json({ erro: 'Erro interno.' });
@@ -607,7 +618,7 @@ async function exportarPDF(req, res) {
 
     if (f.assinado_em) {
       doc.fontSize(9).fillColor('#166534')
-         .text(`✓ Assinado em: ${new Date(f.assinado_em).toLocaleString('pt-BR')}  |  IP: ${f.assinado_ip || '-'}`, { align: 'center' });
+         .text(`✓ Assinado em: ${new Date(f.assinado_em).toLocaleString('pt-BR')}`, { align: 'center' });
     }
     if (f.motivo_rejeicao) {
       doc.fontSize(9).fillColor('#991b1b').text(`✗ Rejeitado: ${f.motivo_rejeicao}`, { align: 'center' });
@@ -615,8 +626,8 @@ async function exportarPDF(req, res) {
     doc.moveDown(0.5);
 
     // Tabela
-    const cols  = [50, 175, 270, 360, 440, 540, 650];
-    const heads = ['Data/Hora', 'Tipo', 'Dispositivo', 'Navegador', 'GPS', 'Endereço', 'IP'];
+    const cols  = [50, 175, 270, 360, 440, 540];
+    const heads = ['Data/Hora', 'Tipo', 'Dispositivo', 'Navegador', 'GPS', 'Endereço'];
     doc.rect(50, doc.y, 740, 16).fill('#1e3a5f');
     const hy = doc.y - 14;
     heads.forEach((h, i) => {
@@ -635,8 +646,7 @@ async function exportarPDF(req, res) {
         r.dispositivo   || '-',
         r.navegador     || '-',
         temDet && r.latitude ? `${Number(r.latitude).toFixed(4)}` : '-',
-        r.endereco_aprox ? r.endereco_aprox.substring(0, 40) : '-',
-        temDet ? (r.ip || '-') : '-',
+        r.endereco_aprox ? r.endereco_aprox.substring(0, 60) : '-',
       ];
       vals.forEach((v, i) => {
         doc.fontSize(7.5).fillColor('#333').text(String(v), cols[i], rowY + 2, {
@@ -705,7 +715,7 @@ async function exportarExcel(req, res) {
     });
 
     // Tabela de registros
-    const headers = ['Data', 'Hora', 'Tipo', 'Dispositivo', 'Navegador', 'GPS Lat', 'GPS Lng', 'Endereço', 'IP'];
+    const headers = ['Data', 'Hora', 'Tipo', 'Dispositivo', 'Navegador', 'GPS Lat', 'GPS Lng', 'Endereço'];
     headers.forEach((h, i) => ws.cell(12, i + 1).string(h).style(bold));
 
     registros.forEach((r, idx) => {
@@ -720,10 +730,9 @@ async function exportarExcel(req, res) {
       ws.cell(row, 6).string(r.latitude  ? String(r.latitude)  : '').style(stl);
       ws.cell(row, 7).string(r.longitude ? String(r.longitude) : '').style(stl);
       ws.cell(row, 8).string(r.endereco_aprox || '').style(stl);
-      ws.cell(row, 9).string(r.ip || '').style(stl);
     });
 
-    [100, 80, 80, 110, 130, 90, 90, 200, 110].forEach((w, i) => ws.column(i + 1).setWidth(w / 7));
+    [100, 80, 80, 110, 130, 90, 90, 220].forEach((w, i) => ws.column(i + 1).setWidth(w / 7));
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename="fechamento-${f.competencia}.xlsx"`);

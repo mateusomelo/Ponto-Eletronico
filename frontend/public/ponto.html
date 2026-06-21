@@ -822,9 +822,6 @@ async function enviarComprovante(tipo, registro) {
     const nome      = user.nome      || '';
     const cargo     = user.cargo_nome || '';
     const empresa   = emailjsCfg.empresaNome || '';
-    const ipExibir  = emailjsCfg.incluirDispositivo
-                        ? (registro.ip_publico || registro.ip || 'Não disponível')
-                        : 'Não disponível';
 
     const params = {
       // ── nomes usados pelo template EmailJS ──────────────────
@@ -857,7 +854,6 @@ async function enviarComprovante(tipo, registro) {
                            : 'Não disponível',
       protocolo,
       foto_url:          fotoUrl,
-      ip:                ipExibir,
       navegador:         emailjsCfg.incluirDispositivo ? (registro.navegador || 'Desconhecido') : '',
       dispositivo:       emailjsCfg.incluirDispositivo ? (registro.dispositivo || 'Desconhecido') : '',
       enviado_em:        new Date().toLocaleString('pt-BR', { timeZone: empresaTZ }),

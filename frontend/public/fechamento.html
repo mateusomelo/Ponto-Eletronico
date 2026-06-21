@@ -232,7 +232,7 @@
       </p>
       <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 14px;font-size:.82rem;color:#166534">
         <i class="fas fa-info-circle"></i>
-        Serão registrados: data, hora e IP para fins de auditoria.
+        Serão registrados: data e hora para fins de auditoria.
       </div>
     </div>
     <div class="modal-footer">
@@ -493,7 +493,7 @@ async function abrirDetalhe(id) {
       <div><label class="text-sm text-muted">Cargo</label><span>${f.cargo_nome || '-'}</span></div>
       <div><label class="text-sm text-muted">Criado por</label><span>${f.criado_por_nome || '-'}</span></div>
       ${f.enviado_em ? `<div><label class="text-sm text-muted">Enviado em</label><span>${fmtDataHora(f.enviado_em)}</span></div>` : ''}
-      ${f.assinado_em ? `<div><label class="text-sm text-muted">Assinado em</label><span>${fmtDataHora(f.assinado_em)} — IP: ${f.assinado_ip || '-'}</span></div>` : ''}
+      ${f.assinado_em ? `<div><label class="text-sm text-muted">Assinado em</label><span>${fmtDataHora(f.assinado_em)}</span></div>` : ''}
       ${f.fechado_definitivo_em ? `<div><label class="text-sm text-muted">Fechado em</label><span>${fmtDataHora(f.fechado_definitivo_em)}</span></div>` : ''}
       ${f.observacao ? `<div style="flex-basis:100%"><label class="text-sm text-muted">Observação</label><span>${f.observacao}</span></div>` : ''}
     `;
@@ -714,8 +714,6 @@ function verRegistro(idx) {
     { label: 'Navegador',   val: r.navegador    || '-' },
   ];
   if (temDetalhes) {
-    if (r.ip)        campos.push({ label: 'IP Interno',   val: r.ip });
-    if (r.ip_publico) campos.push({ label: 'IP Público',  val: r.ip_publico });
     if (r.latitude)  campos.push({ label: 'Latitude',    val: Number(r.latitude).toFixed(6) });
     if (r.longitude) campos.push({ label: 'Longitude',   val: Number(r.longitude).toFixed(6) });
     if (r.precisao)  campos.push({ label: 'Precisão GPS', val: `±${Math.round(r.precisao)}m` });

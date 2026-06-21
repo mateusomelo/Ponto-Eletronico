@@ -42,7 +42,7 @@ async function resumo(req, res) {
     );
 
     const [ultimosPontos] = await pool.query(
-      `SELECT r.id, r.tipo, r.data_hora, r.ip, u.nome AS usuario_nome
+      `SELECT r.id, r.tipo, r.data_hora, u.nome AS usuario_nome
        FROM registros_ponto r JOIN usuarios u ON u.id=r.usuario_id
        WHERE 1=1${rCidW}
        ORDER BY r.data_hora DESC LIMIT 10`,
@@ -121,7 +121,7 @@ async function resumoFuncionario(req, res) {
 
   // Últimos 10 registros
   const [ultimosPontos] = await pool.query(
-    `SELECT r.id, r.tipo, r.data_hora, r.ip, r.dispositivo, r.navegador
+    `SELECT r.id, r.tipo, r.data_hora, r.dispositivo, r.navegador
      FROM registros_ponto r
      WHERE r.usuario_id = ?
      ORDER BY r.data_hora DESC LIMIT 10`,

@@ -161,7 +161,7 @@ function renderFuncionario(data) {
         <span class="badge ${r.tipo === 'entrada' ? 'badge-success' : 'badge-danger'}">${r.tipo}</span>
         <div style="flex:1">
           <div class="text-sm fw-600">${fmtDataHora(r.data_hora)}</div>
-          <div class="text-sm text-muted">${r.dispositivo || '-'} · ${r.ip || '-'}</div>
+          <div class="text-sm text-muted">${r.dispositivo || '-'}</div>
         </div>
       </div>`).join('');
   }

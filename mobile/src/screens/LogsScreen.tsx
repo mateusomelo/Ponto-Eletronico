@@ -54,7 +54,7 @@ export default function LogsScreen() {
           <TouchableOpacity style={styles.card} onPress={() => setDetalhe(item)}>
             <View style={{ flex: 1 }}>
               <Text style={styles.acao}>{item.acao}</Text>
-              <Text style={styles.detalhe}>{item.usuario_nome || 'Sistema'} · {item.ip || '-'}</Text>
+              <Text style={styles.detalhe}>{item.usuario_nome || 'Sistema'}</Text>
               {item.descricao ? <Text style={styles.descricao}>{item.descricao}</Text> : null}
               <Text style={styles.data}>{new Date(item.created_at).toLocaleString('pt-BR')}</Text>
             </View>
@@ -71,7 +71,6 @@ export default function LogsScreen() {
               <Linha label="Ação" valor={detalhe?.acao} />
               <Linha label="Usuário" valor={detalhe?.usuario_nome || 'Sistema'} />
               <Linha label="Data/Hora" valor={detalhe ? new Date(detalhe.created_at).toLocaleString('pt-BR') : ''} />
-              <Linha label="IP" valor={detalhe?.ip || '-'} />
               {detalhe?.descricao ? <Linha label="Descrição" valor={detalhe.descricao} /> : null}
               {detalhe?.user_agent ? <Linha label="Navegador" valor={detalhe.user_agent} /> : null}
 

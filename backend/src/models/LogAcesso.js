@@ -42,7 +42,11 @@ async function listar({ pagina = 1, por_pagina = 50, usuario_id, acao, data_inic
     params
   );
 
-  return { total, pagina, por_pagina, registros: rows };
+  // IP fica armazenado no banco para auditoria técnica interna, mas nunca
+  // é exposto via API — não é exibido para empresas/usuários.
+  const registros = rows.map(({ ip, ...resto }) => resto);
+
+  return { total, pagina, por_pagina, registros };
 }
 
 module.exports = { registrar, listar };

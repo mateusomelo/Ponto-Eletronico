@@ -96,11 +96,14 @@ async function geocodificar(id, lat, lng) {
 
 // Filtra campos sensíveis de acordo com permissões
 function filtrarRegistro(r, temDetalhes) {
-  if (temDetalhes) return r;
+  // IP fica guardado no banco para auditoria técnica interna, mas nunca é
+  // exposto via API — não é exibido para empresas/usuários em nenhum caso.
+  const { ip, ip_publico, ...semIp } = r;
+  if (temDetalhes) return semIp;
   // foto_registro fica sempre visível — é a foto da própria pessoa.
   // Só removemos metadados de localização/dispositivo, que não fazem sentido
   // para o funcionário ver no histórico do próprio ponto.
-  const { ip, ip_publico, latitude, longitude, precisao, user_agent, ...pub } = r;
+  const { latitude, longitude, precisao, user_agent, ...pub } = semIp;
   return pub;
 }
 
@@ -192,10 +195,11 @@ async function registrar(req, res) {
     });
 
     const [reg] = await pool.query('SELECT * FROM registros_ponto WHERE id = ?', [id]);
+    const { ip: _ip, ip_publico: _ipPub, ...registroSemIp } = reg[0];
 
     return res.status(201).json({
       mensagem:  `${tipo.charAt(0).toUpperCase() + tipo.slice(1)} registrada com sucesso.`,
-      registro:  reg[0],
+      registro:  registroSemIp,
     });
   } catch (err) {
     if (fotoFile) fs.unlink(fotoFile.path, () => {});
@@ -477,7 +481,6 @@ async function enviarComprovante(req, res) {
       longitude: registro.longitude ? String(parseFloat(registro.longitude).toFixed(6)) : 'Não disponível',
       protocolo,
       foto_url: fotoUrl,
-      ip: registro.ip_publico || registro.ip || 'Não disponível',
       navegador: registro.navegador || 'App Mobile',
       dispositivo: registro.dispositivo || 'Mobile',
       enviado_em: new Date().toLocaleString('pt-BR', { timeZone: tz }),

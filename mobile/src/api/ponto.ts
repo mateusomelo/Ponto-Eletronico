@@ -5,8 +5,6 @@ export interface RegistroPonto {
   id: number;
   tipo: 'entrada' | 'saida';
   data_hora: string;
-  ip?: string;
-  ip_publico?: string;
   latitude?: number;
   longitude?: number;
   precisao?: number;
