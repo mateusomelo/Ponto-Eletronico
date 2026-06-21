@@ -3,6 +3,7 @@ import {
   ActivityIndicator, Alert, Image, StyleSheet, Text, TouchableOpacity, View,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { FontAwesome5 } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { PontoAPI, StatusPonto } from '../api/ponto';
 import { enviarComprovante } from '../api/comprovante';
@@ -155,9 +156,11 @@ export default function PontoScreen() {
         <View style={styles.cameraControls}>
           <Text style={styles.cameraHint}>Posicione seu rosto no centro</Text>
           <TouchableOpacity style={styles.btnCapturar} onPress={capturar}>
+            <FontAwesome5 name="camera" size={14} color="#fff" style={{ marginRight: 8 }} />
             <Text style={styles.btnCapturarText}>Tirar Foto</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => setEtapa('normal')}>
+          <TouchableOpacity onPress={() => setEtapa('normal')} style={styles.cancelarBtn}>
+            <FontAwesome5 name="times" size={12} color="#fff" style={{ marginRight: 6 }} />
             <Text style={styles.cancelar}>Cancelar</Text>
           </TouchableOpacity>
         </View>
@@ -178,10 +181,16 @@ export default function PontoScreen() {
               onPress={() => setEtapa('camera')}
               disabled={enviando}
             >
+              <FontAwesome5 name="camera" size={14} color="#fff" style={{ marginRight: 8 }} />
               <Text style={styles.btnCapturarText}>Tirar de novo</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.btnCapturar} onPress={confirmarEEnviar} disabled={enviando}>
-              {enviando ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnCapturarText}>Confirmar</Text>}
+              {enviando ? <ActivityIndicator color="#fff" /> : (
+                <>
+                  <FontAwesome5 name="check" size={14} color="#fff" style={{ marginRight: 8 }} />
+                  <Text style={styles.btnCapturarText}>Confirmar</Text>
+                </>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -253,7 +262,7 @@ export default function PontoScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f1f5f9', justifyContent: 'center', padding: 24 },
+  container: { flex: 1, backgroundColor: '#f0f4f8', justifyContent: 'center', padding: 24 },
   card: { backgroundColor: '#fff', borderRadius: 16, padding: 24 },
   title: { fontSize: 18, fontWeight: '700', color: '#1e293b', textAlign: 'center', marginBottom: 16 },
   statusBadge: { alignSelf: 'center', paddingVertical: 8, paddingHorizontal: 18, borderRadius: 20, marginBottom: 16 },
@@ -265,7 +274,7 @@ const styles = StyleSheet.create({
   pendBox: { backgroundColor: '#fef3c7', borderRadius: 8, padding: 10, marginBottom: 10, borderWidth: 1, borderColor: '#fde68a' },
   pendText: { fontSize: 11, color: '#92400e', textAlign: 'center' },
   permText: { fontSize: 12, color: '#475569', textAlign: 'center' },
-  permTextErr: { color: '#dc2626' },
+  permTextErr: { color: '#ef4444' },
   btn: { backgroundColor: '#3b82f6', borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginTop: 12 },
   btnDisabled: { backgroundColor: '#94a3b8' },
   btnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
@@ -273,9 +282,13 @@ const styles = StyleSheet.create({
   camera: { flex: 1 },
   cameraControls: { padding: 24, backgroundColor: '#000', alignItems: 'center' },
   cameraHint: { color: '#fff', marginBottom: 16, fontSize: 13 },
-  btnCapturar: { backgroundColor: '#3b82f6', borderRadius: 30, paddingVertical: 14, paddingHorizontal: 32 },
+  btnCapturar: {
+    backgroundColor: '#3b82f6', borderRadius: 30, paddingVertical: 14, paddingHorizontal: 32,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+  },
   btnCapturarText: { color: '#fff', fontWeight: '700' },
-  cancelar: { color: '#fff', marginTop: 16, fontSize: 13 },
-  fotoSucesso: { width: 140, height: 140, borderRadius: 70, alignSelf: 'center', marginBottom: 16, borderWidth: 3, borderColor: '#16a34a' },
-  tituloSucesso: { fontSize: 17, fontWeight: '700', color: '#166534', textAlign: 'center', marginBottom: 20 },
+  cancelarBtn: { flexDirection: 'row', alignItems: 'center', marginTop: 16 },
+  cancelar: { color: '#fff', fontSize: 13 },
+  fotoSucesso: { width: 140, height: 140, borderRadius: 70, alignSelf: 'center', marginBottom: 16, borderWidth: 3, borderColor: '#10b981' },
+  tituloSucesso: { fontSize: 17, fontWeight: '700', color: '#047857', textAlign: 'center', marginBottom: 20 },
 });

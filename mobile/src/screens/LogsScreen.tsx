@@ -3,6 +3,7 @@ import {
   ActivityIndicator, FlatList, Modal, RefreshControl, ScrollView, StyleSheet,
   Text, TouchableOpacity, View,
 } from 'react-native';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { LogsAPI } from '../api/fechamento';
 
 function formatarJson(valor: any): string | null {
@@ -57,7 +58,7 @@ export default function LogsScreen() {
               {item.descricao ? <Text style={styles.descricao}>{item.descricao}</Text> : null}
               <Text style={styles.data}>{new Date(item.created_at).toLocaleString('pt-BR')}</Text>
             </View>
-            <Text style={styles.olho}>👁</Text>
+            <FontAwesome5 name="eye" size={16} color="#3b82f6" />
           </TouchableOpacity>
         )}
       />
@@ -107,8 +108,8 @@ function Linha({ label, valor }: { label: string; valor?: string }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f1f5f9' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f1f5f9' },
+  container: { flex: 1, backgroundColor: '#f0f4f8' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f0f4f8' },
   empty: { color: '#94a3b8', fontSize: 13, textAlign: 'center', marginTop: 20 },
   card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 10, padding: 12, marginBottom: 8 },
   acao: { fontWeight: '700', fontSize: 13, color: '#1e293b' },

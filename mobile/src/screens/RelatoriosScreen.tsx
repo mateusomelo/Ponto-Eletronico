@@ -61,12 +61,12 @@ export default function RelatoriosScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f1f5f9' },
+  container: { flex: 1, backgroundColor: '#f0f4f8' },
   title: { fontSize: 18, fontWeight: '700', color: '#1e293b', marginBottom: 16 },
   btnRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
   btn: { flex: 1, borderRadius: 10, paddingVertical: 14, alignItems: 'center' },
-  btnPdf: { backgroundColor: '#dc2626' },
-  btnExcel: { backgroundColor: '#16a34a' },
+  btnPdf: { backgroundColor: '#ef4444' },
+  btnExcel: { backgroundColor: '#10b981' },
   btnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
   sectionTitle: { fontSize: 14, fontWeight: '700', color: '#1e293b', marginBottom: 8 },
   empty: { color: '#94a3b8', fontSize: 13, textAlign: 'center', marginTop: 20 },

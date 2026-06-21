@@ -3,6 +3,7 @@ import {
   ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { PerfilAPI } from '../api/perfil';
 import { ApiError, API_BASE } from '../api/client';
@@ -129,7 +130,7 @@ export default function PerfilScreen() {
         ) : (
           <Text style={styles.avatarLetra}>{usuario?.nome?.charAt(0).toUpperCase()}</Text>
         )}
-        <View style={styles.avatarOverlay}><Text style={styles.avatarOverlayText}>📷</Text></View>
+        <View style={styles.avatarOverlay}><FontAwesome5 name="camera" size={11} color="#fff" /></View>
       </TouchableOpacity>
       <Text style={styles.nome}>{usuario?.nome}</Text>
       <Text style={styles.email}>{usuario?.email}</Text>
@@ -169,7 +170,7 @@ export default function PerfilScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f1f5f9' },
+  container: { flex: 1, backgroundColor: '#f0f4f8' },
   avatar: {
     width: 72, height: 72, borderRadius: 36, backgroundColor: '#3b82f6',
     alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginTop: 8, overflow: 'hidden',
@@ -188,7 +189,7 @@ const styles = StyleSheet.create({
   bioRow: { flexDirection: 'row', alignItems: 'center' },
   bioLabel: { fontSize: 14, fontWeight: '600', color: '#1e293b' },
   bioDesc: { fontSize: 11, color: '#94a3b8', marginTop: 2 },
-  bioDescErro: { fontSize: 11, color: '#dc2626', marginTop: 2 },
+  bioDescErro: { fontSize: 11, color: '#ef4444', marginTop: 2 },
   card: { backgroundColor: '#fff', borderRadius: 12, padding: 16 },
   label: { fontSize: 12, color: '#475569', marginBottom: 4, marginTop: 10 },
   input: { borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, color: '#1e293b' },

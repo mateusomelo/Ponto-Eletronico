@@ -54,7 +54,7 @@ export default function EsqueciSenhaScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f1f5f9', justifyContent: 'center', padding: 24 },
+  container: { flex: 1, backgroundColor: '#f0f4f8', justifyContent: 'center', padding: 24 },
   form: { backgroundColor: '#fff', borderRadius: 16, padding: 24 },
   title: { fontSize: 18, fontWeight: '700', color: '#1e293b', marginBottom: 8 },
   subtitle: { fontSize: 13, color: '#64748b', marginBottom: 20, lineHeight: 19 },
@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 10,
     paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: '#1e293b',
   },
-  msg: { color: '#16a34a', marginTop: 14, fontSize: 13 },
+  msg: { color: '#10b981', marginTop: 14, fontSize: 13 },
   btn: {
     backgroundColor: '#3b82f6', borderRadius: 10, paddingVertical: 14,
     alignItems: 'center', marginTop: 20,

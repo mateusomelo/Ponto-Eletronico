@@ -11,8 +11,8 @@ const STATUS_LABEL: Record<string, string> = {
   rejeitado: 'Rejeitado', fechado: 'Fechado',
 };
 const STATUS_COLOR: Record<string, string> = {
-  rascunho: '#94a3b8', enviado: '#f59e0b', assinado: '#16a34a',
-  rejeitado: '#dc2626', fechado: '#1e3a5f',
+  rascunho: '#94a3b8', enviado: '#f59e0b', assinado: '#10b981',
+  rejeitado: '#ef4444', fechado: '#1e3a5f',
 };
 
 export default function FechamentosScreen({ navigation }: any) {
@@ -134,8 +134,8 @@ export default function FechamentosScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f1f5f9' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f1f5f9' },
+  container: { flex: 1, backgroundColor: '#f0f4f8' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f0f4f8' },
   btnNovo: { backgroundColor: '#3b82f6', margin: 16, marginBottom: 0, borderRadius: 10, paddingVertical: 12, alignItems: 'center' },
   btnNovoText: { color: '#fff', fontWeight: '700', fontSize: 14 },
   empty: { color: '#94a3b8', fontSize: 13, textAlign: 'center', marginTop: 20 },
@@ -146,8 +146,8 @@ const styles = StyleSheet.create({
   badgeText: { color: '#fff', fontSize: 11, fontWeight: '600' },
   nome: { fontSize: 12, color: '#64748b', marginTop: 4 },
   actions: { flexDirection: 'row', gap: 8, marginTop: 10 },
-  btnAssinar: { flex: 1, backgroundColor: '#16a34a', borderRadius: 8, paddingVertical: 8, alignItems: 'center' },
-  btnRejeitar: { flex: 1, backgroundColor: '#dc2626', borderRadius: 8, paddingVertical: 8, alignItems: 'center' },
+  btnAssinar: { flex: 1, backgroundColor: '#10b981', borderRadius: 8, paddingVertical: 8, alignItems: 'center' },
+  btnRejeitar: { flex: 1, backgroundColor: '#ef4444', borderRadius: 8, paddingVertical: 8, alignItems: 'center' },
   btnText: { color: '#fff', fontWeight: '600', fontSize: 12 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 24 },
   modalBox: { backgroundColor: '#fff', borderRadius: 12, padding: 20 },
@@ -155,5 +155,5 @@ const styles = StyleSheet.create({
   modalInput: { borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 8, padding: 10, minHeight: 80, textAlignVertical: 'top' },
   modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 20, marginTop: 14 },
   modalCancel: { color: '#64748b', fontWeight: '600' },
-  modalConfirm: { color: '#dc2626', fontWeight: '700' },
+  modalConfirm: { color: '#ef4444', fontWeight: '700' },
 });

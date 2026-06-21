@@ -108,7 +108,7 @@ export default function NovoFechamentoScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f1f5f9' },
+  container: { flex: 1, backgroundColor: '#f0f4f8' },
   card: { backgroundColor: '#fff', borderRadius: 12, padding: 16, margin: 16, marginBottom: 0 },
   label: { fontSize: 12, color: '#475569', marginBottom: 4, marginTop: 10 },
   input: { borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, color: '#1e293b' },

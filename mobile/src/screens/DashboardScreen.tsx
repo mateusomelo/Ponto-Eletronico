@@ -78,8 +78,8 @@ export default function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f1f5f9' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f1f5f9' },
+  container: { flex: 1, backgroundColor: '#f0f4f8' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f0f4f8' },
   greeting: { fontSize: 20, fontWeight: '700', color: '#1e293b' },
   subtitle: { fontSize: 13, color: '#64748b', marginBottom: 16 },
   statsRow: { flexDirection: 'row', gap: 10, marginBottom: 10 },
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 14, fontWeight: '700', color: '#1e293b', marginTop: 16, marginBottom: 8 },
   row: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 10, padding: 12, marginBottom: 8 },
   dot: { width: 8, height: 8, borderRadius: 4, marginRight: 10 },
-  dotEntrada: { backgroundColor: '#16a34a' },
-  dotSaida: { backgroundColor: '#dc2626' },
+  dotEntrada: { backgroundColor: '#10b981' },
+  dotSaida: { backgroundColor: '#ef4444' },
   rowText: { fontSize: 12, color: '#475569', flex: 1 },
 });

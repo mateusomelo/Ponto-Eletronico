@@ -81,8 +81,8 @@ export default function ConfiguracoesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f1f5f9' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f1f5f9' },
+  container: { flex: 1, backgroundColor: '#f0f4f8' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f0f4f8' },
   title: { fontSize: 18, fontWeight: '700', color: '#1e293b', marginBottom: 16 },
   row: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',

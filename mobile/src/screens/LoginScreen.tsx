@@ -3,6 +3,7 @@ import {
   ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet,
   Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { ApiError } from '../api/client';
 import CampoSenha from '../components/CampoSenha';
@@ -38,7 +39,7 @@ export default function LoginScreen({ navigation }: any) {
     >
       <View style={styles.logoBox}>
         <View style={styles.logoIcon}>
-          <Text style={styles.logoIconText}>⏱</Text>
+          <FontAwesome5 name="fingerprint" size={26} color="#3b82f6" />
         </View>
         <Text style={styles.title}>Ponto Eletrônico</Text>
       </View>
@@ -73,7 +74,7 @@ export default function LoginScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f1f5f9', justifyContent: 'center', padding: 24 },
+  container: { flex: 1, backgroundColor: '#f0f4f8', justifyContent: 'center', padding: 24 },
   logoBox: { alignItems: 'center', marginBottom: 32 },
   logoIcon: {
     width: 56, height: 56, borderRadius: 16, backgroundColor: '#1e3a5f',
@@ -87,7 +88,7 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 10,
     paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: '#1e293b',
   },
-  erro: { color: '#dc2626', marginTop: 12, fontSize: 13 },
+  erro: { color: '#ef4444', marginTop: 12, fontSize: 13 },
   btn: {
     backgroundColor: '#3b82f6', borderRadius: 10, paddingVertical: 14,
     alignItems: 'center', marginTop: 20,

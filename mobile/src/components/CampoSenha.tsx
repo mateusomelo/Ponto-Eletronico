@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { StyleSheet, TextInput, TextInputProps, TouchableOpacity, View, Text } from 'react-native';
+import { StyleSheet, TextInput, TextInputProps, TouchableOpacity, View } from 'react-native';
+import { FontAwesome5 } from '@expo/vector-icons';
 
 interface Props extends Omit<TextInputProps, 'secureTextEntry' | 'style'> {
   style?: any;
@@ -19,7 +20,7 @@ export default function CampoSenha({ style, ...rest }: Props) {
         {...rest}
       />
       <TouchableOpacity onPress={() => setMostrar((v) => !v)} style={styles.olhoBtn}>
-        <Text style={styles.olhoIcone}>{mostrar ? '🙈' : '👁'}</Text>
+        <FontAwesome5 name={mostrar ? 'eye-slash' : 'eye'} size={16} color="#94a3b8" />
       </TouchableOpacity>
     </View>
   );
@@ -32,5 +33,4 @@ const styles = StyleSheet.create({
   },
   input: { flex: 1, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, color: '#1e293b' },
   olhoBtn: { padding: 6 },
-  olhoIcone: { fontSize: 16 },
 });

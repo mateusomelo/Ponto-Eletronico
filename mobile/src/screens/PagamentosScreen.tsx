@@ -64,9 +64,9 @@ export default function PagamentosScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f1f5f9' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f1f5f9', padding: 24 },
-  erro: { color: '#dc2626', textAlign: 'center' },
+  container: { flex: 1, backgroundColor: '#f0f4f8' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f0f4f8', padding: 24 },
+  erro: { color: '#ef4444', textAlign: 'center' },
   title: { fontSize: 18, fontWeight: '700', color: '#1e293b', marginBottom: 16 },
   card: { backgroundColor: '#fff', borderRadius: 12, padding: 16 },
   label: { fontSize: 11, color: '#94a3b8', marginTop: 10 },
