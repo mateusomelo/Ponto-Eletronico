@@ -24,6 +24,7 @@ export default function MaisMenuScreen({ navigation }: any) {
       label: 'Folha de Pagamento',
       itens: [
         { label: 'Fechamento de Folha', icone: 'file-invoice-dollar', show: hasPermission('fechamento.visualizar'), tela: 'Fechamentos' },
+        { label: 'Histórico de Assinaturas', icone: 'file-signature', show: hasPermission('fechamento.visualizar'), tela: 'HistoricoAssinaturas' },
       ],
     },
     {

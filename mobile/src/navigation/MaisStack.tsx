@@ -9,6 +9,7 @@ import CargoFormScreen from '../screens/CargoFormScreen';
 import ConfiguracoesScreen from '../screens/ConfiguracoesScreen';
 import FechamentosScreen from '../screens/FechamentosScreen';
 import NovoFechamentoScreen from '../screens/NovoFechamentoScreen';
+import HistoricoAssinaturasScreen from '../screens/HistoricoAssinaturasScreen';
 import LogsScreen from '../screens/LogsScreen';
 import PagamentosScreen from '../screens/PagamentosScreen';
 import PerfilScreen from '../screens/PerfilScreen';
@@ -27,6 +28,7 @@ export default function MaisStack() {
       <Stack.Screen name="Configuracoes" component={ConfiguracoesScreen} options={{ title: 'Configurações' }} />
       <Stack.Screen name="Fechamentos" component={FechamentosScreen} options={{ title: 'Fechamento de Folha' }} />
       <Stack.Screen name="NovoFechamento" component={NovoFechamentoScreen} options={{ title: 'Novo Fechamento' }} />
+      <Stack.Screen name="HistoricoAssinaturas" component={HistoricoAssinaturasScreen} options={{ title: 'Histórico de Assinaturas' }} />
       <Stack.Screen name="Logs" component={LogsScreen} options={{ title: 'Logs de Auditoria' }} />
       <Stack.Screen name="Pagamentos" component={PagamentosScreen} options={{ title: 'Pagamentos' }} />
       <Stack.Screen name="Perfil" component={PerfilScreen} options={{ title: 'Perfil' }} />

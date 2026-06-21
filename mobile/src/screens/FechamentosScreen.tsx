@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator, Alert, FlatList, Modal, RefreshControl, StyleSheet,
   Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
 import { FechamentoAPI } from '../api/fechamento';
 import { useAuth } from '../contexts/AuthContext';
+import PainelAssinatura, { PainelAssinaturaRef } from '../components/PainelAssinatura';
 
 const STATUS_LABEL: Record<string, string> = {
   rascunho: 'Rascunho', enviado: 'Enviado', assinado: 'Assinado',
@@ -22,6 +23,9 @@ export default function FechamentosScreen({ navigation }: any) {
   const [atualizando, setAtualizando] = useState(false);
   const [modalRejeitar, setModalRejeitar] = useState<number | null>(null);
   const [motivo, setMotivo] = useState('');
+  const [modalAssinar, setModalAssinar] = useState<{ id: number; acao: 'assinar' | 'fechar' } | null>(null);
+  const [enviandoAssinatura, setEnviandoAssinatura] = useState(false);
+  const painelRef = useRef<PainelAssinaturaRef>(null);
 
   async function carregar() {
     try {
@@ -37,12 +41,26 @@ export default function FechamentosScreen({ navigation }: any) {
   }, [navigation]);
   const onRefresh = useCallback(() => { setAtualizando(true); carregar(); }, []);
 
-  async function assinar(id: number) {
+  async function confirmarAssinatura() {
+    if (!modalAssinar) return;
+    if (!painelRef.current?.temAssinatura()) {
+      Alert.alert('Atenção', 'Desenhe sua assinatura antes de confirmar.');
+      return;
+    }
+    setEnviandoAssinatura(true);
     try {
-      await FechamentoAPI.assinar(id);
+      const png = await painelRef.current.capturarPng();
+      if (modalAssinar.acao === 'assinar') {
+        await FechamentoAPI.assinar(modalAssinar.id, png);
+      } else {
+        await FechamentoAPI.fechar(modalAssinar.id, png);
+      }
+      setModalAssinar(null);
       carregar();
     } catch (err: any) {
-      Alert.alert('Erro', err?.data?.erro || 'Não foi possível assinar.');
+      Alert.alert('Erro', err?.data?.erro || 'Não foi possível confirmar a assinatura.');
+    } finally {
+      setEnviandoAssinatura(false);
     }
   }
 
@@ -83,6 +101,7 @@ export default function FechamentosScreen({ navigation }: any) {
         renderItem={({ item }) => {
           const podeAssinar = item.status === 'enviado' && (usuario?.cargo_nivel ?? 99) >= 3
             ? item.usuario_id === usuario?.id : item.status === 'enviado';
+          const podeFechar = item.status === 'assinado' && hasPermission('fechamento.criar');
           return (
             <View style={styles.card}>
               <View style={styles.cardHeader}>
@@ -94,11 +113,18 @@ export default function FechamentosScreen({ navigation }: any) {
               <Text style={styles.nome}>{item.usuario_nome}</Text>
               {podeAssinar && (
                 <View style={styles.actions}>
-                  <TouchableOpacity style={styles.btnAssinar} onPress={() => assinar(item.id)}>
+                  <TouchableOpacity style={styles.btnAssinar} onPress={() => setModalAssinar({ id: item.id, acao: 'assinar' })}>
                     <Text style={styles.btnText}>Assinar</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.btnRejeitar} onPress={() => setModalRejeitar(item.id)}>
                     <Text style={styles.btnText}>Rejeitar</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+              {podeFechar && (
+                <View style={styles.actions}>
+                  <TouchableOpacity style={styles.btnFechar} onPress={() => setModalAssinar({ id: item.id, acao: 'fechar' })}>
+                    <Text style={styles.btnText}>Fechar Definitivamente</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -129,6 +155,35 @@ export default function FechamentosScreen({ navigation }: any) {
           </View>
         </View>
       </Modal>
+
+      <Modal visible={!!modalAssinar} transparent animationType="fade" onRequestClose={() => setModalAssinar(null)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>
+              {modalAssinar?.acao === 'fechar' ? 'Assinatura do responsável' : 'Assine no campo abaixo'}
+            </Text>
+            {modalAssinar?.acao === 'fechar' && (
+              <Text style={styles.modalHint}>
+                Após confirmar, não será possível alterar registros neste período. O colaborador recebe uma cópia assinada por e-mail.
+              </Text>
+            )}
+            <PainelAssinatura ref={painelRef} />
+            <TouchableOpacity style={styles.btnLimpar} onPress={() => painelRef.current?.limpar()}>
+              <Text style={styles.btnLimparText}>Limpar assinatura</Text>
+            </TouchableOpacity>
+            <View style={styles.modalActions}>
+              <TouchableOpacity onPress={() => setModalAssinar(null)}>
+                <Text style={styles.modalCancel}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={confirmarAssinatura} disabled={enviandoAssinatura}>
+                {enviandoAssinatura
+                  ? <ActivityIndicator color="#3b82f6" />
+                  : <Text style={styles.modalConfirmAzul}>Confirmar</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </>
   );
 }
@@ -148,12 +203,17 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', gap: 8, marginTop: 10 },
   btnAssinar: { flex: 1, backgroundColor: '#10b981', borderRadius: 8, paddingVertical: 8, alignItems: 'center' },
   btnRejeitar: { flex: 1, backgroundColor: '#ef4444', borderRadius: 8, paddingVertical: 8, alignItems: 'center' },
+  btnFechar: { flex: 1, backgroundColor: '#1e3a5f', borderRadius: 8, paddingVertical: 8, alignItems: 'center' },
   btnText: { color: '#fff', fontWeight: '600', fontSize: 12 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 24 },
   modalBox: { backgroundColor: '#fff', borderRadius: 12, padding: 20 },
   modalTitle: { fontWeight: '700', fontSize: 15, marginBottom: 10 },
+  modalHint: { fontSize: 12, color: '#64748b', marginBottom: 12, lineHeight: 17 },
   modalInput: { borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 8, padding: 10, minHeight: 80, textAlignVertical: 'top' },
   modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 20, marginTop: 14 },
   modalCancel: { color: '#64748b', fontWeight: '600' },
   modalConfirm: { color: '#ef4444', fontWeight: '700' },
+  modalConfirmAzul: { color: '#3b82f6', fontWeight: '700' },
+  btnLimpar: { alignSelf: 'flex-start', marginTop: 8 },
+  btnLimparText: { color: '#94a3b8', fontSize: 12, fontWeight: '600' },
 });
