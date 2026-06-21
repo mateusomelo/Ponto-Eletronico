@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import { Usuario, UsuariosAPI } from '../api/admin';
 
-export default function UsuariosScreen() {
+export default function UsuariosScreen({ navigation }: any) {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [busca, setBusca] = useState('');
   const [carregando, setCarregando] = useState(true);
@@ -22,7 +22,11 @@ export default function UsuariosScreen() {
     }
   }
 
-  useEffect(() => { carregar(); }, []);
+  useEffect(() => {
+    const unsub = navigation.addListener('focus', () => carregar());
+    return unsub;
+  }, [navigation]);
+
   const onRefresh = useCallback(() => { setAtualizando(true); carregar(); }, [busca]);
 
   async function toggleBloqueio(u: Usuario) {
@@ -32,6 +36,20 @@ export default function UsuariosScreen() {
     } catch (err: any) {
       Alert.alert('Erro', err?.data?.erro || 'Não foi possível alterar o usuário.');
     }
+  }
+
+  function confirmarExcluir(u: Usuario) {
+    Alert.alert('Excluir usuário', `Tem certeza que deseja excluir ${u.nome}?`, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Excluir', style: 'destructive', onPress: async () => {
+        try {
+          await UsuariosAPI.excluir(u.id);
+          carregar();
+        } catch (err: any) {
+          Alert.alert('Erro', err?.data?.erro || 'Não foi possível excluir.');
+        }
+      } },
+    ]);
   }
 
   if (carregando) {
@@ -44,6 +62,9 @@ export default function UsuariosScreen() {
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity style={styles.btnNovo} onPress={() => navigation.navigate('UsuarioForm', {})}>
+        <Text style={styles.btnNovoText}>+ Novo Usuário</Text>
+      </TouchableOpacity>
       <TextInput
         style={styles.search}
         placeholder="Buscar por nome, e-mail ou CPF..."
@@ -59,19 +80,24 @@ export default function UsuariosScreen() {
         contentContainerStyle={{ padding: 16 }}
         ListEmptyComponent={<Text style={styles.empty}>Nenhum usuário encontrado.</Text>}
         renderItem={({ item }) => (
-          <View style={styles.card}>
+          <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('UsuarioForm', { id: item.id })}>
             <View style={{ flex: 1 }}>
               <Text style={styles.nome}>{item.nome}</Text>
               <Text style={styles.email}>{item.email}</Text>
               <Text style={styles.cargo}>{item.cargo_nome}</Text>
             </View>
-            <TouchableOpacity
-              style={[styles.badge, item.bloqueado ? styles.badgeBloqueado : styles.badgeAtivo]}
-              onPress={() => toggleBloqueio(item)}
-            >
-              <Text style={styles.badgeText}>{item.bloqueado ? 'Bloqueado' : 'Ativo'}</Text>
-            </TouchableOpacity>
-          </View>
+            <View style={{ alignItems: 'flex-end', gap: 6 }}>
+              <TouchableOpacity
+                style={[styles.badge, item.bloqueado ? styles.badgeBloqueado : styles.badgeAtivo]}
+                onPress={() => toggleBloqueio(item)}
+              >
+                <Text style={styles.badgeText}>{item.bloqueado ? 'Bloqueado' : 'Ativo'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => confirmarExcluir(item)}>
+                <Text style={styles.linkExcluir}>Excluir</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
         )}
       />
     </View>
@@ -81,6 +107,8 @@ export default function UsuariosScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f1f5f9' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f1f5f9' },
+  btnNovo: { backgroundColor: '#3b82f6', margin: 16, marginBottom: 0, borderRadius: 10, paddingVertical: 12, alignItems: 'center' },
+  btnNovoText: { color: '#fff', fontWeight: '700', fontSize: 14 },
   search: {
     margin: 16, marginBottom: 0, backgroundColor: '#fff', borderRadius: 10,
     paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#e2e8f0',
@@ -97,4 +125,5 @@ const styles = StyleSheet.create({
   badgeAtivo: { backgroundColor: '#dcfce7' },
   badgeBloqueado: { backgroundColor: '#fee2e2' },
   badgeText: { fontSize: 11, fontWeight: '600', color: '#1e293b' },
+  linkExcluir: { fontSize: 11, color: '#dc2626', fontWeight: '600' },
 });

@@ -15,8 +15,8 @@ const STATUS_COLOR: Record<string, string> = {
   rejeitado: '#dc2626', fechado: '#1e3a5f',
 };
 
-export default function FechamentosScreen() {
-  const { usuario } = useAuth();
+export default function FechamentosScreen({ navigation }: any) {
+  const { usuario, hasPermission } = useAuth();
   const [lista, setLista] = useState<any[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [atualizando, setAtualizando] = useState(false);
@@ -31,7 +31,10 @@ export default function FechamentosScreen() {
     finally { setCarregando(false); setAtualizando(false); }
   }
 
-  useEffect(() => { carregar(); }, []);
+  useEffect(() => {
+    const unsub = navigation.addListener('focus', () => carregar());
+    return unsub;
+  }, [navigation]);
   const onRefresh = useCallback(() => { setAtualizando(true); carregar(); }, []);
 
   async function assinar(id: number) {
@@ -65,6 +68,11 @@ export default function FechamentosScreen() {
 
   return (
     <>
+      {hasPermission('fechamento.criar') && (
+        <TouchableOpacity style={styles.btnNovo} onPress={() => navigation.navigate('NovoFechamento')}>
+          <Text style={styles.btnNovoText}>+ Novo Fechamento</Text>
+        </TouchableOpacity>
+      )}
       <FlatList
         style={styles.container}
         data={lista}
@@ -128,6 +136,8 @@ export default function FechamentosScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f1f5f9' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f1f5f9' },
+  btnNovo: { backgroundColor: '#3b82f6', margin: 16, marginBottom: 0, borderRadius: 10, paddingVertical: 12, alignItems: 'center' },
+  btnNovoText: { color: '#fff', fontWeight: '700', fontSize: 14 },
   empty: { color: '#94a3b8', fontSize: 13, textAlign: 'center', marginTop: 20 },
   card: { backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 10 },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

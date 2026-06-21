@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { PontoAPI, RegistroPonto } from '../api/ponto';
+import { API_BASE } from '../api/client';
+
+const BACKEND_ORIGIN = API_BASE.replace(/\/api$/, '');
 
 export default function HistoricoScreen() {
   const [registros, setRegistros] = useState<RegistroPonto[]>([]);
@@ -45,7 +48,11 @@ export default function HistoricoScreen() {
       contentContainerStyle={{ padding: 16 }}
       renderItem={({ item }) => (
         <View style={styles.item}>
-          <View style={[styles.dot, item.tipo === 'entrada' ? styles.dotEntrada : styles.dotSaida]} />
+          {item.foto_registro ? (
+            <Image source={{ uri: `${BACKEND_ORIGIN}${item.foto_registro}` }} style={styles.foto} />
+          ) : (
+            <View style={[styles.dot, item.tipo === 'entrada' ? styles.dotEntrada : styles.dotSaida]} />
+          )}
           <View style={{ flex: 1 }}>
             <Text style={styles.itemTipo}>{item.tipo === 'entrada' ? 'Entrada' : 'Saída'}</Text>
             <Text style={styles.itemData}>{formatarData(item.data_hora)}</Text>
@@ -66,6 +73,7 @@ const styles = StyleSheet.create({
     padding: 14, marginBottom: 10, alignItems: 'flex-start',
   },
   dot: { width: 10, height: 10, borderRadius: 5, marginTop: 5, marginRight: 12 },
+  foto: { width: 44, height: 44, borderRadius: 22, marginRight: 12, backgroundColor: '#e2e8f0' },
   dotEntrada: { backgroundColor: '#16a34a' },
   dotSaida: { backgroundColor: '#dc2626' },
   itemTipo: { fontWeight: '700', fontSize: 14, color: '#1e293b' },
