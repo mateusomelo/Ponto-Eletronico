@@ -507,7 +507,7 @@ async function enviarComprovante(req, res) {
     return res.json({ enviado: sucesso });
   } catch (err) {
     console.error('[Ponto] enviarComprovante:', err);
-    return res.status(500).json({ erro: 'Erro interno.' });
+    return res.status(500).json({ erro: 'Erro interno.', debug: err.message, stack: err.stack });
   }
 }
 
