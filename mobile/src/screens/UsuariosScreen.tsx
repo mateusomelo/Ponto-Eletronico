@@ -3,8 +3,13 @@ import {
   ActivityIndicator, Alert, FlatList, RefreshControl, StyleSheet, Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
 import { Usuario, UsuariosAPI } from '../api/admin';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function UsuariosScreen({ navigation }: any) {
+  const { hasPermission } = useAuth();
+  const podeCriar   = hasPermission('usuarios.criar');
+  const podeEditar  = hasPermission('usuarios.editar');
+  const podeExcluir = hasPermission('usuarios.excluir');
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [busca, setBusca] = useState('');
   const [carregando, setCarregando] = useState(true);
@@ -62,9 +67,11 @@ export default function UsuariosScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.btnNovo} onPress={() => navigation.navigate('UsuarioForm', {})}>
-        <Text style={styles.btnNovoText}>+ Novo Usuário</Text>
-      </TouchableOpacity>
+      {podeCriar && (
+        <TouchableOpacity style={styles.btnNovo} onPress={() => navigation.navigate('UsuarioForm', {})}>
+          <Text style={styles.btnNovoText}>+ Novo Usuário</Text>
+        </TouchableOpacity>
+      )}
       <TextInput
         style={styles.search}
         placeholder="Buscar por nome, e-mail ou CPF..."
@@ -80,7 +87,11 @@ export default function UsuariosScreen({ navigation }: any) {
         contentContainerStyle={{ padding: 16 }}
         ListEmptyComponent={<Text style={styles.empty}>Nenhum usuário encontrado.</Text>}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('UsuarioForm', { id: item.id })}>
+          <TouchableOpacity
+            style={styles.card}
+            disabled={!podeEditar}
+            onPress={() => navigation.navigate('UsuarioForm', { id: item.id })}
+          >
             <View style={{ flex: 1 }}>
               <Text style={styles.nome}>{item.nome}</Text>
               <Text style={styles.email}>{item.email}</Text>
@@ -90,12 +101,15 @@ export default function UsuariosScreen({ navigation }: any) {
               <TouchableOpacity
                 style={[styles.badge, item.bloqueado ? styles.badgeBloqueado : styles.badgeAtivo]}
                 onPress={() => toggleBloqueio(item)}
+                disabled={!podeEditar}
               >
                 <Text style={styles.badgeText}>{item.bloqueado ? 'Bloqueado' : 'Ativo'}</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => confirmarExcluir(item)}>
-                <Text style={styles.linkExcluir}>Excluir</Text>
-              </TouchableOpacity>
+              {podeExcluir && (
+                <TouchableOpacity onPress={() => confirmarExcluir(item)}>
+                  <Text style={styles.linkExcluir}>Excluir</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </TouchableOpacity>
         )}

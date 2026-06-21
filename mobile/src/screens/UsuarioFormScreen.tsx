@@ -6,10 +6,13 @@ import { Picker } from '@react-native-picker/picker';
 import { CargosAPI, Cargo, UsuariosAPI } from '../api/admin';
 import { ApiError } from '../api/client';
 import CampoSenha from '../components/CampoSenha';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function UsuarioFormScreen({ route, navigation }: any) {
+  const { hasPermission } = useAuth();
   const usuarioId: number | undefined = route.params?.id;
   const editando = !!usuarioId;
+  const podeGerenciar = hasPermission(editando ? 'usuarios.editar' : 'usuarios.criar');
 
   const [cargos, setCargos] = useState<Cargo[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -53,6 +56,10 @@ export default function UsuarioFormScreen({ route, navigation }: any) {
   }, []);
 
   async function salvar() {
+    if (!podeGerenciar) {
+      Alert.alert('Sem permissão', 'Você não tem permissão para esta ação.');
+      return;
+    }
     if (!nome || !email || !cpf || !cargoId) {
       Alert.alert('Atenção', 'Preencha nome, e-mail, CPF e cargo.');
       return;
@@ -99,20 +106,20 @@ export default function UsuarioFormScreen({ route, navigation }: any) {
     <ScrollView style={styles.container} contentContainerStyle={{ padding: 16 }}>
       <View style={styles.card}>
         <Text style={styles.label}>Nome completo</Text>
-        <TextInput style={styles.input} value={nome} onChangeText={setNome} />
+        <TextInput style={styles.input} value={nome} onChangeText={setNome} editable={podeGerenciar} />
 
         <Text style={styles.label}>E-mail</Text>
-        <TextInput style={styles.input} value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
+        <TextInput style={styles.input} value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" editable={podeGerenciar} />
 
         <Text style={styles.label}>CPF</Text>
-        <TextInput style={styles.input} value={cpf} onChangeText={setCpf} />
+        <TextInput style={styles.input} value={cpf} onChangeText={setCpf} editable={podeGerenciar} />
 
         <Text style={styles.label}>Telefone</Text>
-        <TextInput style={styles.input} value={telefone} onChangeText={setTelefone} keyboardType="phone-pad" />
+        <TextInput style={styles.input} value={telefone} onChangeText={setTelefone} keyboardType="phone-pad" editable={podeGerenciar} />
 
         <Text style={styles.label}>Cargo</Text>
         <View style={styles.pickerWrap}>
-          <Picker selectedValue={cargoId} onValueChange={setCargoId}>
+          <Picker selectedValue={cargoId} onValueChange={setCargoId} enabled={podeGerenciar}>
             {cargos.map((c) => <Picker.Item key={c.id} label={c.nome} value={c.id} />)}
           </Picker>
         </View>
@@ -120,26 +127,28 @@ export default function UsuarioFormScreen({ route, navigation }: any) {
         {!editando && (
           <>
             <Text style={styles.label}>Senha (mín. 8 caracteres)</Text>
-            <CampoSenha value={senha} onChangeText={setSenha} />
+            <CampoSenha value={senha} onChangeText={setSenha} editable={podeGerenciar} />
           </>
         )}
 
         <Text style={styles.label}>Salário mensal (opcional)</Text>
-        <TextInput style={styles.input} value={salario} onChangeText={setSalario} keyboardType="numeric" />
+        <TextInput style={styles.input} value={salario} onChangeText={setSalario} keyboardType="numeric" editable={podeGerenciar} />
 
         <Text style={styles.label}>Carga horária semanal</Text>
-        <TextInput style={styles.input} value={cargaHoraria} onChangeText={setCargaHoraria} keyboardType="numeric" />
+        <TextInput style={styles.input} value={cargaHoraria} onChangeText={setCargaHoraria} keyboardType="numeric" editable={podeGerenciar} />
 
         {editando && (
           <View style={styles.row}>
             <Text style={styles.label}>Ativo</Text>
-            <Switch value={ativo} onValueChange={setAtivo} />
+            <Switch value={ativo} onValueChange={setAtivo} disabled={!podeGerenciar} />
           </View>
         )}
 
-        <TouchableOpacity style={styles.btn} onPress={salvar} disabled={salvando}>
-          {salvando ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Salvar</Text>}
-        </TouchableOpacity>
+        {podeGerenciar && (
+          <TouchableOpacity style={styles.btn} onPress={salvar} disabled={salvando}>
+            {salvando ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Salvar</Text>}
+          </TouchableOpacity>
+        )}
       </View>
     </ScrollView>
   );
