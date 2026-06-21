@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
-import { API, ApiError, clearToken, getToken, getUsuario, setToken, setUsuario } from '../api/client';
+import { API, ApiError, clearToken, getToken, getUsuario, setToken, setUnauthorizedHandler, setUsuario } from '../api/client';
 import { autenticarComBiometria, biometriaHabilitada, setBiometriaHabilitada } from '../api/biometria';
 import { registrarPushToken } from '../api/push';
 
@@ -82,6 +82,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => { carregarSessao(); }, []);
+
+  // Sessão expirada (401 em qualquer chamada autenticada) → desloga e volta
+  // para o Login, em vez de deixar a tela presa num erro genérico que se
+  // repete a cada nova tentativa de carregar dados.
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      clearToken();
+      setUsuarioState(null);
+      setBloqueadoPorBiometria(false);
+    });
+    return () => setUnauthorizedHandler(null);
+  }, []);
 
   // Bloqueia novamente com biometria sempre que o app volta do background
   // (não só no cold start) — mesmo comportamento de apps bancários.

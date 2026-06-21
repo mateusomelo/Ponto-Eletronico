@@ -38,6 +38,15 @@ export class ApiError extends Error {
   }
 }
 
+// Sessão expirada/inválida: qualquer chamada autenticada que volte 401 aciona
+// este callback (registrado pelo AuthContext) para deslogar e voltar à tela
+// de login, em vez de deixar a tela atual presa num erro genérico que se
+// repete a cada "recarregar".
+let onUnauthorized: (() => void) | null = null;
+export function setUnauthorizedHandler(fn: (() => void) | null) {
+  onUnauthorized = fn;
+}
+
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 async function request(method: Method, path: string, body: any = null, params?: Record<string, any>) {
@@ -65,6 +74,7 @@ async function request(method: Method, path: string, body: any = null, params?: 
   const ct = res.headers.get('content-type') || '';
   const data = ct.includes('application/json') ? await res.json() : null;
 
+  if (res.status === 401 && token) onUnauthorized?.();
   if (!res.ok) throw new ApiError(res.status, data || { erro: 'Erro na requisição.' });
   return data;
 }
@@ -92,6 +102,7 @@ export const API = {
     const ct = res.headers.get('content-type') || '';
     let data: any = null;
     try { data = ct.includes('application/json') ? await res.json() : null; } catch { /* corpo vazio/ inválido */ }
+    if (res.status === 401 && token) onUnauthorized?.();
     if (!res.ok) throw new ApiError(res.status, data || { erro: `Erro no upload (HTTP ${res.status}).` });
     return data;
   },
