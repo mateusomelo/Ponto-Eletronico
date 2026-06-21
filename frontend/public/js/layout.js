@@ -65,6 +65,10 @@ function renderLayout(pageTitle) {
         <i class="fas fa-cog nav-icon"></i>
         <span class="nav-label">Configurações</span>
       </a>
+      <a class="nav-item" href="downloads.html">
+        <i class="fas fa-mobile-alt nav-icon"></i>
+        <span class="nav-label">App Mobile</span>
+      </a>
     </div>
 
     <div class="sidebar-footer">

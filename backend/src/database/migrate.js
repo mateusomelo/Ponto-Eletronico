@@ -454,6 +454,23 @@ async function runIncrementalMigrations(conn) {
   `);
   console.log('[Migration] device_tokens: tabela verificada.');
 
+  // ── Versões do app mobile (seção Downloads) ──────────────────────────────
+  await conn.query(`
+    CREATE TABLE IF NOT EXISTS app_versoes (
+      id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      plataforma   ENUM('android','ios') NOT NULL DEFAULT 'android',
+      versao       VARCHAR(30)  NOT NULL,
+      changelog    TEXT NULL,
+      apk_url      VARCHAR(500) NOT NULL,
+      publicado_por INT UNSIGNED NULL,
+      criado_em    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      INDEX idx_av_plataforma (plataforma),
+      INDEX idx_av_criado (criado_em)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+  console.log('[Migration] app_versoes: tabela verificada.');
+
   // ── Configs EmailJS — garante existência para todas as empresas ───────────
   const emailjsConfigs = [
     ['emailjs_public_key',           '',      'string',  'Chave pública do EmailJS (Public Key)'],

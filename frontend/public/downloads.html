@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>App Mobile — Ponto Eletrônico</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <style>
+    .dl-hero {
+      display: flex; align-items: center; gap: 24px; padding: 28px;
+      background: linear-gradient(135deg, #1e3a5f, #3b82f6); border-radius: 12px;
+      color: #fff; margin-bottom: 20px; flex-wrap: wrap;
+    }
+    .dl-hero-icon {
+      width: 64px; height: 64px; border-radius: 16px; background: rgba(255,255,255,.15);
+      display: flex; align-items: center; justify-content: center; font-size: 1.8rem; flex-shrink: 0;
+    }
+    .dl-hero-info { flex: 1; min-width: 200px; }
+    .dl-hero-version { font-size: .85rem; opacity: .85; margin-top: 4px; }
+    .dl-btn-baixar {
+      background: #fff; color: #1e3a5f; border-radius: 8px; padding: 12px 22px;
+      font-weight: 700; display: inline-flex; align-items: center; gap: 8px;
+      text-decoration: none; white-space: nowrap;
+    }
+    .dl-changelog {
+      background: #f8faff; border: 1px solid var(--border); border-radius: 8px;
+      padding: 14px 16px; white-space: pre-wrap; font-size: .85rem; line-height: 1.6; margin-top: 6px;
+    }
+    .dl-history-item {
+      border-bottom: 1px solid var(--border); padding: 14px 0;
+    }
+    .dl-history-item:last-child { border-bottom: none; }
+    .dl-history-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+  </style>
+</head>
+<body>
+<div id="sidebarMount"></div>
+<div class="main" id="main">
+  <div id="topbarMount"></div>
+  <div class="page-content">
+
+    <div class="dl-hero" id="dlHero" style="display:none">
+      <div class="dl-hero-icon"><i class="fas fa-mobile-screen-button"></i></div>
+      <div class="dl-hero-info">
+        <div style="font-size:1.1rem;font-weight:700">App Mobile — Android</div>
+        <div class="dl-hero-version" id="dlVersaoAtual">Carregando...</div>
+      </div>
+      <a class="dl-btn-baixar" id="dlBtnBaixar" href="#" target="_blank" rel="noopener">
+        <i class="fas fa-download"></i> Baixar APK
+      </a>
+    </div>
+
+    <div class="card" id="cardSemVersao" style="display:none;text-align:center;padding:40px 24px">
+      <i class="fas fa-mobile-alt" style="font-size:2.5rem;color:var(--text-muted);margin-bottom:12px;display:block"></i>
+      <p class="text-muted">Nenhuma versão do app mobile publicada ainda.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fas fa-file-alt" style="color:#3b82f6"></i> Novidades desta versão</span>
+      </div>
+      <div class="dl-changelog" id="dlChangelogAtual">—</div>
+    </div>
+
+    <div class="card" id="cardPublicar" style="display:none">
+      <div class="card-header">
+        <span class="card-title"><i class="fas fa-cloud-upload-alt" style="color:#16a34a"></i> Publicar nova versão</span>
+        <span class="badge badge-danger"><i class="fas fa-lock"></i> Super Admin</span>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Versão</label>
+          <input class="form-control" id="novaVersao" placeholder="ex: 1.1.0" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Plataforma</label>
+          <select class="form-control" id="novaPlataforma">
+            <option value="android">Android</option>
+            <option value="ios">iOS</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Link do APK/IPA (GitHub Release, etc.)</label>
+        <input class="form-control" id="novaUrl" placeholder="https://github.com/.../releases/download/..." />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Changelog</label>
+        <textarea class="form-control" id="novoChangelog" rows="4" placeholder="O que mudou nessa versão..."></textarea>
+      </div>
+      <button class="btn btn-primary" id="btnPublicar"><i class="fas fa-paper-plane"></i> Publicar versão</button>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fas fa-history" style="color:#64748b"></i> Histórico de versões</span>
+      </div>
+      <div id="dlHistorico"><span class="spinner"></span></div>
+    </div>
+
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/layout.js"></script>
+<script>
+let versoesCache = [];
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.requireAuth()) return;
+  renderLayout('App Mobile');
+
+  if (Auth.isSuperAdmin()) {
+    document.getElementById('cardPublicar').style.display = '';
+  }
+
+  await carregar();
+});
+
+async function carregar() {
+  try {
+    const data = await API.get('/app-versoes', { plataforma: 'android' });
+    versoesCache = data.versoes || [];
+    renderAtual();
+    renderHistorico();
+  } catch (err) {
+    toast(err.data?.erro || 'Erro ao carregar versões.', 'error');
+  }
+}
+
+function renderAtual() {
+  const atual = versoesCache[0];
+  if (!atual) {
+    document.getElementById('dlHero').style.display = 'none';
+    document.getElementById('cardSemVersao').style.display = '';
+    document.getElementById('dlChangelogAtual').textContent = 'Sem versão publicada.';
+    return;
+  }
+  document.getElementById('cardSemVersao').style.display = 'none';
+  document.getElementById('dlHero').style.display = 'flex';
+  document.getElementById('dlVersaoAtual').textContent =
+    `Versão ${atual.versao} · publicada em ${fmtData(atual.criado_em)}`;
+  document.getElementById('dlBtnBaixar').href = atual.apk_url;
+  document.getElementById('dlChangelogAtual').textContent = atual.changelog || 'Sem changelog informado.';
+  // textContent já é seguro contra XSS (não interpreta HTML)
+}
+
+function renderHistorico() {
+  const el = document.getElementById('dlHistorico');
+  if (!versoesCache.length) {
+    el.innerHTML = '<p class="text-muted">Nenhuma versão no histórico.</p>';
+    return;
+  }
+  el.innerHTML = versoesCache.map(v => `
+    <div class="dl-history-item">
+      <div class="dl-history-header">
+        <div>
+          <strong>v${escHtml(v.versao)}</strong>
+          <span class="badge badge-gray" style="margin-left:8px">${escHtml(v.plataforma)}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="text-sm text-muted">${fmtDataHora(v.criado_em)} · ${escHtml(v.publicado_por_nome || 'Sistema')}</span>
+          <a class="btn btn-xs btn-outline" href="${v.apk_url}" target="_blank" rel="noopener"><i class="fas fa-download"></i></a>
+          ${Auth.isSuperAdmin() ? `<button class="btn btn-xs btn-outline" style="color:#dc2626" onclick="excluirVersao(${v.id})"><i class="fas fa-trash"></i></button>` : ''}
+        </div>
+      </div>
+      ${v.changelog ? `<div class="text-sm text-muted" style="margin-top:6px">${escHtml(v.changelog)}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+async function excluirVersao(id) {
+  if (!confirm('Remover esta versão do histórico?')) return;
+  try {
+    await API.delete(`/app-versoes/${id}`);
+    toast('Versão removida.', 'success');
+    await carregar();
+  } catch (err) {
+    toast(err.data?.erro || 'Erro ao remover.', 'error');
+  }
+}
+
+document.getElementById('btnPublicar')?.addEventListener('click', async () => {
+  const versao     = document.getElementById('novaVersao').value.trim();
+  const plataforma = document.getElementById('novaPlataforma').value;
+  const apk_url    = document.getElementById('novaUrl').value.trim();
+  const changelog  = document.getElementById('novoChangelog').value.trim();
+
+  if (!versao || !apk_url) {
+    toast('Preencha versão e link do arquivo.', 'warning');
+    return;
+  }
+
+  try {
+    await API.post('/app-versoes', { versao, plataforma, apk_url, changelog });
+    toast('Versão publicada com sucesso!', 'success');
+    document.getElementById('novaVersao').value = '';
+    document.getElementById('novaUrl').value = '';
+    document.getElementById('novoChangelog').value = '';
+    await carregar();
+  } catch (err) {
+    toast(err.data?.erro || 'Erro ao publicar versão.', 'error');
+  }
+});
+</script>
+</body>
+</html>

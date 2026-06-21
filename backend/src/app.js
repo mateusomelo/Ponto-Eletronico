@@ -91,6 +91,7 @@ app.use('/api/notificacoes',  require('./routes/notificacoes'));
 app.use('/api/empresas',      require('./routes/empresas'));
 app.use('/api/stripe',        require('./routes/stripe'));
 app.use('/api/superadmin',    require('./routes/superadmin'));
+app.use('/api/app-versoes',   require('./routes/appVersoes'));
 
 // ── Health check ─────────────────────────────────────────
 app.get('/api/health', (req, res) => {
