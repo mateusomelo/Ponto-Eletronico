@@ -497,17 +497,21 @@ async function enviarComprovante(req, res) {
     const sucesso = resp.ok;
     const erroMsg = sucesso ? null : await resp.text();
 
-    await pool.query(
-      `INSERT INTO comprovantes_email (registro_id, usuario_id, company_id, email_para, tipo, sucesso, erro_msg)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [registroId, registro.usuario_id, cid, registro.usuario_email, tipo, sucesso ? 1 : 0, erroMsg]
-    );
+    // comprovantes_email.company_id é NOT NULL — super_admin (sem empresa)
+    // não tem como ser registrado ali, mas o e-mail já foi enviado normalmente.
+    if (cid) {
+      await pool.query(
+        `INSERT INTO comprovantes_email (registro_id, usuario_id, company_id, email_para, tipo, sucesso, erro_msg)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [registroId, registro.usuario_id, cid, registro.usuario_email, tipo, sucesso ? 1 : 0, erroMsg]
+      );
+    }
 
     if (!sucesso) console.error(`[Ponto] EmailJS comprovante falhou (registro ${registroId}):`, erroMsg);
     return res.json({ enviado: sucesso });
   } catch (err) {
     console.error('[Ponto] enviarComprovante:', err);
-    return res.status(500).json({ erro: 'Erro interno.', debug: err.message, stack: err.stack });
+    return res.status(500).json({ erro: 'Erro interno.' });
   }
 }
 
