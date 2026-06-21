@@ -6,8 +6,8 @@ function renderLayout(pageTitle) {
   const sidebar = `
   <nav class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <div class="sidebar-logo"><i class="fas fa-fingerprint" style="color:#3b82f6"></i></div>
-      <span class="sidebar-title">Ponto Eletrônico</span>
+      <div class="sidebar-logo"><img src="/img/logo-icon.png" alt="PontoControl" style="width:100%;height:100%;object-fit:contain" /></div>
+      <span class="sidebar-title">PontoControl</span>
     </div>
 
     <div class="sidebar-nav">

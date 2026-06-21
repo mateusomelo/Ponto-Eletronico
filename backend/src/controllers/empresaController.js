@@ -68,7 +68,7 @@ async function seedEmpresaDefaults(empresaId, empresaNome, empresaCnpj) {
     ['emailjs_service_id',           '',      'string',  'ID do serviço EmailJS (Service ID)'],
     ['emailjs_template_entrada_id',  '',      'string',  'ID do template de entrada no EmailJS'],
     ['emailjs_template_saida_id',    '',      'string',  'ID do template de saída no EmailJS'],
-    ['emailjs_from_name',            'Ponto Eletrônico', 'string', 'Nome do remetente no e-mail'],
+    ['emailjs_from_name',            'PontoControl', 'string', 'Nome do remetente no e-mail'],
     ['emailjs_reply_to',             '',      'string',  'E-mail de resposta (reply-to)'],
     ['comprovante_enviar_entrada',   'false', 'boolean', 'Enviar comprovante por e-mail após entrada'],
     ['comprovante_enviar_saida',     'false', 'boolean', 'Enviar comprovante por e-mail após saída'],

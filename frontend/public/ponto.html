@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Registrar Ponto — Ponto Eletrônico</title>
+  <link rel="icon" type="image/png" href="/img/favicon-32x32.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <title>Registrar Ponto — PontoControl</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" />
   <link rel="stylesheet" href="css/main.css" />
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
@@ -858,7 +860,7 @@ async function enviarComprovante(tipo, registro) {
       dispositivo:       emailjsCfg.incluirDispositivo ? (registro.dispositivo || 'Desconhecido') : '',
       enviado_em:        new Date().toLocaleString('pt-BR', { timeZone: empresaTZ }),
       reply_to:          emailjsCfg.replyTo || user.email,
-      from_name:         emailjsCfg.fromName || 'Ponto Eletrônico',
+      from_name:         emailjsCfg.fromName || 'PontoControl',
     };
 
     emailjs.init(emailjsCfg.publicKey);

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "mobile",
+    "name": "PontoControl",
     "slug": "mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -53,6 +53,15 @@
         {
           "icon": "./assets/icon.png",
           "color": "#1e3a5f"
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 260,
+          "resizeMode": "contain",
+          "backgroundColor": "#f0f4f8"
         }
       ]
     ],

@@ -341,7 +341,7 @@ async function emailConfig(req, res) {
         incluirDispositivo: true,
         incluirProtocolo:   true,
         incluirLogo:        true,
-        fromName:   'Ponto Eletrônico',
+        fromName:   'PontoControl',
         replyTo:    '',
         backendUrl,
         empresaNome,
@@ -383,7 +383,7 @@ async function emailConfig(req, res) {
       publicKey:          pk,
       serviceId:          si,
       templateId:         ti,
-      fromName:           cfg.emailjs_from_name || 'Ponto Eletrônico',
+      fromName:           cfg.emailjs_from_name || 'PontoControl',
       replyTo:            cfg.emailjs_reply_to  || '',
       enviarEntrada:      cfg.comprovante_enviar_entrada   === 'true',
       enviarSaida:        cfg.comprovante_enviar_saida     === 'true',
@@ -485,7 +485,7 @@ async function enviarComprovante(req, res) {
       dispositivo: registro.dispositivo || 'Mobile',
       enviado_em: new Date().toLocaleString('pt-BR', { timeZone: tz }),
       reply_to: registro.usuario_email,
-      from_name: 'Ponto Eletrônico',
+      from_name: 'PontoControl',
     };
 
     const resp = await fetch('https://api.emailjs.com/api/v1.0/email/send', {

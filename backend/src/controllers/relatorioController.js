@@ -1,6 +1,19 @@
 const { pool } = require('../database/connection');
 const PDFDocument = require('pdfkit');
 const xl = require('excel4node');
+const path = require('path');
+const fs = require('fs');
+
+const LOGO_ICON = path.join(__dirname, '../assets/logo-icon.png');
+
+// Marca "PontoControl" no rodapé de cada página gerada (relatórios, fechamentos).
+function rodapePontoControl(doc, pageWidth = 595, marginRight = 50) {
+  try {
+    if (fs.existsSync(LOGO_ICON)) doc.image(LOGO_ICON, pageWidth - marginRight - 90, doc.page.height - 30, { width: 12 });
+  } catch { /* logo é só um adorno — segue sem ela se falhar */ }
+  doc.fontSize(7).fillColor('#94a3b8')
+     .text('Gerado por PontoControl', pageWidth - marginRight - 74, doc.page.height - 27, { width: 80 });
+}
 
 async function getTimezone(company_id) {
   try {
@@ -20,6 +33,9 @@ function fmtDataHora(dt, tz) {
 }
 
 function cabecalhoPDF(doc, titulo, empresa = 'Empresa S.A.') {
+  try {
+    if (fs.existsSync(LOGO_ICON)) doc.image(LOGO_ICON, 50, 40, { width: 28 });
+  } catch { /* segue sem a logo se falhar */ }
   doc.fontSize(18).fillColor('#1e3a5f').text(empresa, { align: 'center' });
   doc.fontSize(13).fillColor('#333').text(titulo, { align: 'center' });
   doc.fontSize(9).fillColor('#888').text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, { align: 'center' });
@@ -113,6 +129,9 @@ async function exportarPDF(req, res) {
     doc.pipe(res);
 
     // ── Cabeçalho da primeira página ─────────────────────────────
+    try {
+      if (fs.existsSync(LOGO_ICON)) doc.image(LOGO_ICON, MARGIN, MARGIN, { width: 24 });
+    } catch { /* segue sem a logo se falhar */ }
     doc.fontSize(18).fillColor('#1e3a5f').text(empresaNome, MARGIN, MARGIN, { width: USABLE_W, align: 'center' });
     doc.fontSize(11).fillColor('#444444').text('Relatório de Registro de Ponto', { width: USABLE_W, align: 'center' });
     doc.fontSize(8).fillColor('#999999').text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, { width: USABLE_W, align: 'center' });
@@ -183,12 +202,13 @@ async function exportarPDF(req, res) {
     doc.fontSize(8).fillColor('#555555')
        .text(`Total de registros: ${rows.length}`, MARGIN, y, { width: USABLE_W, align: 'right' });
 
-    // ── Numeração de páginas ──────────────────────────────────────
+    // ── Numeração de páginas + marca PontoControl ──────────────────
     const range = doc.bufferedPageRange();
     for (let i = range.start; i < range.start + range.count; i++) {
       doc.switchToPage(i);
       doc.fontSize(7).fillColor('#aaaaaa')
          .text(`Página ${i - range.start + 1} de ${range.count}`, MARGIN, PAGE_H - 28, { width: USABLE_W, align: 'center' });
+      rodapePontoControl(doc, PAGE_W, MARGIN);
     }
 
     doc.end();

@@ -1,9 +1,8 @@
 import React, { useRef, useState } from 'react';
 import {
-  ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet,
+  ActivityIndicator, Image, KeyboardAvoidingView, Platform, StyleSheet,
   Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
-import { FontAwesome5 } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { ApiError } from '../api/client';
 import CampoSenha from '../components/CampoSenha';
@@ -39,10 +38,7 @@ export default function LoginScreen({ navigation }: any) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.logoBox}>
-        <View style={styles.logoIcon}>
-          <FontAwesome5 name="fingerprint" size={26} color="#3b82f6" />
-        </View>
-        <Text style={styles.title}>Ponto Eletrônico</Text>
+        <Image source={require('../../assets/splash-icon.png')} style={styles.logoImg} resizeMode="contain" />
       </View>
 
       <View style={styles.form}>
@@ -87,12 +83,7 @@ export default function LoginScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f0f4f8', justifyContent: 'center', padding: 24 },
   logoBox: { alignItems: 'center', marginBottom: 32 },
-  logoIcon: {
-    width: 56, height: 56, borderRadius: 16, backgroundColor: '#1e3a5f',
-    alignItems: 'center', justifyContent: 'center', marginBottom: 12,
-  },
-  logoIconText: { fontSize: 26, color: '#fff' },
-  title: { fontSize: 20, fontWeight: '700', color: '#1e293b' },
+  logoImg: { width: 220, height: 56 },
   form: { backgroundColor: '#fff', borderRadius: 16, padding: 24 },
   label: { fontSize: 13, color: '#475569', marginBottom: 6, marginTop: 12 },
   input: {

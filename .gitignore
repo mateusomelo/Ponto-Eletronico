@@ -35,3 +35,4 @@ Thumbs.db
 verify_local.js
 verify_site.js
 screenshots/
+*.apk

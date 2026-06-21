@@ -212,7 +212,7 @@ async function solicitarReset(req, res) {
 
   try {
     const [rows] = await pool.query(
-      `SELECT u.id, u.nome, COALESCE(e.nome, 'Ponto Eletrônico') AS empresa_nome
+      `SELECT u.id, u.nome, COALESCE(e.nome, 'PontoControl') AS empresa_nome
        FROM usuarios u
        LEFT JOIN empresas e ON e.id = u.company_id
        WHERE u.email = ? AND u.ativo = 1 LIMIT 1`,

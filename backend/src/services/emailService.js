@@ -14,7 +14,7 @@ function criarTransporter() {
 }
 
 const FROM = () =>
-  process.env.EMAIL_FROM || `"Ponto Eletrônico" <${process.env.EMAIL_USER || 'noreply@ponto.com'}>`;
+  process.env.EMAIL_FROM || `"PontoControl" <${process.env.EMAIL_USER || 'noreply@ponto.com'}>`;
 
 const BASE_URL = () => (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/$/, '');
 
@@ -25,10 +25,8 @@ function wrapHtml(titulo, corpo) {
 <style>
   body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f1f5f9;margin:0;padding:32px 16px}
   .card{background:#fff;border-radius:16px;max-width:520px;margin:0 auto;padding:40px 36px;box-shadow:0 4px 24px rgba(0,0,0,.07)}
-  .logo{display:flex;align-items:center;gap:12px;margin-bottom:28px}
-  .logo-icon{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#1e3a5f,#3b82f6);display:flex;align-items:center;justify-content:center}
-  .logo-icon svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2}
-  .logo-text{font-size:1.05rem;font-weight:700;color:#1e293b}
+  .logo{margin-bottom:28px}
+  .logo img{height:36px;display:block}
   h2{font-size:1.2rem;color:#1e293b;margin:0 0 12px}
   p{color:#475569;line-height:1.65;margin:0 0 14px;font-size:.9rem}
   .btn{display:inline-block;padding:13px 26px;background:#3b82f6;color:#fff !important;text-decoration:none;border-radius:10px;font-weight:600;font-size:.9rem;margin:6px 0 18px}
@@ -41,14 +39,11 @@ function wrapHtml(titulo, corpo) {
 <body>
 <div class="card">
   <div class="logo">
-    <div class="logo-icon">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
-    </div>
-    <span class="logo-text">Ponto Eletrônico</span>
+    <img src="${BASE_URL()}/img/logo.png" alt="PontoControl" />
   </div>
   <h2>${titulo}</h2>
   ${corpo}
-  <div class="footer">© ${new Date().getFullYear()} Ponto Eletrônico &nbsp;·&nbsp; Este é um e-mail automático, não responda.</div>
+  <div class="footer">© ${new Date().getFullYear()} PontoControl &nbsp;·&nbsp; Este é um e-mail automático, não responda.</div>
 </div>
 </body></html>`;
 }
@@ -95,7 +90,7 @@ async function enviarResetSenhaEmailJS(email, nome, token, { empresaNome, ip } =
       to_email:          email,
       to_name:           nome,
       nome_usuario:      nome,
-      empresa_nome:      empresaNome || 'Ponto Eletrônico',
+      empresa_nome:      empresaNome || 'PontoControl',
       reset_link:        url,
       reset_url:         url,
       data_solicitacao:  data,
@@ -127,7 +122,7 @@ async function enviarResetSenha(email, nome, token) {
   const url = `${BASE_URL()}/redefinir-senha.html?token=${token}`;
   return enviarEmail({
     para:   email,
-    assunto: 'Redefinição de senha — Ponto Eletrônico',
+    assunto: 'Redefinição de senha — PontoControl',
     html: wrapHtml('Redefinição de senha', `
       <p>Olá, <strong>${nome}</strong>!</p>
       <p>Recebemos uma solicitação para redefinir a senha da sua conta.</p>
@@ -144,7 +139,7 @@ async function enviarAlertaFatura(email, nome, valor, dataVenc, diasRestantes) {
     : `Sua fatura vence em ${diasRestantes} dia${diasRestantes > 1 ? 's' : ''}`;
   return enviarEmail({
     para:   email,
-    assunto: `${titulo} — Ponto Eletrônico`,
+    assunto: `${titulo} — PontoControl`,
     html: wrapHtml(titulo, `
       <p>Olá, <strong>${nome}</strong>!</p>
       <div class="alert">${titulo}<br>Valor: <strong>${valor}</strong> · Vencimento: <strong>${dataVenc}</strong></div>
@@ -187,7 +182,7 @@ async function enviarEmpresaReativada(email, nome, empresaNome) {
 async function enviarAlteracaoSenha(email, nome) {
   return enviarEmail({
     para:   email,
-    assunto: 'Sua senha foi alterada — Ponto Eletrônico',
+    assunto: 'Sua senha foi alterada — PontoControl',
     html: wrapHtml('Senha alterada', `
       <p>Olá, <strong>${nome}</strong>!</p>
       <p>A senha da sua conta foi alterada com sucesso.</p>
@@ -201,7 +196,7 @@ async function enviarBoasVindas(email, nomeAdmin, nomeEmpresa, trialDias) {
   const url = `${BASE_URL()}/dashboard.html`;
   return enviarEmail({
     para:   email,
-    assunto: `Bem-vindo ao Ponto Eletrônico — ${nomeEmpresa}`,
+    assunto: `Bem-vindo ao PontoControl — ${nomeEmpresa}`,
     html: wrapHtml(`Bem-vindo, ${nomeAdmin}!`, `
       <p>Sua conta foi criada com sucesso! 🎉</p>
       <div class="alert success">
@@ -216,7 +211,7 @@ async function enviarBoasVindas(email, nomeAdmin, nomeEmpresa, trialDias) {
         3. Registre o primeiro ponto
       </p>
     `),
-    texto: `Bem-vindo ao Ponto Eletrônico! Acesse: ${url}`,
+    texto: `Bem-vindo ao PontoControl! Acesse: ${url}`,
   });
 }
 
