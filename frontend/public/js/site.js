@@ -20,7 +20,7 @@ function renderNavbar(active) {
   document.getElementById('navbarMount').innerHTML = `
     <nav class="navbar">
       <div class="navbar-inner">
-        <a class="navbar-logo" href="index.html"><img src="img/logo.png" alt="PontoControl" /></a>
+        <a class="navbar-logo" href="index.html"><img src="img/logo-preto.png" alt="PontoControl" /></a>
         <div class="navbar-links" id="navLinks">
           ${links.map(l => `<a href="${l.href}" class="${l.key === active ? 'active' : ''}">${l.label}</a>`).join('')}
           <a href="${SISTEMA_URL}" class="btn btn-primary" style="padding:10px 20px">Acessar Sistema</a>

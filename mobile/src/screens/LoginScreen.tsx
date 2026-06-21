@@ -38,7 +38,7 @@ export default function LoginScreen({ navigation }: any) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.logoBox}>
-        <Image source={require('../../assets/splash-icon.png')} style={styles.logoImg} resizeMode="contain" />
+        <Image source={require('../../assets/splash-icon-preto.png')} style={styles.logoImg} resizeMode="contain" />
       </View>
 
       <View style={styles.form}>

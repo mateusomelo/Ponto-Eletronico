@@ -771,7 +771,7 @@ async function montarPDFFechamento(doc, f, registros, resumo, req, assinaturas, 
 
   // Marca "PontoControl" no rodapé (sistema que gerou o documento)
   try {
-    const logoPath = path.join(__dirname, '../assets/logo-icon.png');
+    const logoPath = path.join(__dirname, '../assets/logo-icon-preto.png');
     if (fs.existsSync(logoPath)) doc.image(logoPath, 50, 567, { width: 11 });
   } catch { /* segue sem a marca se falhar */ }
   doc.fontSize(7).fillColor('#94a3b8').text('Gerado por PontoControl', 65, 570, { width: 120 });

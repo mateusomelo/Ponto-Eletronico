@@ -4,7 +4,8 @@ const xl = require('excel4node');
 const path = require('path');
 const fs = require('fs');
 
-const LOGO_ICON = path.join(__dirname, '../assets/logo-icon.png');
+// Logo preta — PDF tem fundo branco, a versão colorida (com texto cinza claro) fica pouco visível.
+const LOGO_ICON = path.join(__dirname, '../assets/logo-icon-preto.png');
 
 // Marca "PontoControl" no rodapé de cada página gerada (relatórios, fechamentos).
 function rodapePontoControl(doc, pageWidth = 595, marginRight = 50) {

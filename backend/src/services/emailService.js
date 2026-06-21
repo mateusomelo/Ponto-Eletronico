@@ -39,7 +39,7 @@ function wrapHtml(titulo, corpo) {
 <body>
 <div class="card">
   <div class="logo">
-    <img src="${BASE_URL()}/img/logo.png" alt="PontoControl" />
+    <img src="${BASE_URL()}/img/logo-preto.png" alt="PontoControl" />
   </div>
   <h2>${titulo}</h2>
   ${corpo}

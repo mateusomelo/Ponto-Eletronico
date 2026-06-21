@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://ponto-eletronicoo.netlify.app/sitemap.xml
+Sitemap: https://pontocontrol.netlify.app/sitemap.xml
