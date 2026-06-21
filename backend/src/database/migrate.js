@@ -471,6 +471,26 @@ async function runIncrementalMigrations(conn) {
   `);
   console.log('[Migration] app_versoes: tabela verificada.');
 
+  // ── Assinaturas digitais do fechamento de folha ──────────────────────────
+  await conn.query(`
+    CREATE TABLE IF NOT EXISTS fechamento_assinaturas (
+      id              INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      fechamento_id   INT UNSIGNED NOT NULL,
+      tipo            ENUM('colaborador','responsavel') NOT NULL,
+      usuario_id      INT UNSIGNED NOT NULL,
+      nome_assinante  VARCHAR(150) NOT NULL,
+      cargo_assinante VARCHAR(100) NULL,
+      assinatura_url  VARCHAR(500) NOT NULL,
+      assinado_em     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      assinado_ip     VARCHAR(45) NULL,
+      PRIMARY KEY (id),
+      INDEX idx_fa_fechamento (fechamento_id),
+      INDEX idx_fa_usuario    (usuario_id),
+      UNIQUE KEY uq_fechamento_tipo (fechamento_id, tipo)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+  console.log('[Migration] fechamento_assinaturas: tabela verificada.');
+
   // ── Configs EmailJS — garante existência para todas as empresas ───────────
   const emailjsConfigs = [
     ['emailjs_public_key',           '',      'string',  'Chave pública do EmailJS (Public Key)'],

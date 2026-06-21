@@ -10,6 +10,7 @@ router.use(requirePlan('profissional', 'enterprise'));
 // Listagem e detalhes (acesso controlado no controller)
 router.get ('/',                     ctrl.listar);
 router.get ('/usuarios-disponiveis', authorize('fechamento.criar'), ctrl.usuariosDisponiveis);
+router.get ('/assinaturas/historico', ctrl.historicoAssinaturas);
 router.get ('/:id',                  ctrl.detalhe);
 router.get ('/:id/pdf',              ctrl.exportarPDF);
 router.get ('/:id/excel',            ctrl.exportarExcel);

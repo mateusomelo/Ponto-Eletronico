@@ -2,8 +2,34 @@ const { pool }        = require('../database/connection');
 const LogAcesso       = require('../models/LogAcesso');
 const PDFDocument     = require('pdfkit');
 const xl              = require('excel4node');
-const { getClientIp } = require('../utils/ip');
-const { enviarPush }  = require('../services/pushService');
+const fs              = require('fs');
+const path            = require('path');
+const { v4: uuidv4 }  = require('uuid');
+const { getClientIp }   = require('../utils/ip');
+const { enviarPush }    = require('../services/pushService');
+const { UPLOADS_ROOT }  = require('../middlewares/upload');
+const { enviarFechamentoAssinadoEmail } = require('../services/emailService');
+
+// Salva a assinatura desenhada (PNG em base64, ex: "data:image/png;base64,...")
+// em disco e devolve a URL pública (mesmo padrão de foto_registro/avatars).
+function salvarAssinaturaImagem(dataUrl) {
+  const match = /^data:image\/png;base64,(.+)$/.exec(dataUrl || '');
+  if (!match) return null;
+  const dir = path.join(UPLOADS_ROOT, 'assinaturas');
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  const filename = `${uuidv4()}.png`;
+  fs.writeFileSync(path.join(dir, filename), Buffer.from(match[1], 'base64'));
+  return `/uploads/assinaturas/${filename}`;
+}
+
+async function buscarAssinaturas(fechamentoId) {
+  const [rows] = await pool.query(
+    `SELECT tipo, usuario_id, nome_assinante, cargo_assinante, assinatura_url, assinado_em
+     FROM fechamento_assinaturas WHERE fechamento_id = ?`,
+    [fechamentoId]
+  );
+  return rows;
+}
 
 // ── Timezone helper (mysql2 com timezone:'-03:00' retorna Dates em UTC) ──
 function toBRT(dt) {
@@ -259,12 +285,51 @@ async function detalhe(req, res) {
       return res.status(403).json({ erro: 'Acesso negado.' });
     }
 
-    const registros = await buscarRegistrosFechamento(f, req);
-    const resumo    = calcularResumo(registros, f.competencia);
+    const registros   = await buscarRegistrosFechamento(f, req);
+    const resumo       = calcularResumo(registros, f.competencia);
+    const assinaturas  = await buscarAssinaturas(f.id);
 
-    return res.json({ fechamento: semIpFechamento(f), registros, resumo });
+    return res.json({ fechamento: semIpFechamento(f), registros, resumo, assinaturas });
   } catch (err) {
     console.error('[Fechamento] detalhe:', err);
+    return res.status(500).json({ erro: 'Erro interno.' });
+  }
+}
+
+// GET /api/fechamento/assinaturas/historico — quem assinou, quando, pendências
+async function historicoAssinaturas(req, res) {
+  try {
+    const cid = req.user.company_id;
+    const params = [];
+    let where = 'WHERE 1=1';
+    if (cid) { where += ' AND fu.company_id = ?'; params.push(cid); }
+    if (req.user.cargo_nivel >= 3) { where += ' AND f.usuario_id = ?'; params.push(req.user.id); }
+
+    const [rows] = await pool.query(
+      `SELECT f.id AS fechamento_id, f.competencia, f.status,
+              fu.nome AS usuario_nome,
+              fa_col.nome_assinante  AS colaborador_nome,  fa_col.assinado_em  AS colaborador_assinado_em,
+              fa_resp.nome_assinante AS responsavel_nome, fa_resp.assinado_em AS responsavel_assinado_em
+       FROM fechamentos_folha f
+       JOIN usuarios fu ON fu.id = f.usuario_id
+       LEFT JOIN fechamento_assinaturas fa_col  ON fa_col.fechamento_id  = f.id AND fa_col.tipo  = 'colaborador'
+       LEFT JOIN fechamento_assinaturas fa_resp ON fa_resp.fechamento_id = f.id AND fa_resp.tipo = 'responsavel'
+       ${where} AND f.status NOT IN ('rascunho')
+       ORDER BY f.competencia DESC, fu.nome ASC
+       LIMIT 200`,
+      params
+    );
+
+    const historico = rows.map(r => ({
+      ...r,
+      pendencia: r.status === 'enviado' && !r.colaborador_nome ? 'colaborador'
+        : r.status === 'assinado' && !r.responsavel_nome ? 'responsavel'
+        : null,
+    }));
+
+    return res.json({ historico });
+  } catch (err) {
+    console.error('[Fechamento] historicoAssinaturas:', err);
     return res.status(500).json({ erro: 'Erro interno.' });
   }
 }
@@ -372,6 +437,12 @@ async function enviar(req, res) {
 async function assinar(req, res) {
   try {
     const { id } = req.params;
+    const { assinatura_imagem } = req.body;
+    const assinaturaUrl = salvarAssinaturaImagem(assinatura_imagem);
+    if (!assinaturaUrl) {
+      return res.status(400).json({ erro: 'Assinatura desenhada é obrigatória (PNG em base64).' });
+    }
+
     const [[f]] = await pool.query('SELECT * FROM fechamentos_folha WHERE id = ?', [id]);
     if (!f) return res.status(404).json({ erro: 'Fechamento não encontrado.' });
     if (req.user.cargo_nivel >= 3 && f.usuario_id !== req.user.id) {
@@ -382,6 +453,21 @@ async function assinar(req, res) {
     }
 
     const ip = getClientIp(req);
+    const tipo = (f.usuario_id === req.user.id) ? 'colaborador' : 'responsavel';
+    const [[signer]] = await pool.query(
+      `SELECT u.nome, c.nome AS cargo_nome FROM usuarios u LEFT JOIN cargos c ON c.id = u.cargo_id WHERE u.id = ?`,
+      [req.user.id]
+    );
+
+    await pool.query(
+      `INSERT INTO fechamento_assinaturas (fechamento_id, tipo, usuario_id, nome_assinante, cargo_assinante, assinatura_url, assinado_ip)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE usuario_id = VALUES(usuario_id), nome_assinante = VALUES(nome_assinante),
+         cargo_assinante = VALUES(cargo_assinante), assinatura_url = VALUES(assinatura_url),
+         assinado_em = NOW(), assinado_ip = VALUES(assinado_ip)`,
+      [id, tipo, req.user.id, signer?.nome || '', signer?.cargo_nome || null, assinaturaUrl, ip]
+    );
+
     await pool.query(
       `UPDATE fechamentos_folha SET status = 'assinado', assinado_em = NOW(), assinado_ip = ? WHERE id = ?`,
       [ip, id]
@@ -460,15 +546,36 @@ async function rejeitar(req, res) {
   }
 }
 
-// PATCH /api/fechamento/:id/fechar — fechamento definitivo (após assinatura)
+// PATCH /api/fechamento/:id/fechar — fechamento definitivo (assinatura do responsável)
 async function fechar(req, res) {
   try {
     const { id } = req.params;
-    const [[f]] = await pool.query('SELECT * FROM fechamentos_folha WHERE id = ?', [id]);
+    const { assinatura_imagem } = req.body;
+    const assinaturaUrl = salvarAssinaturaImagem(assinatura_imagem);
+    if (!assinaturaUrl) {
+      return res.status(400).json({ erro: 'Assinatura desenhada do responsável é obrigatória (PNG em base64).' });
+    }
+
+    const [[f]] = await pool.query(`${SELECT_FECHAMENTO} WHERE f.id = ?`, [id]);
     if (!f) return res.status(404).json({ erro: 'Fechamento não encontrado.' });
     if (f.status !== 'assinado') {
       return res.status(409).json({ erro: 'O relatório precisa ser assinado pelo funcionário antes do fechamento definitivo.' });
     }
+
+    const ip = getClientIp(req);
+    const [[signer]] = await pool.query(
+      `SELECT u.nome, c.nome AS cargo_nome FROM usuarios u LEFT JOIN cargos c ON c.id = u.cargo_id WHERE u.id = ?`,
+      [req.user.id]
+    );
+
+    await pool.query(
+      `INSERT INTO fechamento_assinaturas (fechamento_id, tipo, usuario_id, nome_assinante, cargo_assinante, assinatura_url, assinado_ip)
+       VALUES (?, 'responsavel', ?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE usuario_id = VALUES(usuario_id), nome_assinante = VALUES(nome_assinante),
+         cargo_assinante = VALUES(cargo_assinante), assinatura_url = VALUES(assinatura_url),
+         assinado_em = NOW(), assinado_ip = VALUES(assinado_ip)`,
+      [id, req.user.id, signer?.nome || '', signer?.cargo_nome || null, assinaturaUrl, ip]
+    );
 
     await pool.query(
       `UPDATE fechamentos_folha
@@ -492,10 +599,25 @@ async function fechar(req, res) {
       usuario_id: req.user.id,
       acao: 'fechamento.fechado_definitivo',
       descricao: `Fechamento ID ${id} encerrado definitivamente`,
-      ip: getClientIp(req), user_agent: req.headers['user-agent'] || '',
+      ip, user_agent: req.headers['user-agent'] || '',
     });
 
-    return res.json({ mensagem: 'Folha fechada definitivamente.' });
+    // Envio automático do PDF assinado por e-mail ao colaborador.
+    if (f.usuario_email) {
+      try {
+        const pdfBuffer = await gerarPDFBuffer(f, req, req.user.company_id);
+        const enviado = await enviarFechamentoAssinadoEmail(f.usuario_email, f.usuario_nome || '', label, pdfBuffer);
+        await LogAcesso.registrar({
+          usuario_id: f.usuario_id,
+          acao: 'fechamento.email_enviado',
+          descricao: `Cópia do fechamento ID ${id} ${enviado ? 'enviada' : 'falhou ao enviar'} para ${f.usuario_email}`,
+        });
+      } catch (emailErr) {
+        console.error('[Fechamento] envio automatico de e-mail falhou:', emailErr.message);
+      }
+    }
+
+    return res.json({ mensagem: 'Folha fechada definitivamente. O colaborador recebeu uma cópia assinada por e-mail.' });
   } catch (err) {
     console.error('[Fechamento] fechar:', err);
     return res.status(500).json({ erro: 'Erro interno.' });
@@ -570,6 +692,115 @@ const STATUS_LABEL = {
 };
 
 // GET /api/fechamento/:id/pdf
+// Monta o conteúdo do PDF do fechamento no `doc` passado (não chama doc.end()).
+// Usado tanto pelo download direto (exportarPDF) quanto pelo e-mail automático.
+async function montarPDFFechamento(doc, f, registros, resumo, req, assinaturas, empresa) {
+  const mes = new Date(f.competencia + '-01').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
+  // Logo + nome da empresa
+  if (empresa?.logo) {
+    try {
+      const logoPath = path.join(UPLOADS_ROOT, empresa.logo.replace(/^\/uploads\//, ''));
+      if (fs.existsSync(logoPath)) doc.image(logoPath, 50, 40, { fit: [60, 60] });
+    } catch { /* logo opcional — segue sem ela */ }
+  }
+  doc.fontSize(14).fillColor('#1e3a5f').text(empresa?.nome || '', 120, 45, { width: 600 });
+  doc.fontSize(16).fillColor('#1e3a5f').text('Relatório de Ponto — Fechamento de Folha', 120, 64, { width: 600 });
+  doc.y = 110;
+
+  doc.fontSize(11).fillColor('#333').text(`Funcionário: ${f.usuario_nome || '-'}`, { align: 'center' });
+  const infoLinha = [
+    f.usuario_cpf       ? `CPF: ${f.usuario_cpf}`         : null,
+    f.cargo_nome        ? `Cargo: ${f.cargo_nome}`         : null,
+    f.usuario_email     ? `E-mail: ${f.usuario_email}`     : null,
+    f.usuario_telefone  ? `Tel.: ${f.usuario_telefone}`    : null,
+  ].filter(Boolean).join('   |   ');
+  if (infoLinha) doc.fontSize(9).fillColor('#444').text(infoLinha, { align: 'center' });
+  doc.fontSize(10).fillColor('#333').text(`Competência: ${mes}`, { align: 'center' });
+  doc.fontSize(9).fillColor('#555')
+     .text(`Status: ${STATUS_LABEL[f.status] || f.status}  |  Gerado em: ${new Date().toLocaleString('pt-BR')}`, { align: 'center' });
+  doc.moveDown(0.5);
+  doc.moveTo(50, doc.y).lineTo(790, doc.y).strokeColor('#1e3a5f').lineWidth(1).stroke();
+  doc.moveDown(0.5);
+
+  // Resumo de horas
+  doc.fontSize(10).fillColor('#333').text(
+    `Trabalhadas: ${resumo.horasTrabalhadas}  |  Previstas: ${resumo.horasPrevistas}  |  Extras: ${resumo.horasExtra}  |  Banco: ${resumo.bancoHoras}  |  Faltas: ${resumo.faltas}  |  Atrasos: ${resumo.atrasos}`,
+    { align: 'center' }
+  );
+  doc.moveDown(0.5);
+
+  if (f.motivo_rejeicao) {
+    doc.fontSize(9).fillColor('#991b1b').text(`✗ Rejeitado: ${f.motivo_rejeicao}`, { align: 'center' });
+    doc.moveDown(0.5);
+  }
+
+  // Tabela
+  const cols  = [50, 175, 270, 360, 440, 540];
+  const heads = ['Data/Hora', 'Tipo', 'Dispositivo', 'Navegador', 'GPS', 'Endereço'];
+  doc.rect(50, doc.y, 740, 16).fill('#1e3a5f');
+  const hy = doc.y - 14;
+  heads.forEach((h, i) => {
+    doc.fontSize(8).fillColor('#fff').text(h, cols[i], hy, { width: (cols[i+1] || 790) - cols[i] - 4 });
+  });
+  doc.moveDown(0.4);
+
+  const temDet = req.user.cargo_nivel <= 2 || req.user.permissoes.includes('registros.detalhes');
+  registros.forEach((r, idx) => {
+    if (doc.y > 540) { doc.addPage({ layout: 'landscape' }); doc.moveDown(0.4); }
+    const rowY = doc.y;
+    doc.rect(50, rowY, 740, 14).fill(idx % 2 === 0 ? '#f0f4ff' : '#fff');
+    const vals = [
+      new Date(r.data_hora).toLocaleString('pt-BR'),
+      r.tipo,
+      r.dispositivo   || '-',
+      r.navegador     || '-',
+      temDet && r.latitude ? `${Number(r.latitude).toFixed(4)}` : '-',
+      r.endereco_aprox ? r.endereco_aprox.substring(0, 60) : '-',
+    ];
+    vals.forEach((v, i) => {
+      doc.fontSize(7.5).fillColor('#333').text(String(v), cols[i], rowY + 2, {
+        width: (cols[i+1] || 790) - cols[i] - 4, ellipsis: true, lineBreak: false,
+      });
+    });
+    doc.y = rowY + 14;
+  });
+
+  doc.moveDown(0.8);
+  doc.fontSize(8).fillColor('#888').text(`Total: ${registros.length} registros`, { align: 'right' });
+
+  // ── Assinaturas ───────────────────────────────────────────
+  const colaborador = assinaturas.find(a => a.tipo === 'colaborador');
+  const responsavel = assinaturas.find(a => a.tipo === 'responsavel');
+
+  if (colaborador || responsavel) {
+    if (doc.y > 430) { doc.addPage({ layout: 'landscape' }); doc.moveDown(0.4); }
+    doc.moveDown(1.2);
+    doc.fontSize(11).fillColor('#1e3a5f').text('Assinaturas', 50, doc.y);
+    doc.moveDown(0.4);
+    const baseY = doc.y;
+
+    [{ a: colaborador, label: 'Colaborador', x: 50 }, { a: responsavel, label: 'Responsável', x: 420 }].forEach(({ a, label, x }) => {
+      doc.fontSize(9).fillColor('#475569').text(label, x, baseY);
+      if (a) {
+        try {
+          const imgPath = path.join(UPLOADS_ROOT, a.assinatura_url.replace(/^\/uploads\//, ''));
+          if (fs.existsSync(imgPath)) doc.image(imgPath, x, baseY + 14, { fit: [280, 70] });
+        } catch { /* segue sem a imagem se falhar */ }
+        doc.fontSize(8).fillColor('#333').text(
+          `${a.nome_assinante}${a.cargo_assinante ? ' — ' + a.cargo_assinante : ''}`, x, baseY + 88, { width: 280 }
+        );
+        doc.fontSize(7.5).fillColor('#64748b').text(
+          `Assinado em ${new Date(a.assinado_em).toLocaleString('pt-BR')}`, x, baseY + 100, { width: 280 }
+        );
+      } else {
+        doc.fontSize(8).fillColor('#94a3b8').text('Pendente', x, baseY + 14);
+      }
+    });
+  }
+}
+
+// GET /api/fechamento/:id/pdf
 async function exportarPDF(req, res) {
   try {
     const { id } = req.params;
@@ -581,97 +812,42 @@ async function exportarPDF(req, res) {
       return res.status(403).json({ erro: 'Acesso negado.' });
     }
 
-    const registros = await buscarRegistrosFechamento(f, req);
-    const resumo    = calcularResumo(registros, f.competencia);
-    const mes = new Date(f.competencia + '-01').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    const registros    = await buscarRegistrosFechamento(f, req);
+    const resumo        = calcularResumo(registros, f.competencia);
+    const assinaturas   = await buscarAssinaturas(f.id);
+    const cid = req.user.company_id;
+    const [[empresa]] = cid ? await pool.query('SELECT nome, logo FROM empresas WHERE id = ?', [cid]) : [[null]];
 
     const doc = new PDFDocument({ margin: 50, size: 'A4', layout: 'landscape' });
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition',
       `attachment; filename="fechamento-${f.competencia}-${(f.usuario_nome || 'geral').replace(/\s+/g, '_')}.pdf"`);
     doc.pipe(res);
-
-    // Cabeçalho
-    doc.fontSize(16).fillColor('#1e3a5f').text('Relatório de Ponto — Fechamento de Folha', { align: 'center' });
-    doc.moveDown(0.3);
-    doc.fontSize(11).fillColor('#333').text(`Funcionário: ${f.usuario_nome || '-'}`, { align: 'center' });
-    const infoLinha = [
-      f.usuario_cpf       ? `CPF: ${f.usuario_cpf}`         : null,
-      f.cargo_nome        ? `Cargo: ${f.cargo_nome}`         : null,
-      f.usuario_email     ? `E-mail: ${f.usuario_email}`     : null,
-      f.usuario_telefone  ? `Tel.: ${f.usuario_telefone}`    : null,
-    ].filter(Boolean).join('   |   ');
-    if (infoLinha) doc.fontSize(9).fillColor('#444').text(infoLinha, { align: 'center' });
-    doc.fontSize(10).fillColor('#333').text(`Competência: ${mes}`, { align: 'center' });
-    doc.fontSize(9).fillColor('#555')
-       .text(`Status: ${STATUS_LABEL[f.status] || f.status}  |  Gerado em: ${new Date().toLocaleString('pt-BR')}`, { align: 'center' });
-    doc.moveDown(0.5);
-    doc.moveTo(50, doc.y).lineTo(790, doc.y).strokeColor('#1e3a5f').lineWidth(1).stroke();
-    doc.moveDown(0.5);
-
-    // Resumo de horas
-    doc.fontSize(10).fillColor('#333').text(
-      `Trabalhadas: ${resumo.horasTrabalhadas}  |  Previstas: ${resumo.horasPrevistas}  |  Extras: ${resumo.horasExtra}  |  Banco: ${resumo.bancoHoras}  |  Faltas: ${resumo.faltas}  |  Atrasos: ${resumo.atrasos}`,
-      { align: 'center' }
-    );
-    doc.moveDown(0.5);
-
-    if (f.assinado_em) {
-      doc.fontSize(9).fillColor('#166534')
-         .text(`✓ Assinado em: ${new Date(f.assinado_em).toLocaleString('pt-BR')}`, { align: 'center' });
-    }
-    if (f.motivo_rejeicao) {
-      doc.fontSize(9).fillColor('#991b1b').text(`✗ Rejeitado: ${f.motivo_rejeicao}`, { align: 'center' });
-    }
-    doc.moveDown(0.5);
-
-    // Tabela
-    const cols  = [50, 175, 270, 360, 440, 540];
-    const heads = ['Data/Hora', 'Tipo', 'Dispositivo', 'Navegador', 'GPS', 'Endereço'];
-    doc.rect(50, doc.y, 740, 16).fill('#1e3a5f');
-    const hy = doc.y - 14;
-    heads.forEach((h, i) => {
-      doc.fontSize(8).fillColor('#fff').text(h, cols[i], hy, { width: (cols[i+1] || 790) - cols[i] - 4 });
-    });
-    doc.moveDown(0.4);
-
-    const temDet = req.user.cargo_nivel <= 2 || req.user.permissoes.includes('registros.detalhes');
-    registros.forEach((r, idx) => {
-      if (doc.y > 540) doc.addPage({ layout: 'landscape' });
-      const rowY = doc.y;
-      doc.rect(50, rowY, 740, 14).fill(idx % 2 === 0 ? '#f0f4ff' : '#fff');
-      const vals = [
-        new Date(r.data_hora).toLocaleString('pt-BR'),
-        r.tipo,
-        r.dispositivo   || '-',
-        r.navegador     || '-',
-        temDet && r.latitude ? `${Number(r.latitude).toFixed(4)}` : '-',
-        r.endereco_aprox ? r.endereco_aprox.substring(0, 60) : '-',
-      ];
-      vals.forEach((v, i) => {
-        doc.fontSize(7.5).fillColor('#333').text(String(v), cols[i], rowY + 2, {
-          width: (cols[i+1] || 790) - cols[i] - 4, ellipsis: true, lineBreak: false,
-        });
-      });
-      doc.y = rowY + 14;
-    });
-
-    doc.moveDown(0.8);
-    doc.fontSize(8).fillColor('#888').text(`Total: ${registros.length} registros`, { align: 'right' });
-
-    // Campo de assinatura manual (se ainda não assinado)
-    if (!['assinado', 'fechado'].includes(f.status)) {
-      doc.moveDown(2);
-      doc.moveTo(100, doc.y).lineTo(360, doc.y).strokeColor('#999').lineWidth(0.5).stroke();
-      doc.moveDown(0.3);
-      doc.fontSize(9).fillColor('#555').text(`Assinatura: ${f.usuario_nome || ''}`, 100);
-    }
-
+    await montarPDFFechamento(doc, f, registros, resumo, req, assinaturas, empresa);
     doc.end();
   } catch (err) {
     console.error('[Fechamento] exportarPDF:', err);
     return res.status(500).json({ erro: 'Erro interno.' });
   }
+}
+
+// Gera o PDF do fechamento em memória (Buffer) — usado para anexar no e-mail
+// automático após a assinatura final, sem precisar de uma requisição HTTP.
+async function gerarPDFBuffer(f, req, companyId) {
+  const registros  = await buscarRegistrosFechamento(f, req);
+  const resumo      = calcularResumo(registros, f.competencia);
+  const assinaturas = await buscarAssinaturas(f.id);
+  const [[empresa]] = companyId
+    ? await pool.query('SELECT nome, logo FROM empresas WHERE id = ?', [companyId])
+    : [[null]];
+
+  const doc = new PDFDocument({ margin: 50, size: 'A4', layout: 'landscape' });
+  const chunks = [];
+  doc.on('data', (c) => chunks.push(c));
+  const fim = new Promise((resolve) => doc.on('end', () => resolve(Buffer.concat(chunks))));
+  await montarPDFFechamento(doc, f, registros, resumo, req, assinaturas, empresa);
+  doc.end();
+  return fim;
 }
 
 // GET /api/fechamento/:id/excel
@@ -746,5 +922,5 @@ async function exportarExcel(req, res) {
 module.exports = {
   listar, usuariosDisponiveis, detalhe,
   criar, enviar, assinar, rejeitar, fechar, reabrir, excluir,
-  exportarPDF, exportarExcel,
+  exportarPDF, exportarExcel, historicoAssinaturas,
 };

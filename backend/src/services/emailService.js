@@ -220,10 +220,40 @@ async function enviarBoasVindas(email, nomeAdmin, nomeEmpresa, trialDias) {
   });
 }
 
+async function enviarFechamentoAssinadoEmail(email, nome, competenciaLabel, pdfBuffer) {
+  const transporter = criarTransporter();
+  const html = wrapHtml('Fechamento de folha assinado', `
+    <p>Olá, <strong>${nome}</strong>!</p>
+    <p>O fechamento de folha referente a <strong>${competenciaLabel}</strong> foi assinado por todas as partes e finalizado.</p>
+    <div class="alert success">Uma cópia do documento assinado (PDF) está anexada a este e-mail.</div>
+    <p style="font-size:.82rem;color:#64748b">Guarde este e-mail — ele é o seu comprovante oficial do período.</p>
+  `);
+  const texto = `Fechamento de ${competenciaLabel} assinado e finalizado. O PDF está anexado.`;
+
+  if (!transporter) {
+    console.log(`[Email] SMTP não configurado — suprimido: fechamento assinado → ${email}`);
+    return false;
+  }
+  try {
+    await transporter.sendMail({
+      from: FROM(), to: email,
+      subject: `Fechamento de folha assinado — ${competenciaLabel}`,
+      html, text: texto,
+      attachments: [{ filename: `fechamento-${competenciaLabel.replace('/', '-')}.pdf`, content: pdfBuffer, contentType: 'application/pdf' }],
+    });
+    console.log(`[Email] Fechamento assinado enviado → ${email}`);
+    return true;
+  } catch (err) {
+    console.error('[Email] Falha ao enviar fechamento assinado:', err.message);
+    return false;
+  }
+}
+
 module.exports = {
   enviarEmail,
   enviarResetSenha,
   enviarResetSenhaEmailJS,
+  enviarFechamentoAssinadoEmail,
   enviarAlertaFatura,
   enviarEmpresaSuspensa,
   enviarEmpresaReativada,

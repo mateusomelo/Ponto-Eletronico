@@ -9,7 +9,7 @@ const UPLOADS_ROOT = process.env.UPLOADS_PATH
   : path.join(__dirname, '../../../uploads');
 
 // Garante que os diretórios existam ao iniciar
-['avatars', 'registros', 'logos'].forEach(sub => {
+['avatars', 'registros', 'logos', 'assinaturas'].forEach(sub => {
   const dir = path.join(UPLOADS_ROOT, sub);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 });
@@ -47,4 +47,4 @@ const logoUpload = multer({
   fileFilter: imageFilter,
 });
 
-module.exports = { avatarUpload, registroUpload, logoUpload };
+module.exports = { avatarUpload, registroUpload, logoUpload, UPLOADS_ROOT };
