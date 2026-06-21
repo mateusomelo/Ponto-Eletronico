@@ -297,12 +297,14 @@ async function historicoPLano(req, res) {
 // DELETE /api/empresas/:id
 async function excluir(req, res) {
   const id = req.params.id;
-  if (parseInt(id) === 1) {
-    return res.status(400).json({ erro: 'Não é possível excluir a empresa padrão.' });
-  }
   try {
     const [check] = await pool.query('SELECT id FROM empresas WHERE id = ?', [id]);
     if (!check.length) return res.status(404).json({ erro: 'Empresa não encontrada.' });
+
+    const [[{ total }]] = await pool.query('SELECT COUNT(*) AS total FROM empresas');
+    if (total <= 1) {
+      return res.status(400).json({ erro: 'Deve existir pelo menos uma empresa cadastrada.' });
+    }
 
     const [users] = await pool.query('SELECT id FROM usuarios WHERE company_id = ?', [id]);
     for (const u of users) {

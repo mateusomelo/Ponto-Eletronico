@@ -98,6 +98,11 @@ async function excluir(req, res) {
     const [rows] = await pool.query("SELECT id FROM usuarios WHERE role = 'super_admin' AND id = ?", [id]);
     if (!rows.length) return res.status(404).json({ erro: 'Super admin não encontrado.' });
 
+    // Limpa registros que têm FK RESTRICT para usuarios.id (ex: registros_ponto),
+    // senão o DELETE abaixo falha silenciosamente com erro de constraint.
+    await pool.query('DELETE FROM notificacoes    WHERE usuario_id = ?', [id]);
+    await pool.query('DELETE FROM registros_ponto WHERE usuario_id = ?', [id]);
+    await pool.query('UPDATE fechamentos_folha SET usuario_id = NULL WHERE usuario_id = ?', [id]);
     await pool.query('DELETE FROM usuarios WHERE id = ?', [id]);
     return res.json({ mensagem: 'Super admin excluído.' });
   } catch (err) {
