@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet,
   Text, TextInput, TouchableOpacity, View,
@@ -14,6 +14,7 @@ export default function LoginScreen({ navigation }: any) {
   const [senha, setSenha] = useState('');
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState('');
+  const senhaRef = useRef<TextInput>(null);
 
   async function handleLogin() {
     if (!email || !senha) {
@@ -54,10 +55,20 @@ export default function LoginScreen({ navigation }: any) {
           keyboardType="email-address"
           value={email}
           onChangeText={setEmail}
+          returnKeyType="next"
+          onSubmitEditing={() => senhaRef.current?.focus()}
+          blurOnSubmit={false}
         />
 
         <Text style={styles.label}>Senha</Text>
-        <CampoSenha placeholder="••••••••" value={senha} onChangeText={setSenha} />
+        <CampoSenha
+          ref={senhaRef}
+          placeholder="••••••••"
+          value={senha}
+          onChangeText={setSenha}
+          returnKeyType="go"
+          onSubmitEditing={handleLogin}
+        />
 
         {erro ? <Text style={styles.erro}>{erro}</Text> : null}
 

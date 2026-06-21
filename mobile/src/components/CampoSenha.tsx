@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { forwardRef, useState } from 'react';
 import { StyleSheet, TextInput, TextInputProps, TouchableOpacity, View } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 
@@ -8,12 +8,13 @@ interface Props extends Omit<TextInputProps, 'secureTextEntry' | 'style'> {
 
 // Campo de senha padrão do app: texto sempre legível (modo claro/escuro) e
 // ícone de mostrar/ocultar — mesmo padrão usado na tela de Login.
-export default function CampoSenha({ style, ...rest }: Props) {
+const CampoSenha = forwardRef<TextInput, Props>(({ style, ...rest }, ref) => {
   const [mostrar, setMostrar] = useState(false);
 
   return (
     <View style={[styles.wrap, style]}>
       <TextInput
+        ref={ref}
         style={styles.input}
         placeholderTextColor="#94a3b8"
         secureTextEntry={!mostrar}
@@ -24,7 +25,9 @@ export default function CampoSenha({ style, ...rest }: Props) {
       </TouchableOpacity>
     </View>
   );
-}
+});
+
+export default CampoSenha;
 
 const styles = StyleSheet.create({
   wrap: {

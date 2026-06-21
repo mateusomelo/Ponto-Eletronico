@@ -111,6 +111,14 @@
     else window.location.href = '/dashboard.html';
   })();
 
+  // Enter no e-mail → foca a senha (em vez de tentar submeter o form vazio)
+  document.getElementById('email').addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      document.getElementById('senha').focus();
+    }
+  });
+
   // Toggle senha
   document.getElementById('toggleSenha').addEventListener('click', () => {
     const input = document.getElementById('senha');
