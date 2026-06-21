@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import LoginScreen from '../screens/LoginScreen';
 import EsqueciSenhaScreen from '../screens/EsqueciSenhaScreen';
 import MainTabs from './MainTabs';
+import SuperAdminStack from './SuperAdminStack';
 import BiometriaLockScreen from '../screens/BiometriaLockScreen';
 
 const Stack = createNativeStackNavigator();
@@ -26,6 +27,8 @@ export default function RootNavigator() {
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {bloqueadoPorBiometria ? (
           <Stack.Screen name="BiometriaLock" component={BiometriaLockScreen} />
+        ) : usuario?.role === 'super_admin' ? (
+          <Stack.Screen name="SuperAdmin" component={SuperAdminStack} />
         ) : usuario ? (
           <Stack.Screen name="Main" component={MainTabs} />
         ) : (
