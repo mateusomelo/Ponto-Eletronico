@@ -93,6 +93,7 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 8,
     paddingHorizontal: 10, paddingVertical: 6, minWidth: 90, textAlign: 'right', fontSize: 13,
+    color: '#1e293b',
   },
   btn: { backgroundColor: '#3b82f6', borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginTop: 16 },
   btnText: { color: '#fff', fontWeight: '700', fontSize: 15 },

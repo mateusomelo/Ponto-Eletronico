@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { ApiError } from '../api/client';
+import CampoSenha from '../components/CampoSenha';
 
 export default function LoginScreen({ navigation }: any) {
   const { login } = useAuth();
@@ -47,6 +48,7 @@ export default function LoginScreen({ navigation }: any) {
         <TextInput
           style={styles.input}
           placeholder="seu@email.com"
+          placeholderTextColor="#94a3b8"
           autoCapitalize="none"
           keyboardType="email-address"
           value={email}
@@ -54,13 +56,7 @@ export default function LoginScreen({ navigation }: any) {
         />
 
         <Text style={styles.label}>Senha</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="••••••••"
-          secureTextEntry
-          value={senha}
-          onChangeText={setSenha}
-        />
+        <CampoSenha placeholder="••••••••" value={senha} onChangeText={setSenha} />
 
         {erro ? <Text style={styles.erro}>{erro}</Text> : null}
 
@@ -89,7 +85,7 @@ const styles = StyleSheet.create({
   label: { fontSize: 13, color: '#475569', marginBottom: 6, marginTop: 12 },
   input: {
     borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 10,
-    paddingHorizontal: 14, paddingVertical: 12, fontSize: 15,
+    paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: '#1e293b',
   },
   erro: { color: '#dc2626', marginTop: 12, fontSize: 13 },
   btn: {

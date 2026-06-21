@@ -5,6 +5,7 @@ import {
 import { Picker } from '@react-native-picker/picker';
 import { CargosAPI, Cargo, UsuariosAPI } from '../api/admin';
 import { ApiError } from '../api/client';
+import CampoSenha from '../components/CampoSenha';
 
 export default function UsuarioFormScreen({ route, navigation }: any) {
   const usuarioId: number | undefined = route.params?.id;
@@ -119,7 +120,7 @@ export default function UsuarioFormScreen({ route, navigation }: any) {
         {!editando && (
           <>
             <Text style={styles.label}>Senha (mín. 8 caracteres)</Text>
-            <TextInput style={styles.input} value={senha} onChangeText={setSenha} secureTextEntry />
+            <CampoSenha value={senha} onChangeText={setSenha} />
           </>
         )}
 
@@ -149,7 +150,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f1f5f9' },
   card: { backgroundColor: '#fff', borderRadius: 12, padding: 16 },
   label: { fontSize: 12, color: '#475569', marginBottom: 4, marginTop: 12 },
-  input: { borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14 },
+  input: { borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, color: '#1e293b' },
   pickerWrap: { borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 8 },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 },
   btn: { backgroundColor: '#3b82f6', borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginTop: 20 },

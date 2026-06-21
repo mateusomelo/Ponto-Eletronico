@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f1f5f9' },
   card: { backgroundColor: '#fff', borderRadius: 12, padding: 16, margin: 16, marginBottom: 0 },
   label: { fontSize: 12, color: '#475569', marginBottom: 4, marginTop: 10 },
-  input: { borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14 },
+  input: { borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, color: '#1e293b' },
   sectionTitle: { fontSize: 13, fontWeight: '700', color: '#1e293b', margin: 16, marginBottom: 8 },
   empty: { color: '#94a3b8', fontSize: 13, textAlign: 'center', marginTop: 20 },
   row: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 10, padding: 12, marginBottom: 8 },

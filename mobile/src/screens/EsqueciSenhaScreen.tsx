@@ -32,6 +32,7 @@ export default function EsqueciSenhaScreen({ navigation }: any) {
         <TextInput
           style={styles.input}
           placeholder="seu@email.com"
+          placeholderTextColor="#94a3b8"
           autoCapitalize="none"
           keyboardType="email-address"
           value={email}
@@ -59,7 +60,7 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 13, color: '#64748b', marginBottom: 20, lineHeight: 19 },
   input: {
     borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 10,
-    paddingHorizontal: 14, paddingVertical: 12, fontSize: 15,
+    paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: '#1e293b',
   },
   msg: { color: '#16a34a', marginTop: 14, fontSize: 13 },
   btn: {
