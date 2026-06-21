@@ -29,6 +29,7 @@ export const PontoAPI = {
   emailConfig: () => API.get('/ponto/email-config'),
   historico: (params: Record<string, any> = {}) => API.get('/ponto/historico', params),
   logComprovante: (registroId: number, body: any) => API.post(`/ponto/${registroId}/log-comprovante`, body),
+  enviarComprovanteServidor: (registroId: number) => API.post(`/ponto/${registroId}/comprovante`),
 
   registrar: async (form: {
     tipo: 'entrada' | 'saida';

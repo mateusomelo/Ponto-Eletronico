@@ -4,7 +4,6 @@ import {
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Location from 'expo-location';
-import { useAuth } from '../contexts/AuthContext';
 import { PontoAPI, StatusPonto } from '../api/ponto';
 import { enviarComprovante } from '../api/comprovante';
 import { ApiError } from '../api/client';
@@ -14,7 +13,6 @@ type GpsState = { lat: number; lng: number; precisao: number } | null;
 type Etapa = 'normal' | 'camera' | 'preview' | 'sucesso';
 
 export default function PontoScreen() {
-  const { usuario } = useAuth();
   const [camPerm, requestCamPerm] = useCameraPermissions();
   const [gps, setGps] = useState<GpsState>(null);
   const [gpsMsg, setGpsMsg] = useState('Obtendo localização…');
@@ -118,7 +116,7 @@ export default function PontoScreen() {
         tipo, latitude: gps.lat, longitude: gps.lng, precisao: gps.precisao, fotoUri: uri,
       });
       watchRef.current?.remove();
-      if (usuario) enviarComprovante(tipo, resp.registro, usuario).catch(() => {});
+      enviarComprovante(tipo, resp.registro).catch(() => {});
       await carregarStatus();
       setUltimoTipo(tipo);
       setEtapa('sucesso');
