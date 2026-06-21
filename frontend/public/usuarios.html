@@ -10,8 +10,9 @@
     @media (max-width: 768px) {
       table th:nth-child(4), table td:nth-child(4),
       table th:nth-child(7), table td:nth-child(7) { display: none; }
-      table td:last-child > div { flex-direction: column; gap: 6px; }
-      table td:last-child .btn  { width: 36px; height: 36px; padding: 0; justify-content: center; }
+      /* Botões de ação ficam em linha (a tabela já tem scroll horizontal) —
+         empilhar verticalmente deixava cada linha com ~178px de altura. */
+      table td:last-child .btn { width: 36px; height: 36px; padding: 0; justify-content: center; }
     }
     .avatar-upload-wrap { display:flex; flex-direction:column; align-items:center; margin-bottom:1.25rem; }
     .avatar-upload {
