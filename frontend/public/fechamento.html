@@ -147,6 +147,9 @@
         <!-- Caixa de rejeição (se rejeitado) -->
         <div style="padding:0 20px" id="rejeicaoWrap" style="display:none"></div>
 
+        <!-- Assinaturas -->
+        <div style="padding:12px 20px 0" id="assinaturasWrap"></div>
+
         <!-- Resumo de horas -->
         <div style="padding:12px 20px 0">
           <div class="horas-grid" id="horasGrid"></div>
@@ -230,15 +233,46 @@
       <p style="font-size:.9rem;margin-bottom:10px">
         Você está assinando este relatório em nome do funcionário ou como responsável pelo fechamento.
       </p>
-      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 14px;font-size:.82rem;color:#166534">
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 14px;font-size:.82rem;color:#166534;margin-bottom:14px">
         <i class="fas fa-info-circle"></i>
         Serão registrados: data e hora para fins de auditoria.
       </div>
+      <label class="form-label">Assine no campo abaixo (mouse, dedo ou caneta touch)</label>
+      <canvas id="sigCanvasAdmin" style="width:100%;height:140px;border:1px dashed var(--border);border-radius:8px;touch-action:none;background:#fff;display:block"></canvas>
+      <button type="button" class="btn btn-sm btn-outline" id="btnLimparSigAdmin" style="margin-top:8px">
+        <i class="fas fa-eraser"></i> Limpar assinatura
+      </button>
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modalAssinarAdmin')">Cancelar</button>
       <button class="btn btn-primary" id="btnConfirmarAssinarAdmin">
         <i class="fas fa-check"></i> Confirmar Assinatura
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Fechar definitivamente (assinatura do responsável) -->
+<div class="modal-overlay" id="modalFecharDefinitivo">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fas fa-lock" style="color:#1e3a5f;margin-right:8px"></i>Fechar Definitivamente</h3>
+      <button class="modal-close" onclick="closeModal('modalFecharDefinitivo')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:.9rem;margin-bottom:10px">
+        Após essa ação não será possível alterar registros neste período. O colaborador receberá uma cópia assinada por e-mail.
+      </p>
+      <label class="form-label">Assinatura do responsável</label>
+      <canvas id="sigCanvasFechar" style="width:100%;height:140px;border:1px dashed var(--border);border-radius:8px;touch-action:none;background:#fff;display:block"></canvas>
+      <button type="button" class="btn btn-sm btn-outline" id="btnLimparSigFechar" style="margin-top:8px">
+        <i class="fas fa-eraser"></i> Limpar assinatura
+      </button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalFecharDefinitivo')">Cancelar</button>
+      <button class="btn btn-primary" id="btnConfirmarFecharDefinitivo">
+        <i class="fas fa-lock"></i> Confirmar e Fechar
       </button>
     </div>
   </div>
@@ -298,6 +332,7 @@
 <script src="js/api.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/layout.js"></script>
+<script src="js/assinatura.js"></script>
 <script>
 const STATUS_LABEL = {
   rascunho:  'Rascunho',
@@ -445,6 +480,7 @@ async function abrirDetalhe(id) {
     const f    = data.fechamento;
     const regs = data.registros;
     const res  = data.resumo;
+    const assinaturas = data.assinaturas || [];
     _registrosCache = regs;
 
     const [ano, mes] = f.competencia.split('-');
@@ -497,6 +533,29 @@ async function abrirDetalhe(id) {
       ${f.fechado_definitivo_em ? `<div><label class="text-sm text-muted">Fechado em</label><span>${fmtDataHora(f.fechado_definitivo_em)}</span></div>` : ''}
       ${f.observacao ? `<div style="flex-basis:100%"><label class="text-sm text-muted">Observação</label><span>${f.observacao}</span></div>` : ''}
     `;
+
+    // Assinaturas (colaborador + responsável)
+    const colab = assinaturas.find(a => a.tipo === 'colaborador');
+    const resp  = assinaturas.find(a => a.tipo === 'responsavel');
+    if (colab || resp) {
+      const cardSig = (label, a) => `
+        <div style="flex:1;min-width:220px;border:1px solid var(--border);border-radius:10px;padding:12px">
+          <div class="text-sm text-muted" style="margin-bottom:6px">${label}</div>
+          ${a
+            ? `<img src="${a.assinatura_url}" style="max-height:60px;display:block;margin-bottom:6px" alt="Assinatura" />
+               <div style="font-size:.82rem;font-weight:600">${a.nome_assinante}${a.cargo_assinante ? ' — ' + a.cargo_assinante : ''}</div>
+               <div class="text-sm text-muted">${fmtDataHora(a.assinado_em)}</div>`
+            : `<span class="badge badge-gray">Pendente</span>`}
+        </div>`;
+      document.getElementById('assinaturasWrap').innerHTML = `
+        <div class="text-sm text-muted" style="margin-bottom:8px;font-weight:600">Assinaturas</div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap">
+          ${cardSig('Colaborador', colab)}
+          ${cardSig('Responsável', resp)}
+        </div>`;
+    } else {
+      document.getElementById('assinaturasWrap').innerHTML = '';
+    }
 
     // Rejeição
     if (f.motivo_rejeicao) {
@@ -609,16 +668,39 @@ async function enviarParaAssinatura(id) {
   } catch (err) { toast(err.data?.erro || 'Erro ao enviar o relatório.', 'error'); }
 }
 
-async function fecharDefinitivo(id) {
-  const ok = await confirmDialog('Fechar definitivamente? Após essa ação não será possível alterar registros neste período.');
-  if (!ok) return;
+let _idParaFechar = null;
+let _painelSigFechar = null;
+
+function fecharDefinitivo(id) {
+  _idParaFechar = id;
+  openModal('modalFecharDefinitivo');
+  setTimeout(() => { _painelSigFechar = criarPainelAssinatura('sigCanvasFechar'); }, 50);
+}
+
+document.getElementById('btnLimparSigFechar').addEventListener('click', () => _painelSigFechar?.limpar());
+
+document.getElementById('btnConfirmarFecharDefinitivo').addEventListener('click', async () => {
+  if (!_idParaFechar) return;
+  if (!_painelSigFechar?.temAssinatura()) {
+    toast('Desenhe sua assinatura como responsável antes de confirmar.', 'warning');
+    return;
+  }
+  const id = _idParaFechar;
+  const btn = document.getElementById('btnConfirmarFecharDefinitivo');
+  btn.disabled = true;
   try {
-    await API.patch(`/fechamento/${id}/fechar`, {});
-    toast('Folha encerrada definitivamente.', 'success');
+    await API.patch(`/fechamento/${id}/fechar`, { assinatura_imagem: _painelSigFechar.getDataUrl() });
+    closeModal('modalFecharDefinitivo');
+    toast('Folha encerrada definitivamente. O colaborador recebeu uma cópia assinada por e-mail.', 'success');
     if (_fechamentoId === id) await abrirDetalhe(id);
     else await listar();
-  } catch (err) { toast(err.data?.erro || 'Erro ao fechar a folha.', 'error'); }
-}
+  } catch (err) {
+    toast(err.data?.erro || 'Erro ao fechar a folha.', 'error');
+  } finally {
+    btn.disabled = false;
+    _idParaFechar = null;
+  }
+});
 
 async function reabrirRascunho(id) {
   const ok = await confirmDialog('Retornar para rascunho? As assinaturas existentes serão perdidas.');
@@ -833,11 +915,17 @@ async function criarFechamento() {
 // ── Assinar / Rejeitar (admin) ────────────────────────────
 let _idParaAssinar = null;
 let _idParaRejeitar = null;
+let _painelSigAdmin = null;
 
 function abrirModalAssinar(id) {
   _idParaAssinar = id;
   openModal('modalAssinarAdmin');
+  setTimeout(() => {
+    _painelSigAdmin = criarPainelAssinatura('sigCanvasAdmin');
+  }, 50);
 }
+
+document.getElementById('btnLimparSigAdmin').addEventListener('click', () => _painelSigAdmin?.limpar());
 
 function abrirModalRejeitar(id) {
   _idParaRejeitar = id;
@@ -847,10 +935,14 @@ function abrirModalRejeitar(id) {
 
 document.getElementById('btnConfirmarAssinarAdmin').addEventListener('click', async () => {
   if (!_idParaAssinar) return;
+  if (!_painelSigAdmin?.temAssinatura()) {
+    toast('Desenhe sua assinatura antes de confirmar.', 'warning');
+    return;
+  }
   const btn = document.getElementById('btnConfirmarAssinarAdmin');
   btn.disabled = true;
   try {
-    await API.patch(`/fechamento/${_idParaAssinar}/assinar`, {});
+    await API.patch(`/fechamento/${_idParaAssinar}/assinar`, { assinatura_imagem: _painelSigAdmin.getDataUrl() });
     closeModal('modalAssinarAdmin');
     toast('Relatório assinado com sucesso.', 'success');
     if (window.atualizarBadgeNotificacoes) window.atualizarBadgeNotificacoes();

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Histórico de Assinaturas — Ponto Eletrônico</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+<body>
+<div id="sidebarMount"></div>
+<div class="main" id="main">
+  <div id="topbarMount"></div>
+  <div class="page-content">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fas fa-file-signature" style="color:#3b82f6"></i> Histórico de Assinaturas</span>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Competência</th>
+              <th>Funcionário</th>
+              <th>Status</th>
+              <th>Colaborador assinou</th>
+              <th>Responsável assinou</th>
+              <th>Pendência</th>
+            </tr>
+          </thead>
+          <tbody id="tblHistorico">
+            <tr><td colspan="6" class="table-empty"><span class="spinner"></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/layout.js"></script>
+<script>
+const STATUS_LABEL = { rascunho: 'Rascunho', enviado: 'Enviado', assinado: 'Assinado', rejeitado: 'Rejeitado', fechado: 'Fechado' };
+const STATUS_CLASS = { rascunho: 'badge-gray', enviado: 'badge-warning', assinado: 'badge-info', rejeitado: 'badge-danger', fechado: 'badge-success' };
+const PENDENCIA_LABEL = { colaborador: 'Aguardando colaborador', responsavel: 'Aguardando responsável' };
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.requireAuth()) return;
+  renderLayout('Histórico de Assinaturas');
+  await carregar();
+});
+
+async function carregar() {
+  try {
+    const data = await API.get('/fechamento/assinaturas/historico');
+    renderTabela(data.historico || []);
+  } catch (err) {
+    toast(err.data?.erro || 'Erro ao carregar histórico de assinaturas.', 'error');
+  }
+}
+
+function renderTabela(lista) {
+  const tb = document.getElementById('tblHistorico');
+  if (!lista.length) {
+    tb.innerHTML = '<tr><td colspan="6" class="table-empty">Nenhum fechamento encontrado.</td></tr>';
+    return;
+  }
+  tb.innerHTML = lista.map(item => `
+    <tr style="cursor:pointer" onclick="window.location.href='fechamento.html'">
+      <td>${item.competencia}</td>
+      <td>${item.usuario_nome || '-'}</td>
+      <td><span class="badge ${STATUS_CLASS[item.status] || 'badge-gray'}">${STATUS_LABEL[item.status] || item.status}</span></td>
+      <td class="text-sm">${item.colaborador_nome ? `${item.colaborador_nome} — ${fmtDataHora(item.colaborador_assinado_em)}` : '<span class="text-muted">-</span>'}</td>
+      <td class="text-sm">${item.responsavel_nome ? `${item.responsavel_nome} — ${fmtDataHora(item.responsavel_assinado_em)}` : '<span class="text-muted">-</span>'}</td>
+      <td>${item.pendencia ? `<span class="badge badge-warning">${PENDENCIA_LABEL[item.pendencia]}</span>` : '<span class="badge badge-success">Completo</span>'}</td>
+    </tr>`).join('');
+}
+</script>
+</body>
+</html>

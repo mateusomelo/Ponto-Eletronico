@@ -51,6 +51,10 @@ function renderLayout(pageTitle) {
         <i class="fas fa-file-invoice-dollar nav-icon"></i>
         <span class="nav-label">Fechamento de Folha</span>
       </a>
+      <a class="nav-item" href="assinaturas.html" data-perm="fechamento.visualizar">
+        <i class="fas fa-file-signature nav-icon"></i>
+        <span class="nav-label">Histórico de Assinaturas</span>
+      </a>
 
       <div class="nav-group-label" data-supervisor>Sistema</div>
       <a class="nav-item" href="pagamentos.html" data-supervisor>
