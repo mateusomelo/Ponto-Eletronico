@@ -3,6 +3,13 @@ import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View }
 import { DashboardAPI } from '../api/ponto';
 import { useAuth } from '../contexts/AuthContext';
 
+function saudacaoHora() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Bom dia';
+  if (h < 18) return 'Boa tarde';
+  return 'Boa noite';
+}
+
 function Card({ label, value }: { label: string; value: number | string }) {
   return (
     <View style={styles.statCard}>
@@ -42,28 +49,38 @@ export default function DashboardScreen() {
       contentContainerStyle={{ padding: 16 }}
       refreshControl={<RefreshControl refreshing={atualizando} onRefresh={onRefresh} />}
     >
-      <Text style={styles.greeting}>Olá, {usuario?.nome?.split(' ')[0]}</Text>
+      <Text style={styles.greeting}>{saudacaoHora()}, {usuario?.nome?.split(' ')[0]}!</Text>
       <Text style={styles.subtitle}>{usuario?.cargo_nome} · {usuario?.company_nome || 'Plataforma'}</Text>
 
-      <View style={styles.statsRow}>
-        {isAdmin ? (
-          <>
-            <Card label="Usuários ativos" value={dados.usuarios_ativos} />
-            <Card label="Presentes agora" value={dados.presentes_agora} />
-          </>
-        ) : (
-          <>
-            <Card label="Hoje" value={dados?.registros_hoje ?? 0} />
-            <Card label="Dias no mês" value={dados?.dias_mes ?? 0} />
-          </>
-        )}
-      </View>
-      <View style={styles.statsRow}>
-        <Card label="Esta semana" value={dados?.registros_semana ?? 0} />
-        <Card label="Este mês" value={dados?.registros_mes ?? 0} />
-      </View>
+      {isAdmin ? (
+        <>
+          <View style={styles.statsRow}>
+            <Card label="Total de Usuários" value={dados.total_usuarios} />
+            <Card label="Usuários Ativos" value={dados.usuarios_ativos} />
+          </View>
+          <View style={styles.statsRow}>
+            <Card label="Presentes Agora" value={dados.presentes_agora} />
+            <Card label="Registros Hoje" value={dados.registros_hoje} />
+          </View>
+          <View style={styles.statsRow}>
+            <Card label="Registros na Semana" value={dados.registros_semana} />
+            <Card label="Registros no Mês" value={dados.registros_mes} />
+          </View>
+        </>
+      ) : (
+        <>
+          <View style={styles.statsRow}>
+            <Card label="Registros Hoje" value={dados?.registros_hoje ?? 0} />
+            <Card label="Dias Trabalhados" value={dados?.dias_mes ?? 0} />
+          </View>
+          <View style={styles.statsRow}>
+            <Card label="Esta Semana" value={dados?.registros_semana ?? 0} />
+            <Card label="Este Mês" value={dados?.registros_mes ?? 0} />
+          </View>
+        </>
+      )}
 
-      <Text style={styles.sectionTitle}>{isAdmin ? 'Últimos registros (equipe)' : 'Seus últimos registros'}</Text>
+      <Text style={styles.sectionTitle}>{isAdmin ? 'Últimos Registros de Ponto' : 'Últimos Registros'}</Text>
       {(dados?.ultimos_pontos || []).slice(0, 8).map((p: any) => (
         <View key={p.id} style={styles.row}>
           <View style={[styles.dot, p.tipo === 'entrada' ? styles.dotEntrada : styles.dotSaida]} />
