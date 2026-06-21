@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contato — PontoControl</title>
+  <meta name="description" content="Fale com a equipe PontoControl. E-mail, WhatsApp e formulário de contato para dúvidas comerciais e suporte." />
+  <link rel="icon" type="image/png" href="img/favicon-32x32.png" />
+  <link rel="canonical" href="https://pontocontrol.com.br/contato.html" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/site.css" />
+</head>
+<body data-page="contato">
+<div id="navbarMount"></div>
+
+<section class="hero" style="padding:64px 0">
+  <div class="container text-center">
+    <span class="badge-soft" style="background:rgba(255,255,255,.12);color:#fff"><i class="fas fa-envelope"></i> Contato</span>
+    <h1 style="margin-top:18px;font-size:2.2rem">Vamos conversar?</h1>
+    <p class="lead" style="margin:0 auto">Dúvidas comerciais, suporte ou parcerias — escolha o canal que preferir.</p>
+  </div>
+</section>
+
+<section>
+  <div class="container contact-grid">
+    <div>
+      <h2 class="section-title" style="font-size:1.4rem;margin-bottom:24px">Canais de atendimento</h2>
+
+      <div class="contact-info-item">
+        <div class="ico"><i class="fas fa-envelope"></i></div>
+        <div>
+          <strong>E-mail</strong><br>
+          <a href="mailto:contato@pontocontrol.com.br">contato@pontocontrol.com.br</a>
+        </div>
+      </div>
+      <div class="contact-info-item">
+        <div class="ico" style="background:#dcfce7;color:#16a34a"><i class="fab fa-whatsapp"></i></div>
+        <div>
+          <strong>WhatsApp</strong><br>
+          <a href="https://wa.me/5500000000000" target="_blank" rel="noopener">Falar pelo WhatsApp</a>
+        </div>
+      </div>
+      <div class="contact-info-item">
+        <div class="ico"><i class="fas fa-sign-in-alt"></i></div>
+        <div>
+          <strong>Já é cliente?</strong><br>
+          <a href="https://ponto-eletronicoo.netlify.app/index.html">Acessar o sistema</a>
+        </div>
+      </div>
+
+      <div style="margin-top:28px;padding:18px 20px;background:var(--bg);border-radius:var(--radius);font-size:.85rem;color:var(--text-muted)">
+        <i class="fas fa-info-circle" style="color:var(--blue)"></i>
+        Atendimento em português, de segunda a sexta.
+      </div>
+    </div>
+
+    <div>
+      <form id="formContato">
+        <div class="form-group">
+          <label class="form-label">Nome</label>
+          <input type="text" class="form-control" id="ctNome" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">E-mail</label>
+          <input type="email" class="form-control" id="ctEmail" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Empresa</label>
+          <input type="text" class="form-control" id="ctEmpresa" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mensagem</label>
+          <textarea class="form-control" id="ctMensagem" rows="5" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center">
+          <i class="fas fa-paper-plane"></i> Enviar mensagem
+        </button>
+        <p id="ctFeedback" style="margin-top:12px;font-size:.85rem;display:none"></p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<div id="footerMount"></div>
+<script src="js/site.js"></script>
+<script>
+  document.getElementById('formContato').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const nome = document.getElementById('ctNome').value.trim();
+    const email = document.getElementById('ctEmail').value.trim();
+    const mensagem = document.getElementById('ctMensagem').value.trim();
+    const assunto = encodeURIComponent('Contato via site — ' + nome);
+    const corpo = encodeURIComponent(`Nome: ${nome}\nE-mail: ${email}\nEmpresa: ${document.getElementById('ctEmpresa').value.trim()}\n\nMensagem:\n${mensagem}`);
+    window.location.href = `mailto:contato@pontocontrol.com.br?subject=${assunto}&body=${corpo}`;
+    const fb = document.getElementById('ctFeedback');
+    fb.style.display = 'block';
+    fb.style.color = '#16a34a';
+    fb.textContent = 'Abrindo seu aplicativo de e-mail para enviar a mensagem...';
+  });
+</script>
+</body>
+</html>
