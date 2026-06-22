@@ -133,11 +133,21 @@ async function registrar(req, res) {
     return res.status(400).json({ erro: 'Foto obrigatória para dispositivos móveis.' });
   }
 
+  // Lock nomeado por usuário — serializa cliques/requisições concorrentes do
+  // mesmo usuário para que a checagem de duplicata + insert não tenha race condition.
+  const lockName = `ponto_usuario_${req.user.id}`;
+  const conn = await pool.getConnection();
   try {
+    const [[lockResult]] = await conn.query('SELECT GET_LOCK(?, 5) AS ok', [lockName]);
+    if (!lockResult.ok) {
+      if (fotoFile) fs.unlink(fotoFile.path, () => {});
+      return res.status(409).json({ erro: 'Outro registro de ponto está em andamento. Tente novamente.' });
+    }
+
     // Fuso da empresa — usado para competência e queries de data
     const tz = await getCompanyTZ(req.user.company_id);
     const competenciaAtual = monthInTZ(tz);
-    const [[periodoClosed]] = await pool.query(
+    const [[periodoClosed]] = await conn.query(
       `SELECT id FROM fechamentos_folha
        WHERE usuario_id = ? AND status = 'fechado' AND competencia = ? LIMIT 1`,
       [req.user.id, competenciaAtual]
@@ -148,7 +158,7 @@ async function registrar(req, res) {
     }
 
     // Verificar duplicata recente — comparação feita no MySQL para evitar problemas de fuso
-    const [ultimo] = await pool.query(
+    const [ultimo] = await conn.query(
       `SELECT tipo, TIMESTAMPDIFF(SECOND, data_hora, NOW()) AS segundos_atras
        FROM registros_ponto
        WHERE usuario_id = ?
@@ -168,7 +178,7 @@ async function registrar(req, res) {
     const ip_publico = getClientIp(req);
     const ip_socket  = (req.socket?.remoteAddress || '').replace(/^::ffff:/i, '') || ip_publico;
 
-    const [result] = await pool.query(
+    const [result] = await conn.query(
       `INSERT INTO registros_ponto
          (usuario_id, tipo, data_hora, ip, ip_publico, latitude, longitude, precisao,
           foto_registro, dispositivo, so, navegador, user_agent)
@@ -194,7 +204,7 @@ async function registrar(req, res) {
       user_agent: ua,
     });
 
-    const [reg] = await pool.query('SELECT * FROM registros_ponto WHERE id = ?', [id]);
+    const [reg] = await conn.query('SELECT * FROM registros_ponto WHERE id = ?', [id]);
     const { ip: _ip, ip_publico: _ipPub, ...registroSemIp } = reg[0];
 
     return res.status(201).json({
@@ -205,6 +215,9 @@ async function registrar(req, res) {
     if (fotoFile) fs.unlink(fotoFile.path, () => {});
     console.error('[Ponto] registrar:', err);
     return res.status(500).json({ erro: 'Erro interno.' });
+  } finally {
+    try { await conn.query('SELECT RELEASE_LOCK(?)', [lockName]); } catch {}
+    conn.release();
   }
 }
 
