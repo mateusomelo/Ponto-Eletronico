@@ -1,4 +1,6 @@
 import React from 'react';
+import { TouchableOpacity } from 'react-native';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import MaisMenuScreen from '../screens/MaisMenuScreen';
 import RelatoriosScreen from '../screens/RelatoriosScreen';
@@ -30,7 +32,21 @@ export default function MaisStack() {
       <Stack.Screen name="Fechamentos" component={FechamentosScreen} options={{ title: 'Fechamento de Folha' }} />
       <Stack.Screen name="NovoFechamento" component={NovoFechamentoScreen} options={{ title: 'Novo Fechamento' }} />
       <Stack.Screen name="HistoricoAssinaturas" component={HistoricoAssinaturasScreen} options={{ title: 'Histórico de Assinaturas' }} />
-      <Stack.Screen name="Notificacoes" component={NotificacoesScreen} options={{ title: 'Notificações' }} />
+      <Stack.Screen
+        name="Notificacoes"
+        component={NotificacoesScreen}
+        options={({ navigation }) => ({
+          title: 'Notificações',
+          headerLeft: () => (
+            <TouchableOpacity
+              onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate('MaisMenu')}
+              style={{ marginRight: 12, padding: 4 }}
+            >
+              <FontAwesome5 name="arrow-left" size={18} color="#1e293b" />
+            </TouchableOpacity>
+          ),
+        })}
+      />
       <Stack.Screen name="Logs" component={LogsScreen} options={{ title: 'Logs de Auditoria' }} />
       <Stack.Screen name="Pagamentos" component={PagamentosScreen} options={{ title: 'Pagamentos' }} />
       <Stack.Screen name="Perfil" component={PerfilScreen} options={{ title: 'Perfil' }} />

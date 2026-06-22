@@ -133,7 +133,7 @@ export default function FechamentosScreen({ navigation }: any) {
         }}
       />
 
-      <Modal visible={!!modalRejeitar} transparent animationType="fade">
+      <Modal visible={!!modalRejeitar} transparent animationType="fade" statusBarTranslucent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
             <Text style={styles.modalTitle}>Motivo da rejeição</Text>
@@ -156,7 +156,7 @@ export default function FechamentosScreen({ navigation }: any) {
         </View>
       </Modal>
 
-      <Modal visible={!!modalAssinar} transparent animationType="fade" onRequestClose={() => setModalAssinar(null)}>
+      <Modal visible={!!modalAssinar} transparent animationType="fade" statusBarTranslucent onRequestClose={() => setModalAssinar(null)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
             <Text style={styles.modalTitle}>
