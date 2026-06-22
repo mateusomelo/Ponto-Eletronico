@@ -1,6 +1,14 @@
 const jwt    = require('jsonwebtoken');
 const { pool } = require('../database/connection');
 
+// Rotas que precisam funcionar mesmo com a empresa suspensa — é exatamente
+// o caso de uma empresa com trial vencido que precisa poder pagar/assinar
+// um plano para ser reativada (senão ela nunca consegue chegar lá).
+const ROTAS_LIBERADAS_SUSPENSA = [
+  '/api/stripe/minha-empresa/assinar',
+  '/api/stripe/minha-assinatura',
+];
+
 async function authenticate(req, res, next) {
   const header = req.headers['authorization'];
   const token  = header && header.startsWith('Bearer ') ? header.slice(7) : null;
@@ -44,7 +52,8 @@ async function authenticate(req, res, next) {
         [user.company_id]
       );
       const empresa = empRows[0];
-      if (!empresa || empresa.status === 'suspended') {
+      const rotaLiberada = ROTAS_LIBERADAS_SUSPENSA.includes(req.originalUrl.split('?')[0]);
+      if ((!empresa || empresa.status === 'suspended') && !rotaLiberada) {
         return res.status(403).json({
           erro:  'Acesso suspenso. Contate o suporte da plataforma.',
           code:  'COMPANY_SUSPENDED',

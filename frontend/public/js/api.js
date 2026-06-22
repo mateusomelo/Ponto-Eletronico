@@ -62,8 +62,11 @@ async function request(method, path, body = null, options = {}) {
       if (ct2.includes('application/json')) {
         const errData = await res.json();
         if (errData.code === 'COMPANY_SUSPENDED') {
-          clearToken();
-          window.location.href = '/empresa-suspensa.html';
+          // Mantém o token — a tela de empresa-suspensa.html precisa dele
+          // pra deixar o admin escolher e pagar um plano sem precisar logar de novo.
+          if (!window.location.pathname.includes('empresa-suspensa.html')) {
+            window.location.href = '/empresa-suspensa.html';
+          }
           return;
         }
         throw { status: 403, data: errData };

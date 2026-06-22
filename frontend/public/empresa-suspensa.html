@@ -5,27 +5,113 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" type="image/png" href="/img/favicon-32x32.png" />
   <link rel="manifest" href="/manifest.json" />
-  <title>Acesso Suspenso — PontoControl</title>
+  <title>Escolha seu plano — PontoControl</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" />
   <link rel="stylesheet" href="css/main.css" />
   <link rel="stylesheet" href="css/auth.css" />
+  <style>
+    .planos-page {
+      min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+      padding: 48px 20px; background: linear-gradient(135deg,#0f172a 0%,#1e3a5f 60%,#0f172a 100%);
+    }
+    .planos-header { text-align: center; margin-bottom: 36px; max-width: 560px; }
+    .planos-header i { font-size: 2.6rem; color: #f59e0b; margin-bottom: 14px; display: block; }
+    .planos-header h1 { color: #fff; font-size: 1.5rem; margin-bottom: 8px; }
+    .planos-header p { color: #94a3b8; font-size: .92rem; }
+    .planos-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
+      max-width: 920px; width: 100%;
+    }
+    @media (max-width: 860px) { .planos-grid { grid-template-columns: 1fr; max-width: 380px; } }
+    .plano-card {
+      background: #fff; border-radius: 16px; padding: 28px 24px; text-align: center;
+      position: relative; border: 2px solid transparent;
+    }
+    .plano-card.destaque { border-color: #3b82f6; }
+    .plano-badge {
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      background: #3b82f6; color: #fff; font-size: .7rem; font-weight: 700;
+      padding: 4px 14px; border-radius: 50px;
+    }
+    .plano-nome { font-size: 1.1rem; font-weight: 700; color: #1e293b; margin-bottom: 8px; }
+    .plano-preco { font-size: 2rem; font-weight: 800; color: #1e3a5f; margin-bottom: 4px; }
+    .plano-preco span { font-size: .85rem; font-weight: 500; color: #94a3b8; }
+    .plano-features { list-style: none; padding: 0; margin: 18px 0 22px; text-align: left; font-size: .85rem; color: #475569; }
+    .plano-features li { margin-bottom: 8px; display: flex; gap: 8px; align-items: flex-start; }
+    .plano-features i { color: #10b981; margin-top: 2px; }
+    .btn-assinar {
+      width: 100%; padding: 12px; border-radius: 10px; border: none; cursor: pointer;
+      font-weight: 700; font-size: .9rem; background: #3b82f6; color: #fff;
+    }
+    .btn-assinar:disabled { opacity: .6; cursor: default; }
+    .planos-footer { margin-top: 32px; text-align: center; }
+    .planos-footer a { color: #94a3b8; font-size: .85rem; }
+  </style>
 </head>
 <body>
-<div class="auth-page">
-  <div class="auth-card" style="text-align:center;padding:48px 32px">
-    <i class="fas fa-ban" style="font-size:4rem;color:#dc2626;margin-bottom:20px;display:block"></i>
-    <h1 style="color:#1e3a5f;font-size:1.4rem;margin-bottom:8px">Acesso Suspenso</h1>
-    <p style="color:#64748b;margin-bottom:8px">O acesso da sua empresa foi suspenso.</p>
-    <p style="color:#64748b;margin-bottom:28px;font-size:.9rem">
-      Entre em contato com o suporte da plataforma para regularizar a situação.
-    </p>
-    <a href="/login.html" class="btn btn-primary" style="width:100%">
-      <i class="fas fa-arrow-left"></i> Voltar ao Login
-    </a>
-    <div style="margin-top:20px;font-size:.8rem;color:#94a3b8">
-      © 2026 PontoControl
+<div class="planos-page">
+  <div class="planos-header">
+    <i class="fas fa-lock"></i>
+    <h1>Seu período de teste terminou</h1>
+    <p>Escolha um plano abaixo para reativar o acesso da sua empresa imediatamente.</p>
+  </div>
+
+  <div class="planos-grid">
+    <div class="plano-card">
+      <div class="plano-nome">Básico</div>
+      <div class="plano-preco">R$49<span>/mês</span></div>
+      <ul class="plano-features">
+        <li><i class="fas fa-check"></i> Até 10 colaboradores</li>
+        <li><i class="fas fa-check"></i> Registro de ponto com GPS</li>
+        <li><i class="fas fa-check"></i> Relatórios básicos (PDF/Excel)</li>
+      </ul>
+      <button class="btn-assinar" onclick="assinar('basico', this)">Assinar Básico</button>
+    </div>
+
+    <div class="plano-card destaque">
+      <div class="plano-badge">Mais popular</div>
+      <div class="plano-nome">Profissional</div>
+      <div class="plano-preco">R$99<span>/mês</span></div>
+      <ul class="plano-features">
+        <li><i class="fas fa-check"></i> Tudo do plano Básico</li>
+        <li><i class="fas fa-check"></i> Colaboradores ilimitados</li>
+        <li><i class="fas fa-check"></i> Fechamento de folha com assinatura digital</li>
+      </ul>
+      <button class="btn-assinar" onclick="assinar('profissional', this)">Assinar Profissional</button>
+    </div>
+
+    <div class="plano-card">
+      <div class="plano-nome">Enterprise</div>
+      <div class="plano-preco">R$199<span>/mês</span></div>
+      <ul class="plano-features">
+        <li><i class="fas fa-check"></i> Tudo do plano Profissional</li>
+        <li><i class="fas fa-check"></i> Suporte prioritário</li>
+        <li><i class="fas fa-check"></i> Logs de auditoria completos</li>
+      </ul>
+      <button class="btn-assinar" onclick="assinar('enterprise', this)">Assinar Enterprise</button>
     </div>
   </div>
+
+  <div class="planos-footer">
+    <a href="/login.html"><i class="fas fa-arrow-left"></i> Voltar ao login</a>
+  </div>
 </div>
+
+<script src="js/api.js"></script>
+<script>
+async function assinar(plano, btn) {
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Abrindo pagamento...';
+  try {
+    const data = await API.post('/stripe/minha-empresa/assinar', { plano });
+    window.location.href = data.checkout_url;
+  } catch (err) {
+    alert(err.data?.erro || 'Não foi possível iniciar o pagamento. Tente novamente.');
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+}
+</script>
 </body>
 </html>

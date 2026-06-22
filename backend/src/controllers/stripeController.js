@@ -95,6 +95,77 @@ async function assinar(req, res) {
   }
 }
 
+// POST /api/stripe/minha-empresa/assinar  (company_admin — funciona mesmo com empresa suspensa)
+// Igual a assinar(), mas escopado à própria empresa do usuário logado e
+// permite escolher o plano no momento da assinatura (em vez de usar o
+// plano já salvo na empresa).
+async function assinarPropria(req, res) {
+  const id = req.user.company_id;
+  const { plano } = req.body;
+  if (!id) return res.status(400).json({ erro: 'Usuário sem empresa vinculada.' });
+  if (!['basico', 'profissional', 'enterprise'].includes(plano)) {
+    return res.status(400).json({ erro: 'Plano inválido.' });
+  }
+
+  try {
+    const stripe = getStripe();
+
+    const [rows] = await pool.query('SELECT * FROM empresas WHERE id = ?', [id]);
+    if (!rows.length) return res.status(404).json({ erro: 'Empresa não encontrada.' });
+    const empresa = rows[0];
+
+    const priceId = getPriceId(plano);
+    if (!priceId || priceId.startsWith('price_COLOQUE')) {
+      return res.status(422).json({ erro: `Price ID para o plano "${plano}" não configurado no .env.` });
+    }
+
+    let customerId = empresa.stripe_customer_id;
+    if (customerId) {
+      try {
+        await stripe.customers.retrieve(customerId);
+      } catch (custErr) {
+        if (custErr.code === 'resource_missing') {
+          customerId = null;
+          await pool.query(
+            'UPDATE empresas SET stripe_customer_id = NULL, stripe_subscription_id = NULL WHERE id = ?',
+            [id]
+          );
+        } else {
+          throw custErr;
+        }
+      }
+    }
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        name:     empresa.nome,
+        email:    empresa.email || undefined,
+        metadata: { empresa_id: String(id) },
+      });
+      customerId = customer.id;
+      await pool.query('UPDATE empresas SET stripe_customer_id = ? WHERE id = ?', [customerId, id]);
+    }
+
+    await pool.query('UPDATE empresas SET plano = ? WHERE id = ?', [plano, id]);
+
+    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+
+    const session = await stripe.checkout.sessions.create({
+      customer:          customerId,
+      line_items:        [{ price: priceId, quantity: 1 }],
+      mode:              'subscription',
+      success_url:       `${baseUrl}/login.html?checkout=success`,
+      cancel_url:        `${baseUrl}/empresa-suspensa.html?checkout=cancel`,
+      metadata:          { empresa_id: String(id) },
+      subscription_data: { metadata: { empresa_id: String(id) } },
+    });
+
+    return res.json({ checkout_url: session.url });
+  } catch (err) {
+    console.error('[Stripe] assinarPropria:', err.message);
+    return res.status(500).json({ erro: err.message });
+  }
+}
+
 // POST /api/stripe/empresas/:id/cancelar  (super_admin)
 async function cancelar(req, res) {
   const { id } = req.params;
@@ -369,4 +440,4 @@ async function webhook(req, res) {
   }
 }
 
-module.exports = { assinar, cancelar, infoAssinatura, minhaAssinatura, alertaFatura, webhook };
+module.exports = { assinar, assinarPropria, cancelar, infoAssinatura, minhaAssinatura, alertaFatura, webhook };
