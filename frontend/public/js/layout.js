@@ -102,7 +102,7 @@ function renderLayout(pageTitle) {
     </div>
     <div class="topbar-right">
       <span class="topbar-time" id="topbarClock"></span>
-      <button class="btn-icon notif-bell-btn" id="btnNotificacoes" title="Notificações" onclick="window.location.href=Auth.isSupervisor()?'fechamento.html':'meus-relatorios.html'">
+      <button class="btn-icon notif-bell-btn" id="btnNotificacoes" title="Notificações" onclick="window.location.href='notificacoes.html'">
         <i class="fas fa-bell"></i>
         <span class="notif-badge" id="notifBadge" style="display:none">0</span>
       </button>

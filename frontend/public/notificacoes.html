@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="/img/favicon-32x32.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <title>Notificações — PontoControl</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <style>
+    .notif-item {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 14px 16px; border: 1px solid var(--border); border-radius: 12px;
+      margin-bottom: 10px; cursor: pointer; transition: box-shadow .2s, border-color .2s;
+      background: var(--bg-primary);
+    }
+    .notif-item:hover { box-shadow: var(--shadow-md); border-color: var(--accent); }
+    .notif-item.unread { background: #eff6ff; border-color: #bfdbfe; }
+    .notif-icon {
+      width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 1.05rem;
+      background: #dbeafe; color: #1e40af;
+    }
+    .notif-icon.tipo-alerta   { background: #fef3c7; color: #92400e; }
+    .notif-icon.tipo-sucesso  { background: #dcfce7; color: #166534; }
+    .notif-icon.tipo-erro     { background: #fee2e2; color: #991b1b; }
+    .notif-body { flex: 1; min-width: 0; }
+    .notif-titulo { font-size: .92rem; font-weight: 700; }
+    .notif-msg { font-size: .85rem; color: var(--text-muted); margin-top: 2px; }
+    .notif-data { font-size: .74rem; color: var(--text-muted); margin-top: 6px; }
+    .notif-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); flex-shrink: 0; margin-top: 6px; }
+  </style>
+</head>
+<body>
+<div id="sidebarMount"></div>
+<div class="main" id="main">
+  <div id="topbarMount"></div>
+  <div class="page-content">
+
+    <div class="card" style="padding-bottom:0">
+      <div class="card-header">
+        <span class="card-title">
+          <i class="fas fa-bell" style="color:#3b82f6"></i>
+          Notificações
+        </span>
+        <button class="btn btn-sm btn-outline" id="btnMarcarTodas">
+          <i class="fas fa-check-double"></i> Marcar todas como lidas
+        </button>
+      </div>
+    </div>
+
+    <div id="listaNotificacoes" style="margin-top:12px">
+      <div class="table-empty"><span class="spinner"></span></div>
+    </div>
+
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/layout.js"></script>
+<script>
+const TIPO_ICON = {
+  sistema: 'fa-info-circle', fechamento: 'fa-file-signature',
+  alerta: 'fa-exclamation-triangle', sucesso: 'fa-check-circle', erro: 'fa-times-circle',
+};
+const TIPO_CLASS = {
+  alerta: 'tipo-alerta', sucesso: 'tipo-sucesso', erro: 'tipo-erro',
+};
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.requireAuth()) return;
+  renderLayout('Notificações');
+  await carregar();
+});
+
+async function carregar() {
+  try {
+    const data = await API.get('/notificacoes', { por_pagina: 50 });
+    renderLista(data.notificacoes || []);
+  } catch (err) {
+    document.getElementById('listaNotificacoes').innerHTML =
+      `<div class="card" style="text-align:center;padding:32px;color:var(--text-muted)">Erro ao carregar notificações.</div>`;
+  }
+}
+
+function renderLista(lista) {
+  const el = document.getElementById('listaNotificacoes');
+  if (!lista.length) {
+    el.innerHTML = `<div class="card" style="text-align:center;padding:32px;color:var(--text-muted)">
+      <i class="fas fa-bell-slash" style="font-size:2rem;margin-bottom:10px;opacity:.4"></i>
+      <div>Nenhuma notificação por aqui.</div>
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = lista.map(n => `
+    <div class="notif-item ${n.lida ? '' : 'unread'}" onclick="abrirNotificacao(${n.id}, ${n.fechamento_id || 'null'})">
+      <div class="notif-icon ${TIPO_CLASS[n.tipo] || ''}">
+        <i class="fas ${TIPO_ICON[n.tipo] || 'fa-bell'}"></i>
+      </div>
+      <div class="notif-body">
+        <div class="notif-titulo">${n.titulo}</div>
+        ${n.mensagem ? `<div class="notif-msg">${n.mensagem}</div>` : ''}
+        <div class="notif-data">${fmtDataHora(n.created_at)}</div>
+      </div>
+      ${n.lida ? '' : '<div class="notif-dot"></div>'}
+    </div>`).join('');
+}
+
+async function abrirNotificacao(id, fechamentoId) {
+  try { await API.patch(`/notificacoes/${id}/ler`, {}); } catch {}
+  if (window.atualizarBadgeNotificacoes) window.atualizarBadgeNotificacoes();
+  if (fechamentoId) {
+    window.location.href = Auth.isSupervisor() ? 'fechamento.html' : 'meus-relatorios.html';
+  } else {
+    carregar();
+  }
+}
+
+document.getElementById('btnMarcarTodas').addEventListener('click', async () => {
+  try {
+    await API.patch('/notificacoes/ler-todas', {});
+    if (window.atualizarBadgeNotificacoes) window.atualizarBadgeNotificacoes();
+    carregar();
+    toast('Todas as notificações foram marcadas como lidas.', 'success');
+  } catch {
+    toast('Erro ao marcar notificações como lidas.', 'error');
+  }
+});
+</script>
+</body>
+</html>
