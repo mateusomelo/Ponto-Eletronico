@@ -12,9 +12,8 @@ import { NotificacoesAPI } from '../api/notificacoes';
 
 const Tab = createBottomTabNavigator();
 
-// Sino de notificações: mesmo comportamento da web — mostra contador de não
-// lidas e, ao tocar, leva para Fechamentos (onde ficam as notificações reais:
-// fechamento enviado, fatura vencendo, etc.), igual ao topbar do site.
+// Sino de notificações: mostra contador de não lidas e abre a tela de
+// Notificações (mesma lista que a API /notificacoes alimenta na web).
 function SinoNotificacoes() {
   const navigation = useNavigation();
   const [total, setTotal] = useState(0);
@@ -30,7 +29,7 @@ function SinoNotificacoes() {
 
   function abrir() {
     navigation.dispatch(
-      CommonActions.navigate({ name: 'Mais', params: { screen: 'Fechamentos' } })
+      CommonActions.navigate({ name: 'Mais', params: { screen: 'Notificacoes' } })
     );
   }
 
