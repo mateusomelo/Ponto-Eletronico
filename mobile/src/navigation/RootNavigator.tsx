@@ -8,6 +8,7 @@ import EsqueciSenhaScreen from '../screens/EsqueciSenhaScreen';
 import MainTabs from './MainTabs';
 import SuperAdminStack from './SuperAdminStack';
 import BiometriaLockScreen from '../screens/BiometriaLockScreen';
+import BannerAtualizacao from '../components/BannerAtualizacao';
 
 const Stack = createNativeStackNavigator();
 
@@ -23,21 +24,24 @@ export default function RootNavigator() {
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {bloqueadoPorBiometria ? (
-          <Stack.Screen name="BiometriaLock" component={BiometriaLockScreen} />
-        ) : usuario?.role === 'super_admin' ? (
-          <Stack.Screen name="SuperAdmin" component={SuperAdminStack} />
-        ) : usuario ? (
-          <Stack.Screen name="Main" component={MainTabs} />
-        ) : (
-          <>
-            <Stack.Screen name="Login" component={LoginScreen} />
-            <Stack.Screen name="EsqueciSenha" component={EsqueciSenhaScreen} />
-          </>
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
+    <View style={{ flex: 1 }}>
+      {usuario && !bloqueadoPorBiometria && <BannerAtualizacao />}
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          {bloqueadoPorBiometria ? (
+            <Stack.Screen name="BiometriaLock" component={BiometriaLockScreen} />
+          ) : usuario?.role === 'super_admin' ? (
+            <Stack.Screen name="SuperAdmin" component={SuperAdminStack} />
+          ) : usuario ? (
+            <Stack.Screen name="Main" component={MainTabs} />
+          ) : (
+            <>
+              <Stack.Screen name="Login" component={LoginScreen} />
+              <Stack.Screen name="EsqueciSenha" component={EsqueciSenhaScreen} />
+            </>
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
+    </View>
   );
 }
