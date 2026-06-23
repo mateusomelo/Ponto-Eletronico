@@ -30,8 +30,10 @@ async function listar(req, res) {
       `SELECT u.id, u.nome, u.email, u.cpf, u.telefone, u.foto,
               u.salario_mensal, u.carga_horaria_semanal,
               u.cargo_id, u.ativo, u.bloqueado, u.ultimo_acesso, u.created_at,
+              u.escala_id, e.nome AS escala_nome,
               c.nome AS cargo_nome, c.nivel AS cargo_nivel
        FROM usuarios u JOIN cargos c ON c.id = u.cargo_id
+       LEFT JOIN escalas e ON e.id = u.escala_id
        ${where}
        ORDER BY u.nome ASC
        LIMIT ${parseInt(por_pagina)} OFFSET ${parseInt(offset)}`,
@@ -55,8 +57,10 @@ async function obter(req, res) {
       `SELECT u.id, u.nome, u.email, u.cpf, u.telefone, u.foto,
               u.salario_mensal, u.carga_horaria_semanal,
               u.cargo_id, u.ativo, u.bloqueado, u.ultimo_acesso, u.created_at, u.updated_at,
+              u.escala_id, e.nome AS escala_nome,
               c.nome AS cargo_nome, c.nivel AS cargo_nivel
        FROM usuarios u JOIN cargos c ON c.id = u.cargo_id
+       LEFT JOIN escalas e ON e.id = u.escala_id
        WHERE u.id = ?${extraWhere}`,
       extraParam
     );
@@ -69,7 +73,7 @@ async function obter(req, res) {
 
 // POST /api/usuarios
 async function criar(req, res) {
-  const { nome, email, cpf, telefone, cargo_id, senha, salario_mensal, carga_horaria_semanal } = req.body;
+  const { nome, email, cpf, telefone, cargo_id, senha, salario_mensal, carga_horaria_semanal, escala_id } = req.body;
 
   if (!nome || !email || !cpf || !cargo_id || !senha) {
     return res.status(400).json({ erro: 'Campos obrigatórios: nome, email, cpf, cargo_id, senha.' });
@@ -95,13 +99,14 @@ async function criar(req, res) {
     const novoCid = req.user.company_id || null;
 
     const [result] = await pool.query(
-      `INSERT INTO usuarios (nome, email, cpf, telefone, senha_hash, cargo_id, salario_mensal, carga_horaria_semanal, company_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO usuarios (nome, email, cpf, telefone, senha_hash, cargo_id, salario_mensal, carga_horaria_semanal, company_id, escala_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         nome.trim(), email.toLowerCase().trim(), cpf, telefone || null, hash, cargo_id,
         salario_mensal ? parseFloat(salario_mensal) : null,
         carga_horaria_semanal ? parseFloat(carga_horaria_semanal) : 40,
         novoCid,
+        escala_id || null,
       ]
     );
 
@@ -122,7 +127,7 @@ async function criar(req, res) {
 
 // PUT /api/usuarios/:id
 async function editar(req, res) {
-  const { nome, email, cpf, telefone, cargo_id, ativo, salario_mensal, carga_horaria_semanal } = req.body;
+  const { nome, email, cpf, telefone, cargo_id, ativo, salario_mensal, carga_horaria_semanal, escala_id } = req.body;
   const id  = req.params.id;
   const cid = req.user.company_id;
   const cidFilter = cid ? ' AND company_id = ?' : '';
@@ -161,6 +166,10 @@ async function editar(req, res) {
     if (carga_horaria_semanal !== undefined && carga_horaria_semanal !== null && carga_horaria_semanal !== '') {
       sets.push('carga_horaria_semanal = ?');
       params.push(parseFloat(carga_horaria_semanal));
+    }
+    if (escala_id !== undefined) {
+      sets.push('escala_id = ?');
+      params.push(escala_id || null);
     }
 
     if (!sets.length) return res.status(400).json({ erro: 'Nenhum campo para atualizar.' });

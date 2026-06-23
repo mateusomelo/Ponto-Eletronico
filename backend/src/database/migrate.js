@@ -540,6 +540,49 @@ async function runIncrementalMigrations(conn) {
     console.log('[Migration] configuracoes: UNIQUE(chave, company_id) criado');
   }
 
+  // ── Cerca eletrônica (geofencing): coordenada central + ativação ─────────
+  const geoConfigs = [
+    ['geo_ativo',      'false', 'boolean', 'Bloquear registro de ponto fora do raio permitido'],
+    ['geo_latitude',   '',      'string',  'Latitude do ponto central da empresa (cerca eletrônica)'],
+    ['geo_longitude',  '',      'string',  'Longitude do ponto central da empresa (cerca eletrônica)'],
+  ];
+  const [todasEmpresas2] = await conn.query('SELECT id FROM empresas');
+  for (const emp of todasEmpresas2) {
+    for (const [chave, valor, tipo, descricao] of geoConfigs) {
+      await conn.query(
+        `INSERT IGNORE INTO configuracoes (chave, valor, tipo, descricao, company_id) VALUES (?, ?, ?, ?, ?)`,
+        [chave, valor, tipo, descricao, emp.id]
+      );
+    }
+  }
+  console.log('[Migration] configs de cerca eletrônica: verificadas para todas as empresas.');
+
+  // ── Escalas de trabalho ────────────────────────────────────────────────────
+  await conn.query(`
+    CREATE TABLE IF NOT EXISTS escalas (
+      id              INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      company_id      INT UNSIGNED NOT NULL,
+      nome            VARCHAR(100) NOT NULL,
+      tipo            ENUM('fixo','12x36') NOT NULL DEFAULT 'fixo',
+      horario_entrada TIME NULL,
+      horario_saida   TIME NULL,
+      dias_semana     VARCHAR(20) NULL COMMENT 'CSV de dias 0-6 (dom-sab) para tipo fixo, ex: 1,2,3,4,5',
+      data_referencia DATE NULL COMMENT 'dia de trabalho ancora, usado pra calcular o ciclo do 12x36',
+      ativo           TINYINT(1) NOT NULL DEFAULT 1,
+      criado_em       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      INDEX idx_escala_company (company_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+  console.log('[Migration] escalas: tabela verificada.');
+
+  const [usrCols2] = await conn.query('SHOW COLUMNS FROM usuarios');
+  const usrNames2 = usrCols2.map(c => c.Field);
+  if (!usrNames2.includes('escala_id')) {
+    await conn.query('ALTER TABLE usuarios ADD COLUMN escala_id INT UNSIGNED NULL');
+    console.log('[Migration] usuarios: coluna escala_id adicionada');
+  }
+
 }
 
 // ── Entry point ──────────────────────────────────────────────

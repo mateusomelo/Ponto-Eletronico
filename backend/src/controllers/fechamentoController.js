@@ -37,7 +37,45 @@ function toBRT(dt) {
 }
 
 // ── Cálculo de horas do período ───────────────────────────
-function calcularResumo(registros, competencia) {
+// Busca a escala de trabalho atribuída a um usuário (ou null se não tiver nenhuma —
+// nesse caso calcularResumo cai no comportamento padrão: Seg-Sex, 8h/dia, tolerância 08:15).
+async function buscarEscalaUsuario(usuario_id) {
+  const [[u]] = await pool.query('SELECT escala_id FROM usuarios WHERE id = ?', [usuario_id]);
+  if (!u || !u.escala_id) return null;
+  const [[escala]] = await pool.query('SELECT * FROM escalas WHERE id = ? AND ativo = 1', [u.escala_id]);
+  return escala || null;
+}
+
+// Determina se um dado dia (Date em BRT, meia-noite) é dia de trabalho segundo a escala.
+// Retorna null se não há escala suficiente pra decidir (cai no padrão Seg-Sex).
+function diaDeTrabalho(escala, diaBRT) {
+  if (!escala) return null;
+  if (escala.tipo === '12x36') {
+    if (!escala.data_referencia) return null;
+    const ref = new Date(escala.data_referencia);
+    const refUTC = new Date(Date.UTC(ref.getUTCFullYear(), ref.getUTCMonth(), ref.getUTCDate()));
+    const diffDias = Math.round((diaBRT - refUTC) / 86400000);
+    return diffDias % 2 === 0; // 12x36 = trabalha um dia, descansa o próximo (ciclo de 2 dias)
+  }
+  // tipo 'fixo' com dias_semana customizados
+  if (escala.dias_semana) {
+    const dias = escala.dias_semana.split(',').map(Number);
+    return dias.includes(diaBRT.getUTCDay());
+  }
+  return null;
+}
+
+function minutosEsperadosPorDia(escala) {
+  if (escala?.tipo === '12x36') return 12 * 60;
+  if (escala?.horario_entrada && escala?.horario_saida) {
+    const [he, mi] = escala.horario_entrada.split(':').map(Number);
+    const [hs, ms] = escala.horario_saida.split(':').map(Number);
+    return Math.max(0, (hs * 60 + ms) - (he * 60 + mi));
+  }
+  return 8 * 60;
+}
+
+async function calcularResumo(registros, competencia, escala = null) {
   const [ano, mes] = competencia.split('-').map(Number);
   const hoje       = toBRT(new Date()); // now in BRT
 
@@ -53,17 +91,20 @@ function calcularResumo(registros, competencia) {
     porDia[dia].push({ tipo: r.tipo, brt });
   }
 
-  // Dias úteis (Seg-Sex) até limite
+  const minutosDia = minutosEsperadosPorDia(escala);
+
+  // Dias de trabalho previstos até o limite (conforme escala, ou Seg-Sex por padrão)
   let diasUteis = 0;
   const iter = new Date(Date.UTC(ano, mes - 1, 1, 3)); // 1º dia BRT (meia-noite BRT = 03:00 UTC)
   while (iter <= limite) {
-    const dow = new Date(iter.getTime() - 3 * 3600000).getUTCDay(); // BRT weekday
-    if (dow >= 1 && dow <= 5) diasUteis++;
+    const diaBRT = new Date(iter.getTime() - 3 * 3600000);
+    const dow = diaBRT.getUTCDay();
+    const ehTrabalho = diaDeTrabalho(escala, diaBRT);
+    if (ehTrabalho === null ? (dow >= 1 && dow <= 5) : ehTrabalho) diasUteis++;
     iter.setUTCDate(iter.getUTCDate() + 1);
   }
 
-  const MINUTOS_DIA   = 8 * 60;
-  const minutosPrevistos = diasUteis * MINUTOS_DIA;
+  const minutosPrevistos = diasUteis * minutosDia;
   let   minutosTrabalhos = 0;
   let   atrasos          = 0;
 
@@ -79,22 +120,25 @@ function calcularResumo(registros, competencia) {
       } else { i++; }
     }
 
-    // Atraso: primeira entrada após 08:15 BRT
+    // Atraso: primeira entrada após o horário esperado + tolerância de 15min
     const pE = regs.find(r => r.tipo === 'entrada');
     if (pE) {
       const h = pE.brt.getUTCHours();
       const m = pE.brt.getUTCMinutes();
-      if (h > 8 || (h === 8 && m > 15)) atrasos++;
+      const [heEsp, miEsp] = (escala?.horario_entrada || '08:00').split(':').map(Number);
+      const limiteMin = heEsp * 60 + miEsp + 15;
+      if (h * 60 + m > limiteMin) atrasos++;
     }
   }
 
-  // Faltas: dias úteis sem registro
+  // Faltas: dias de trabalho previstos sem nenhum registro
   let faltas = 0;
   const iter2 = new Date(Date.UTC(ano, mes - 1, 1, 3));
   while (iter2 <= limite) {
     const brtDay = new Date(iter2.getTime() - 3 * 3600000);
     const dow = brtDay.getUTCDay();
-    if (dow >= 1 && dow <= 5) {
+    const ehTrabalho = diaDeTrabalho(escala, brtDay);
+    if (ehTrabalho === null ? (dow >= 1 && dow <= 5) : ehTrabalho) {
       const key = `${brtDay.getUTCFullYear()}-${String(brtDay.getUTCMonth()+1).padStart(2,'0')}-${String(brtDay.getUTCDate()).padStart(2,'0')}`;
       if (!porDia[key]) faltas++;
     }
@@ -286,7 +330,8 @@ async function detalhe(req, res) {
     }
 
     const registros   = await buscarRegistrosFechamento(f, req);
-    const resumo       = calcularResumo(registros, f.competencia);
+    const escala       = await buscarEscalaUsuario(f.usuario_id);
+    const resumo       = await calcularResumo(registros, f.competencia, escala);
     const assinaturas  = await buscarAssinaturas(f.id);
 
     return res.json({ fechamento: semIpFechamento(f), registros, resumo, assinaturas });
@@ -820,7 +865,8 @@ async function exportarPDF(req, res) {
     }
 
     const registros    = await buscarRegistrosFechamento(f, req);
-    const resumo        = calcularResumo(registros, f.competencia);
+    const escala        = await buscarEscalaUsuario(f.usuario_id);
+    const resumo        = await calcularResumo(registros, f.competencia, escala);
     const assinaturas   = await buscarAssinaturas(f.id);
     const cid = req.user.company_id;
     const [[empresa]] = cid ? await pool.query('SELECT nome, logo FROM empresas WHERE id = ?', [cid]) : [[null]];
@@ -842,7 +888,8 @@ async function exportarPDF(req, res) {
 // automático após a assinatura final, sem precisar de uma requisição HTTP.
 async function gerarPDFBuffer(f, req, companyId) {
   const registros  = await buscarRegistrosFechamento(f, req);
-  const resumo      = calcularResumo(registros, f.competencia);
+  const escala      = await buscarEscalaUsuario(f.usuario_id);
+  const resumo      = await calcularResumo(registros, f.competencia, escala);
   const assinaturas = await buscarAssinaturas(f.id);
   const [[empresa]] = companyId
     ? await pool.query('SELECT nome, logo FROM empresas WHERE id = ?', [companyId])
@@ -868,7 +915,8 @@ async function exportarExcel(req, res) {
     }
 
     const registros = await buscarRegistrosFechamento(f, req);
-    const resumo    = calcularResumo(registros, f.competencia);
+    const escala    = await buscarEscalaUsuario(f.usuario_id);
+    const resumo    = await calcularResumo(registros, f.competencia, escala);
 
     const wb   = new xl.Workbook();
     const ws   = wb.addWorksheet(`Folha ${f.competencia}`);
@@ -930,4 +978,5 @@ module.exports = {
   listar, usuariosDisponiveis, detalhe,
   criar, enviar, assinar, rejeitar, fechar, reabrir, excluir,
   exportarPDF, exportarExcel, historicoAssinaturas,
+  calcularResumo, buscarEscalaUsuario,
 };

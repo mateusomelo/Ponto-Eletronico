@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="/img/favicon-32x32.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <title>Escalas de Trabalho — PontoControl</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <style>
+    .escala-card {
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 14px;
+    }
+    .escala-icon {
+      width: 42px; height: 42px; border-radius: 10px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+      background: #dbeafe; color: #1e40af;
+    }
+    .escala-icon.tipo-12x36 { background: #fef3c7; color: #92400e; }
+    .escala-info { flex: 1; min-width: 0; }
+    .escala-nome { font-weight: 700; font-size: .95rem; }
+    .escala-meta { font-size: .8rem; color: var(--text-muted); margin-top: 2px; }
+    .dias-check { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+    .dia-btn {
+      width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--bg-primary); cursor: pointer; font-size: .78rem; font-weight: 600;
+    }
+    .dia-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  </style>
+</head>
+<body>
+<div id="sidebarMount"></div>
+<div class="main" id="main">
+  <div id="topbarMount"></div>
+  <div class="page-content">
+
+    <div class="card" style="padding-bottom:0">
+      <div class="card-header">
+        <span class="card-title"><i class="fas fa-calendar-alt" style="color:#3b82f6"></i> Escalas de Trabalho</span>
+        <button class="btn btn-sm btn-primary" id="btnNova"><i class="fas fa-plus"></i> Nova Escala</button>
+      </div>
+    </div>
+    <div id="listaEscalas" style="margin-top:12px"><div class="page-loader"><span class="spinner"></span></div></div>
+
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalEscala">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modalTitulo">Nova Escala</h3>
+      <button class="modal-close" onclick="closeModal('modalEscala')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Nome da escala</label>
+        <input type="text" class="form-control" id="fNome" placeholder="Ex: Recepção — Turno Manhã" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tipo</label>
+        <select class="form-control" id="fTipo" onchange="alternarTipo()">
+          <option value="fixo">Fixo (dias e horário definidos)</option>
+          <option value="12x36">12x36 (trabalha 1 dia, descansa o próximo)</option>
+        </select>
+      </div>
+
+      <div id="blocoFixo">
+        <div class="form-row" style="grid-template-columns:1fr 1fr">
+          <div class="form-group">
+            <label class="form-label">Horário de entrada</label>
+            <input type="time" class="form-control" id="fEntrada" value="08:00" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Horário de saída</label>
+            <input type="time" class="form-control" id="fSaida" value="17:00" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Dias da semana</label>
+          <div class="dias-check" id="diasCheck"></div>
+        </div>
+      </div>
+
+      <div id="blocoDoze" style="display:none">
+        <div class="form-group">
+          <label class="form-label">Data de um dia de trabalho (referência do ciclo)</label>
+          <input type="date" class="form-control" id="fDataRef" />
+          <div class="text-sm text-muted mt-1">A partir dessa data, o sistema alterna automaticamente: trabalha 1 dia, descansa o próximo (12h de turno).</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalEscala')">Cancelar</button>
+      <button class="btn btn-primary" id="btnSalvar">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/layout.js"></script>
+<script>
+const DIAS_LABEL = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+let _escalas = [];
+let _editandoId = null;
+let _diasSelecionados = new Set([1,2,3,4,5]);
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.requireAuth()) return;
+  renderLayout('Escalas de Trabalho');
+  renderDiasCheck();
+  await carregar();
+});
+
+function renderDiasCheck() {
+  document.getElementById('diasCheck').innerHTML = DIAS_LABEL.map((l, i) => `
+    <button type="button" class="dia-btn ${_diasSelecionados.has(i) ? 'active' : ''}" data-dia="${i}" onclick="toggleDia(${i})">${l}</button>
+  `).join('');
+}
+
+function toggleDia(i) {
+  if (_diasSelecionados.has(i)) _diasSelecionados.delete(i); else _diasSelecionados.add(i);
+  renderDiasCheck();
+}
+
+function alternarTipo() {
+  const tipo = document.getElementById('fTipo').value;
+  document.getElementById('blocoFixo').style.display = tipo === 'fixo' ? 'block' : 'none';
+  document.getElementById('blocoDoze').style.display  = tipo === '12x36' ? 'block' : 'none';
+}
+
+async function carregar() {
+  try {
+    const data = await API.get('/escalas');
+    _escalas = data.escalas || [];
+    renderLista();
+  } catch {
+    toast('Erro ao carregar escalas.', 'error');
+  }
+}
+
+function renderLista() {
+  const el = document.getElementById('listaEscalas');
+  if (!_escalas.length) {
+    el.innerHTML = `<div class="card" style="text-align:center;padding:32px;color:var(--text-muted)">
+      <i class="fas fa-calendar-alt" style="font-size:2rem;margin-bottom:10px;opacity:.4"></i>
+      <div>Nenhuma escala cadastrada ainda. Sem escala, os usuários seguem o horário padrão (Seg-Sex, 8h/dia).</div>
+    </div>`;
+    return;
+  }
+  el.innerHTML = _escalas.map(e => {
+    const meta = e.tipo === '12x36'
+      ? `12x36 · referência: ${e.data_referencia ? fmtData(e.data_referencia) : '-'}`
+      : `${(e.dias_semana||'').split(',').map(d => DIAS_LABEL[d]).join(', ')} · ${e.horario_entrada||''}–${e.horario_saida||''}`;
+    return `
+    <div class="escala-card">
+      <div class="escala-icon ${e.tipo === '12x36' ? 'tipo-12x36' : ''}">
+        <i class="fas ${e.tipo === '12x36' ? 'fa-sync-alt' : 'fa-clock'}"></i>
+      </div>
+      <div class="escala-info">
+        <div class="escala-nome">${e.nome} ${!e.ativo ? '<span class="badge" style="background:#f1f5f9;color:#94a3b8">Inativa</span>' : ''}</div>
+        <div class="escala-meta">${meta}</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-xs btn-outline" onclick="editar(${e.id})"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-xs btn-danger" onclick="excluir(${e.id}, '${e.nome.replace(/'/g,"\\'")}')"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function fmtData(d) {
+  const [a,m,dd] = String(d).slice(0,10).split('-');
+  return `${dd}/${m}/${a}`;
+}
+
+document.getElementById('btnNova').addEventListener('click', () => {
+  _editandoId = null;
+  document.getElementById('modalTitulo').textContent = 'Nova Escala';
+  document.getElementById('fNome').value = '';
+  document.getElementById('fTipo').value = 'fixo';
+  document.getElementById('fEntrada').value = '08:00';
+  document.getElementById('fSaida').value = '17:00';
+  document.getElementById('fDataRef').value = '';
+  _diasSelecionados = new Set([1,2,3,4,5]);
+  renderDiasCheck();
+  alternarTipo();
+  openModal('modalEscala');
+});
+
+function editar(id) {
+  const e = _escalas.find(x => x.id === id);
+  if (!e) return;
+  _editandoId = id;
+  document.getElementById('modalTitulo').textContent = 'Editar Escala';
+  document.getElementById('fNome').value = e.nome;
+  document.getElementById('fTipo').value = e.tipo;
+  document.getElementById('fEntrada').value = e.horario_entrada || '08:00';
+  document.getElementById('fSaida').value = e.horario_saida || '17:00';
+  document.getElementById('fDataRef').value = e.data_referencia ? String(e.data_referencia).slice(0,10) : '';
+  _diasSelecionados = new Set((e.dias_semana || '1,2,3,4,5').split(',').map(Number));
+  renderDiasCheck();
+  alternarTipo();
+  openModal('modalEscala');
+}
+
+document.getElementById('btnSalvar').addEventListener('click', async () => {
+  const nome = document.getElementById('fNome').value.trim();
+  const tipo = document.getElementById('fTipo').value;
+  if (!nome) { toast('Informe o nome da escala.', 'warning'); return; }
+
+  const payload = { nome, tipo };
+  if (tipo === 'fixo') {
+    payload.horario_entrada = document.getElementById('fEntrada').value;
+    payload.horario_saida   = document.getElementById('fSaida').value;
+    payload.dias_semana     = Array.from(_diasSelecionados).sort().join(',');
+    if (!payload.dias_semana) { toast('Selecione ao menos um dia da semana.', 'warning'); return; }
+  } else {
+    payload.data_referencia = document.getElementById('fDataRef').value;
+    if (!payload.data_referencia) { toast('Informe a data de referência.', 'warning'); return; }
+  }
+
+  try {
+    if (_editandoId) await API.put(`/escalas/${_editandoId}`, payload);
+    else await API.post('/escalas', payload);
+    closeModal('modalEscala');
+    toast('Escala salva!', 'success');
+    carregar();
+  } catch (err) {
+    toast(err.data?.erro || 'Erro ao salvar escala.', 'error');
+  }
+});
+
+async function excluir(id, nome) {
+  const ok = await confirmDialog(`Excluir a escala "<strong>${nome}</strong>"? Usuários atribuídos a ela voltam ao horário padrão.`);
+  if (!ok) return;
+  try {
+    await API.delete(`/escalas/${id}`);
+    toast('Escala excluída.', 'success');
+    carregar();
+  } catch (err) {
+    toast(err.data?.erro || 'Erro ao excluir.', 'error');
+  }
+}
+</script>
+</body>
+</html>

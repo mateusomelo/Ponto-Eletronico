@@ -45,6 +45,10 @@ function renderLayout(pageTitle) {
         <i class="fas fa-id-badge nav-icon"></i>
         <span class="nav-label">Cargos & Permissões</span>
       </a>
+      <a class="nav-item" href="escalas.html" data-perm="sistema.configurar">
+        <i class="fas fa-calendar-alt nav-icon"></i>
+        <span class="nav-label">Escalas de Trabalho</span>
+      </a>
 
       <div class="nav-group-label" data-perm="fechamento.visualizar">Folha de Pagamento</div>
       <a class="nav-item" href="fechamento.html" data-perm="fechamento.visualizar">

@@ -63,6 +63,9 @@ async function seedEmpresaDefaults(empresaId, empresaNome, empresaCnpj) {
     ['foto_obrigatoria_mobile','true',              'boolean', 'Exigir foto em dispositivos móveis'],
     ['max_raio_metros',        '500',               'number',  'Raio máximo em metros para registro'],
     ['fuso_horario',           'America/Sao_Paulo', 'string',  'Fuso horário do sistema'],
+    ['geo_ativo',              'false',             'boolean', 'Bloquear registro de ponto fora do raio permitido'],
+    ['geo_latitude',           '',                  'string',  'Latitude do ponto central da empresa (cerca eletrônica)'],
+    ['geo_longitude',          '',                  'string',  'Longitude do ponto central da empresa (cerca eletrônica)'],
     // EmailJS / Comprovantes
     ['emailjs_public_key',           '',      'string',  'Chave pública do EmailJS (Public Key)'],
     ['emailjs_service_id',           '',      'string',  'ID do serviço EmailJS (Service ID)'],

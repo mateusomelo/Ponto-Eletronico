@@ -20,11 +20,18 @@
       #datesCustom span  { display: none; }
       /* Tabela: esconde colunas menos importantes */
       table th:nth-child(6), table td:nth-child(6) { display: none; }
+      #camposPersonalizado { grid-template-columns: 1fr 1fr !important; }
     }
     @media (max-width: 480px) {
       table th:nth-child(4), table td:nth-child(4),
       table th:nth-child(5), table td:nth-child(5) { display: none; }
     }
+    .perm-check {
+      display: flex; align-items: center; gap: 8px; font-size: .85rem;
+      padding: 6px 8px; border-radius: 6px; background: #f8faff; cursor: pointer;
+    }
+    .perm-check:hover { background: #eff6ff; }
+    .perm-check input { accent-color: var(--accent); }
   </style>
 </head>
 <body>
@@ -54,6 +61,46 @@
         <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap" id="exportBtns">
           <button class="btn btn-outline" id="btnPDF"   disabled><i class="fas fa-file-pdf" style="color:#ef4444"></i> Exportar PDF</button>
           <button class="btn btn-outline" id="btnExcel" disabled><i class="fas fa-file-excel" style="color:#10b981"></i> Exportar Excel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Exportação para folha de pagamento -->
+    <div class="card mb-6" data-perm="relatorios.visualizar">
+      <div class="card-header">
+        <span class="card-title"><i class="fas fa-file-invoice-dollar" style="color:#16a34a"></i> Exportar para Folha de Pagamento</span>
+      </div>
+      <div class="filters-bar">
+        <input type="month" class="form-control" id="competenciaFolha" style="max-width:180px" />
+        <button class="btn btn-outline" id="btnFolhaCSV"><i class="fas fa-file-csv" style="color:#16a34a"></i> Exportar CSV</button>
+        <span class="text-sm text-muted">Matrícula, nome, cargo, horas trabalhadas, extras, faltas, atrasos e banco de horas — de todos os colaboradores no mês.</span>
+      </div>
+    </div>
+
+    <!-- Relatório personalizado -->
+    <div class="card mb-6" data-perm="relatorios.visualizar">
+      <div class="card-header">
+        <span class="card-title"><i class="fas fa-sliders-h" style="color:#3b82f6"></i> Relatório Personalizado</span>
+      </div>
+      <div style="padding:14px 20px">
+        <div class="text-sm text-muted" style="margin-bottom:10px">Escolha os campos que quer no relatório:</div>
+        <div class="perm-grid" id="camposPersonalizado" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
+          <label class="perm-check"><input type="checkbox" value="matricula" checked /> Matrícula</label>
+          <label class="perm-check"><input type="checkbox" value="nome" checked /> Nome</label>
+          <label class="perm-check"><input type="checkbox" value="email" /> E-mail</label>
+          <label class="perm-check"><input type="checkbox" value="cpf" /> CPF</label>
+          <label class="perm-check"><input type="checkbox" value="telefone" /> Telefone</label>
+          <label class="perm-check"><input type="checkbox" value="cargo" checked /> Cargo</label>
+          <label class="perm-check"><input type="checkbox" value="dias_trabalhados" checked /> Dias Trabalhados</label>
+          <label class="perm-check"><input type="checkbox" value="total_entradas" /> Total Entradas</label>
+          <label class="perm-check"><input type="checkbox" value="total_saidas" /> Total Saídas</label>
+          <label class="perm-check"><input type="checkbox" value="ultimo_registro" /> Último Registro</label>
+        </div>
+        <div class="filters-bar">
+          <input type="date" class="form-control" id="persDataInicio" style="max-width:160px" />
+          <span class="text-muted">até</span>
+          <input type="date" class="form-control" id="persDataFim" style="max-width:160px" />
+          <button class="btn btn-primary" id="btnPersonalizadoCSV"><i class="fas fa-file-csv"></i> Gerar CSV</button>
         </div>
       </div>
     </div>
@@ -238,6 +285,45 @@ async function exportar(fmt) {
 
 document.getElementById('btnPDF').addEventListener('click',   () => exportar('pdf'));
 document.getElementById('btnExcel').addEventListener('click', () => exportar('excel'));
+
+// ── Folha de pagamento ──────────────────────────────────────
+(function initCompetenciaFolha() {
+  const el = document.getElementById('competenciaFolha');
+  if (el) el.value = new Date().toISOString().slice(0, 7);
+})();
+
+document.getElementById('btnFolhaCSV').addEventListener('click', async () => {
+  const competencia = document.getElementById('competenciaFolha').value;
+  if (!competencia) { toast('Selecione a competência.', 'warning'); return; }
+  try {
+    const res  = await API.download('/relatorios/folha-pagamento', { competencia });
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = `folha-pagamento-${competencia}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  } catch { toast('Erro ao exportar folha de pagamento.', 'error'); }
+});
+
+// ── Relatório personalizado ─────────────────────────────────
+document.getElementById('btnPersonalizadoCSV').addEventListener('click', async () => {
+  const campos = Array.from(document.querySelectorAll('#camposPersonalizado input:checked')).map(c => c.value);
+  if (!campos.length) { toast('Selecione ao menos um campo.', 'warning'); return; }
+  const params = { campos: campos.join(',') };
+  const di = document.getElementById('persDataInicio').value;
+  const df = document.getElementById('persDataFim').value;
+  if (di) params.data_inicio = di;
+  if (df) params.data_fim    = df;
+
+  try {
+    const res  = await API.download('/relatorios/personalizado', params);
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'relatorio-personalizado.csv'; a.click();
+    URL.revokeObjectURL(url);
+  } catch { toast('Erro ao gerar relatório personalizado.', 'error'); }
+});
 </script>
 </body>
 </html>

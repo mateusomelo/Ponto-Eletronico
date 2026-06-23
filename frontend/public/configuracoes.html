@@ -94,6 +94,9 @@ const labels = {
   horario_saida:        { label: 'Horário padrão de saída',        tipo: 'text'   },
   tolerancia_minutos:   { label: 'Tolerância atraso (minutos)',   tipo: 'number' },
   max_raio_metros:      { label: 'Raio máximo GPS (metros)',      tipo: 'number' },
+  geo_ativo:            { label: 'Bloquear ponto fora da cerca eletrônica', tipo: 'select', opts: [['false','Não — só registrar o GPS'],['true','Sim — bloquear fora do raio']] },
+  geo_latitude:         { label: 'Latitude do centro da empresa',  tipo: 'text'   },
+  geo_longitude:        { label: 'Longitude do centro da empresa', tipo: 'text'   },
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -145,7 +148,22 @@ function renderCfg() {
   }
 
   html += '</div>';
+  html += `<button type="button" class="btn btn-sm btn-outline" id="btnUsarLocalAtual" style="margin-top:8px">
+    <i class="fas fa-map-marker-alt"></i> Usar minha localização atual como centro da cerca
+  </button>`;
   body.innerHTML = html;
+
+  document.getElementById('btnUsarLocalAtual').addEventListener('click', () => {
+    if (!navigator.geolocation) { toast('Geolocalização não disponível neste navegador.', 'error'); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        document.querySelector('[data-chave="geo_latitude"]').value  = pos.coords.latitude.toFixed(7);
+        document.querySelector('[data-chave="geo_longitude"]').value = pos.coords.longitude.toFixed(7);
+        toast('Localização capturada. Clique em Salvar para confirmar.', 'success');
+      },
+      () => toast('Não foi possível obter sua localização. Verifique a permissão do navegador.', 'error')
+    );
+  });
 }
 
 document.getElementById('btnSalvar').addEventListener('click', async () => {

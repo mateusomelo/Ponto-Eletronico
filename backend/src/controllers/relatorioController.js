@@ -307,4 +307,119 @@ async function resumoUsuario(req, res) {
   }
 }
 
-module.exports = { dados, exportarPDF, exportarExcel, resumoUsuario };
+// GET /api/relatorios/folha-pagamento?competencia=YYYY-MM
+// CSV genérico (matrícula, nome, cargo, horas trabalhadas/extras/faltas/atrasos/banco)
+// pronto pra importar na maioria dos sistemas de folha de pagamento.
+async function exportarFolhaPagamento(req, res) {
+  const { competencia } = req.query;
+  if (!competencia || !/^\d{4}-\d{2}$/.test(competencia)) {
+    return res.status(400).json({ erro: 'Informe competencia no formato YYYY-MM.' });
+  }
+
+  try {
+    const { calcularResumo, buscarEscalaUsuario } = require('./fechamentoController');
+    const cid = req.user.company_id;
+
+    const [usuarios] = await pool.query(
+      `SELECT u.id, u.nome, u.cpf, c.nome AS cargo
+       FROM usuarios u JOIN cargos c ON c.id = u.cargo_id
+       WHERE u.ativo = 1 ${cid ? 'AND u.company_id = ?' : ''}
+       ORDER BY u.nome ASC`,
+      cid ? [cid] : []
+    );
+
+    const linhas = [['Matricula', 'Nome', 'Cargo', 'Horas Trabalhadas', 'Horas Extras', 'Faltas', 'Atrasos', 'Banco de Horas']];
+
+    for (const u of usuarios) {
+      const [registros] = await pool.query(
+        `SELECT tipo, data_hora FROM registros_ponto
+         WHERE usuario_id = ? AND DATE_FORMAT(data_hora, '%Y-%m') = ?
+         ORDER BY data_hora ASC`,
+        [u.id, competencia]
+      );
+      const escala = await buscarEscalaUsuario(u.id);
+      const resumo  = await calcularResumo(registros, competencia, escala);
+      linhas.push([
+        u.id, u.nome, u.cargo || '',
+        resumo.horasTrabalhadas, resumo.horasExtra,
+        resumo.faltas, resumo.atrasos, resumo.bancoHoras,
+      ]);
+    }
+
+    const csv = linhas.map(l => l.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\r\n');
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="folha-pagamento-${competencia}.csv"`);
+    return res.send('﻿' + csv); // BOM pra abrir certinho no Excel
+  } catch (err) {
+    console.error('[Relatorio] exportarFolhaPagamento:', err);
+    return res.status(500).json({ erro: 'Erro interno.' });
+  }
+}
+
+// Campos disponíveis para o relatório personalizado — chave => [label, expressão SQL ou null se vier do app]
+const CAMPOS_DISPONIVEIS = {
+  matricula:        'u.id',
+  nome:              'u.nome',
+  email:             'u.email',
+  cpf:               'u.cpf',
+  telefone:          'u.telefone',
+  cargo:             'c.nome',
+  dias_trabalhados:  "COUNT(DISTINCT DATE(r.data_hora))",
+  total_entradas:    "COUNT(CASE WHEN r.tipo='entrada' THEN 1 END)",
+  total_saidas:      "COUNT(CASE WHEN r.tipo='saida' THEN 1 END)",
+  ultimo_registro:   'MAX(r.data_hora)',
+};
+
+// GET /api/relatorios/personalizado?campos=nome,cargo,dias_trabalhados&data_inicio=&data_fim=
+async function exportarPersonalizado(req, res) {
+  const { campos, data_inicio, data_fim } = req.query;
+  const lista = (campos || '').split(',').map(c => c.trim()).filter(c => CAMPOS_DISPONIVEIS[c]);
+  if (!lista.length) {
+    return res.status(400).json({ erro: 'Selecione ao menos um campo válido.' });
+  }
+
+  try {
+    const cid = req.user.company_id;
+    const params = [];
+    let whereReg = '';
+    if (data_inicio) { whereReg += ' AND DATE(r.data_hora) >= ?'; params.push(data_inicio); }
+    if (data_fim)    { whereReg += ' AND DATE(r.data_hora) <= ?'; params.push(data_fim); }
+
+    let whereUser = 'WHERE u.ativo = 1';
+    const paramsUser = [...params];
+    if (cid) { whereUser += ' AND u.company_id = ?'; paramsUser.push(cid); }
+
+    const selectSql = lista.map(c => `${CAMPOS_DISPONIVEIS[c]} AS ${c}`).join(', ');
+    const [rows] = await pool.query(
+      `SELECT ${selectSql}
+       FROM usuarios u
+       LEFT JOIN registros_ponto r ON r.usuario_id = u.id ${whereReg}
+       JOIN cargos c ON c.id = u.cargo_id
+       ${whereUser}
+       GROUP BY u.id
+       ORDER BY u.nome ASC`,
+      paramsUser
+    );
+
+    const LABELS = {
+      matricula: 'Matricula', nome: 'Nome', email: 'E-mail', cpf: 'CPF', telefone: 'Telefone',
+      cargo: 'Cargo', dias_trabalhados: 'Dias Trabalhados', total_entradas: 'Total Entradas',
+      total_saidas: 'Total Saidas', ultimo_registro: 'Ultimo Registro',
+    };
+    const linhas = [lista.map(c => LABELS[c])];
+    rows.forEach(r => linhas.push(lista.map(c => r[c] ?? '')));
+
+    const csv = linhas.map(l => l.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\r\n');
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="relatorio-personalizado.csv"');
+    return res.send('﻿' + csv);
+  } catch (err) {
+    console.error('[Relatorio] exportarPersonalizado:', err);
+    return res.status(500).json({ erro: 'Erro interno.' });
+  }
+}
+
+module.exports = {
+  dados, exportarPDF, exportarExcel, resumoUsuario, exportarFolhaPagamento,
+  exportarPersonalizado, CAMPOS_DISPONIVEIS,
+};

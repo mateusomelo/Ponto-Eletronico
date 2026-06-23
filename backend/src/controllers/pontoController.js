@@ -31,6 +31,17 @@ function dayBoundsUTC(dateStr, tz) {
   return [toSQL(midnightMs), toSQL(midnightMs + 86400000)];
 }
 
+// Distância em metros entre duas coordenadas (fórmula de Haversine)
+function distanciaMetros(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const toRad = (d) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 // Lê fuso_horario da empresa no banco de configuracoes
 async function getCompanyTZ(company_id) {
   if (!company_id) return 'America/Sao_Paulo';
@@ -131,6 +142,36 @@ async function registrar(req, res) {
   // Foto obrigatória somente em dispositivos móveis
   if (mobile && !fotoFile) {
     return res.status(400).json({ erro: 'Foto obrigatória para dispositivos móveis.' });
+  }
+
+  // Cerca eletrônica (geofencing) — bloqueia se a empresa tiver isso ativado
+  // e o ponto estiver fora do raio permitido em relação ao centro configurado.
+  try {
+    const [geoRows] = await pool.query(
+      `SELECT chave, valor FROM configuracoes
+       WHERE company_id = ? AND chave IN ('geo_ativo','geo_latitude','geo_longitude','max_raio_metros')`,
+      [req.user.company_id]
+    );
+    const geoCfg = {};
+    geoRows.forEach(r => { geoCfg[r.chave] = r.valor; });
+
+    if (geoCfg.geo_ativo === 'true' && geoCfg.geo_latitude && geoCfg.geo_longitude) {
+      const raio = parseFloat(geoCfg.max_raio_metros) || 500;
+      const dist = distanciaMetros(
+        parseFloat(latitude), parseFloat(longitude),
+        parseFloat(geoCfg.geo_latitude), parseFloat(geoCfg.geo_longitude)
+      );
+      if (dist > raio) {
+        if (fotoFile) fs.unlink(fotoFile.path, () => {});
+        return res.status(403).json({
+          erro: `Você está a ${Math.round(dist)}m do local permitido (máximo ${raio}m). Aproxime-se para registrar o ponto.`,
+          code: 'FORA_DA_CERCA',
+        });
+      }
+    }
+  } catch (geoErr) {
+    console.error('[Ponto] verificação de cerca eletrônica:', geoErr.message);
+    // Em caso de erro na verificação, não bloqueia o registro — falha aberta.
   }
 
   // Lock nomeado por usuário — serializa cliques/requisições concorrentes do

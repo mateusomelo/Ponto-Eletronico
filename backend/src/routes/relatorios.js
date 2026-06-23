@@ -17,5 +17,7 @@ router.use(authorize('relatorios.visualizar'));
 
 router.get('/dados',          ctrl.dados);
 router.get('/resumo-usuario', ctrl.resumoUsuario);
+router.get('/folha-pagamento', ctrl.exportarFolhaPagamento);
+router.get('/personalizado',   ctrl.exportarPersonalizado);
 
 module.exports = router;

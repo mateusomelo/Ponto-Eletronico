@@ -86,6 +86,7 @@ app.use('/api/relatorios',    require('./routes/relatorios'));
 app.use('/api/dashboard',     require('./routes/dashboard'));
 app.use('/api/logs',          require('./routes/logs'));
 app.use('/api/configuracoes',  require('./routes/configuracoes'));
+app.use('/api/escalas',        require('./routes/escalas'));
 app.use('/api/fechamento',    require('./routes/fechamento'));
 app.use('/api/notificacoes',  require('./routes/notificacoes'));
 app.use('/api/empresas',      require('./routes/empresas'));
