@@ -161,8 +161,8 @@ async function assinarPropria(req, res) {
 
     return res.json({ checkout_url: session.url });
   } catch (err) {
-    console.error('[Stripe] assinarPropria:', err.message);
-    return res.status(500).json({ erro: err.message });
+    console.error('[Stripe] assinarPropria:', err.message, err.stack);
+    return res.status(500).json({ erro: err.message, _debugStack: err.stack });
   }
 }
 
