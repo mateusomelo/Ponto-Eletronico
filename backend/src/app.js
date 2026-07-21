@@ -96,7 +96,7 @@ app.use('/api/app-versoes',   require('./routes/appVersoes'));
 
 // ── Health check ─────────────────────────────────────────
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', ts: new Date().toISOString(), env: process.env.NODE_ENV });
+  res.json({ status: 'ok', ts: new Date().toISOString(), env: process.env.NODE_ENV, v: '2.0.0' });
 });
 
 // ── SPA fallback ─────────────────────────────────────────

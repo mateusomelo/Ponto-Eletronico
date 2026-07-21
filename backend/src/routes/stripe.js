@@ -7,8 +7,8 @@ const ctrl = require('../controllers/stripeController');
 // Ver própria assinatura (requer pagamentos.visualizar)
 router.get('/minha-assinatura', authenticate, authorize('pagamentos.visualizar'), ctrl.minhaAssinatura);
 
-// Alerta leve de fatura pendente — qualquer usuário autenticado da empresa pode ver
-// (usado pelo banner global do layout para refresh dinâmico)
+// Alerta leve de fatura pendente — qualquer usuario autenticado da empresa pode ver
+// (usado pelo banner global do layout para refresh dinamico)
 router.get('/alerta-fatura', authenticate, ctrl.alertaFatura);
 
 // Assinar um plano pela própria empresa — precisa funcionar mesmo com a
