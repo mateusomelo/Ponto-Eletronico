@@ -393,6 +393,13 @@ async function criarUsuario(req, res) {
       [nome.trim(), email.toLowerCase().trim(), cpfPlaceholder, hash, cargos[0].id, empresaId, role]
     );
 
+    // Email de boas-vindas com login e senha
+    const [[empresa]] = await pool.query('SELECT nome FROM empresas WHERE id = ? LIMIT 1', [empresaId]);
+    emailService.enviarBoasVindasEmailJS(
+      email.toLowerCase().trim(), nome.trim(),
+      empresa?.nome || '', senha, 7
+    ).catch(() => {});
+
     return res.status(201).json({
       mensagem: 'Usuário criado com sucesso.',
       id: result.insertId,
