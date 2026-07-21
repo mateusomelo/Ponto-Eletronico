@@ -116,6 +116,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!Auth.requireAuth()) return;
   renderLayout('Logs de Auditoria');
 
+  // Super admin: injeta botão de voltar ao painel
+  if (Auth.isSuperAdmin()) {
+    const topbar = document.getElementById('topbarMount');
+    if (topbar) {
+      const back = document.createElement('a');
+      back.href = 'admin.html';
+      back.className = 'btn btn-outline';
+      back.style.cssText = 'position:absolute;right:120px;top:14px;font-size:.8rem;z-index:10';
+      back.innerHTML = '<i class="fas fa-arrow-left"></i> Painel Admin';
+      topbar.style.position = 'relative';
+      topbar.appendChild(back);
+    }
+  }
+
   if (!Auth.isAdmin()) {
     document.querySelector('.page-content').innerHTML =
       '<div class="card" style="text-align:center;padding:48px 24px">' +
