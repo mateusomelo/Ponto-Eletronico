@@ -493,7 +493,10 @@ async function cadastrarEmpresa(req, res) {
       { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
     );
 
-    // E-mail de boas-vindas (silencioso se SMTP não configurado)
+    // E-mail de boas-vindas via EmailJS (com login e senha) — silencioso se não configurado
+    emailService.enviarBoasVindasEmailJS(emailNorm, nome_admin.trim(), nome_empresa.trim(), senha, trialDias)
+      .catch(() => {});
+    // Fallback SMTP caso EmailJS não esteja configurado
     emailService.enviarBoasVindas(emailNorm, nome_admin.trim(), nome_empresa.trim(), trialDias)
       .catch(() => {});
 

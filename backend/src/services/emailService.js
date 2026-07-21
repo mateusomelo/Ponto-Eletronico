@@ -120,6 +120,57 @@ async function enviarResetSenhaEmailJS(email, nome, token, { empresaNome, ip } =
   }
 }
 
+async function enviarBoasVindasEmailJS(email, nomeAdmin, nomeEmpresa, senha, trialDias) {
+  const serviceId  = process.env.EMAILJS_SERVICE_ID;
+  const templateId = process.env.EMAILJS_TEMPLATE_BOAS_VINDAS_ID;
+  const publicKey  = process.env.EMAILJS_PUBLIC_KEY;
+  const privateKey = process.env.EMAILJS_PRIVATE_KEY;
+
+  if (!serviceId || !templateId || !publicKey) {
+    console.log('[Email] EmailJS boas-vindas: EMAILJS_TEMPLATE_BOAS_VINDAS_ID não configurado');
+    return false;
+  }
+
+  const url = `${BASE_URL()}/login.html`;
+
+  const payload = JSON.stringify({
+    service_id:  serviceId,
+    template_id: templateId,
+    user_id:     publicKey,
+    ...(privateKey ? { accessToken: privateKey } : {}),
+    template_params: {
+      email,
+      name:          nomeAdmin,
+      to_email:      email,
+      to_name:       nomeAdmin,
+      nome_admin:    nomeAdmin,
+      nome_empresa:  nomeEmpresa,
+      login_acesso:  email,
+      senha_acesso:  senha,
+      trial_dias:    String(trialDias),
+      link_acesso:   url,
+    },
+  });
+
+  try {
+    const resp = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    payload,
+    });
+    if (resp.ok) {
+      console.log(`[Email] Boas-vindas via EmailJS enviado → ${email}`);
+      return true;
+    }
+    const txt = await resp.text();
+    console.error(`[Email] EmailJS boas-vindas falhou (${resp.status}): ${txt}`);
+    return false;
+  } catch (err) {
+    console.error('[Email] EmailJS boas-vindas erro:', err.message);
+    return false;
+  }
+}
+
 async function enviarResetSenha(email, nome, token) {
   const url = `${BASE_URL()}/redefinir-senha.html?token=${token}`;
   return enviarEmail({
@@ -250,6 +301,7 @@ module.exports = {
   enviarEmail,
   enviarResetSenha,
   enviarResetSenhaEmailJS,
+  enviarBoasVindasEmailJS,
   enviarFechamentoAssinadoEmail,
   enviarAlertaFatura,
   enviarEmpresaSuspensa,
