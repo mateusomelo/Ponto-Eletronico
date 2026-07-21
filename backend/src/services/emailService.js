@@ -87,9 +87,7 @@ async function enviarResetSenhaEmailJS(email, nome, token, { empresaNome, ip } =
     user_id:     publicKey,
     ...(privateKey ? { accessToken: privateKey } : {}),
     template_params: {
-      email,                              // {{email}} no campo "Para" do template
-      to_email:          email,           // alias alternativo
-      name:              nome,            // {{name}} no campo "De Nome"
+      to_email:          email,
       to_name:           nome,
       nome_usuario:      nome,
       empresa_nome:      empresaNome || 'PontoControl',
