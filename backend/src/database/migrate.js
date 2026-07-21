@@ -583,6 +583,22 @@ async function runIncrementalMigrations(conn) {
     console.log('[Migration] usuarios: coluna escala_id adicionada');
   }
 
+  // ── logs_acesso: company_id para isolamento por empresa ───────────────────
+  const [logCols] = await conn.query('SHOW COLUMNS FROM logs_acesso');
+  const logNames  = logCols.map(c => c.Field);
+  if (!logNames.includes('company_id')) {
+    await conn.query('ALTER TABLE logs_acesso ADD COLUMN company_id INT UNSIGNED NULL AFTER usuario_id');
+    await conn.query('ALTER TABLE logs_acesso ADD INDEX idx_log_company (company_id)');
+    // Backfill: preenche company_id nos logs existentes a partir do usuário
+    await conn.query(`
+      UPDATE logs_acesso l
+      JOIN usuarios u ON u.id = l.usuario_id
+      SET l.company_id = u.company_id
+      WHERE l.company_id IS NULL AND l.usuario_id IS NOT NULL
+    `);
+    console.log('[Migration] logs_acesso: company_id adicionado e backfill aplicado');
+  }
+
 }
 
 // ── Entry point ──────────────────────────────────────────────
