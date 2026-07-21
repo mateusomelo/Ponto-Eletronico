@@ -4,8 +4,8 @@ const { requireSuperAdmin, authorize }    = require('../middlewares/permission')
 const ctrl = require('../controllers/stripeController');
 
 // ── Rotas company_admin ──────────────────────────────────────
-// Ver própria assinatura (requer pagamentos.visualizar)
-router.get('/minha-assinatura', authenticate, authorize('pagamentos.visualizar'), ctrl.minhaAssinatura);
+// Ver própria assinatura — qualquer usuário autenticado da sua empresa pode ver
+router.get('/minha-assinatura', authenticate, ctrl.minhaAssinatura);
 
 // Alerta leve de fatura pendente — qualquer usuário autenticado da empresa pode ver
 // (usado pelo banner global do layout para refresh dinâmico)
@@ -23,3 +23,4 @@ router.post('/empresas/:id/assinar',  authenticate, requireSuperAdmin, ctrl.assi
 router.post('/empresas/:id/cancelar', authenticate, requireSuperAdmin, ctrl.cancelar);
 
 module.exports = router;
+

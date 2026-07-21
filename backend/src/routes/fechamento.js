@@ -5,12 +5,16 @@ const { authorize }     = require('../middlewares/permission');
 const { requirePlan }   = require('../middlewares/planGuard');
 
 router.use(authenticate);
+
+// Histórico de assinaturas: todos podem ver (informação leve sobre sua empresa)
+router.get ('/assinaturas/historico', ctrl.historicoAssinaturas);
+
+// Resto do fechamento: requer plano profissional ou enterprise
 router.use(requirePlan('profissional', 'enterprise'));
 
 // Listagem e detalhes (acesso controlado no controller)
 router.get ('/',                     ctrl.listar);
 router.get ('/usuarios-disponiveis', authorize('fechamento.criar'), ctrl.usuariosDisponiveis);
-router.get ('/assinaturas/historico', ctrl.historicoAssinaturas);
 router.get ('/:id',                  ctrl.detalhe);
 router.get ('/:id/pdf',              ctrl.exportarPDF);
 router.get ('/:id/excel',            ctrl.exportarExcel);
@@ -27,3 +31,4 @@ router.patch('/:id/assinar',         ctrl.assinar);
 router.patch('/:id/rejeitar',        ctrl.rejeitar);
 
 module.exports = router;
+
