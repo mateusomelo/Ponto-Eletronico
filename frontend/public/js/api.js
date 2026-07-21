@@ -76,7 +76,13 @@ async function request(method, path, body = null, options = {}) {
     const ct = res.headers.get('content-type') || '';
     if (ct.includes('application/json')) {
       const data = await res.json();
-      if (!res.ok) throw { status: res.status, data };
+      if (!res.ok) {
+        // Rota não encontrada = backend está em deploy/atualização — mensagem amigável
+        if (res.status === 404 && data?.erro === 'Rota não encontrada.') {
+          throw { status: 404, data: { erro: 'Sistema em atualização. Tente novamente em alguns instantes.' } };
+        }
+        throw { status: res.status, data };
+      }
       return data;
     }
 
