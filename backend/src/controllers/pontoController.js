@@ -515,6 +515,8 @@ async function enviarComprovante(req, res) {
     const protocolo = gerarProtocolo(registro.data_hora, registro.id, tz);
 
     const params = {
+      email: registro.usuario_email,
+      name:  registro.usuario_nome,
       nome_funcionario: registro.usuario_nome,
       cargo: registro.cargo_nome,
       empresa: empresaNome,
