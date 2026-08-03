@@ -12,26 +12,118 @@
     @media (max-width: 480px) {
       .col-desc { display: none !important; }
     }
-    .log-detail-row {
-      display: flex; gap: 8px; margin-bottom: 8px;
-      font-size: .85rem; align-items: flex-start;
-    }
-    .log-detail-row label {
-      min-width: 110px; font-weight: 600; color: var(--text-muted);
-      font-size: .78rem; padding-top: 2px; flex-shrink: 0;
-    }
+
+    /* ── Detalhes modal ── */
+    .log-detail-row { display: flex; gap: 8px; margin-bottom: 8px; font-size: .85rem; align-items: flex-start; }
+    .log-detail-row label { min-width: 110px; font-weight: 600; color: var(--text-muted); font-size: .78rem; padding-top: 2px; flex-shrink: 0; }
     .log-detail-row span { flex: 1; word-break: break-all; }
-    .log-json {
-      background: #f8faff; border: 1px solid var(--border);
-      border-radius: 6px; padding: 10px 12px;
-      font-size: .75rem; overflow: auto; max-height: 220px;
-      margin-top: 4px; white-space: pre; font-family: monospace;
+    .log-json { background: #f8faff; border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; font-size: .75rem; overflow: auto; max-height: 220px; margin-top: 4px; white-space: pre; font-family: monospace; }
+    .log-section-title { font-size: .78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; margin: 12px 0 6px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+
+    /* ══════════════════════════════════════════
+       Super Admin dark mode (body.sa-mode)
+    ══════════════════════════════════════════ */
+    body.sa-mode {
+      background: #0f172a !important;
+      color: #e2e8f0 !important;
     }
-    .log-section-title {
-      font-size: .78rem; font-weight: 700; color: var(--text-muted);
-      text-transform: uppercase; letter-spacing: .05em;
-      margin: 12px 0 6px; border-bottom: 1px solid var(--border); padding-bottom: 4px;
+    body.sa-mode .main { background: transparent !important; }
+
+    /* Página */
+    body.sa-mode .page-content { padding: 22px 28px; }
+    @media (max-width: 640px) { body.sa-mode .page-content { padding: 12px 14px; } }
+
+    /* Card */
+    body.sa-mode .card {
+      background: rgba(255,255,255,.04) !important;
+      border: 1px solid rgba(255,255,255,.08) !important;
+      border-radius: 16px !important;
+      box-shadow: none !important;
     }
+    body.sa-mode .card-header {
+      background: rgba(255,255,255,.03) !important;
+      border-bottom: 1px solid rgba(255,255,255,.08) !important;
+      padding: 16px 20px !important;
+    }
+    body.sa-mode .card-title { color: #f1f5f9 !important; font-size: 1rem !important; font-weight: 700 !important; }
+
+    /* Filters bar */
+    body.sa-mode .filters-bar {
+      background: rgba(255,255,255,.02) !important;
+      border-bottom: 1px solid rgba(255,255,255,.07) !important;
+      padding: 14px 20px !important;
+      gap: 10px !important;
+      flex-wrap: wrap !important;
+    }
+    body.sa-mode .filters-bar .form-control,
+    body.sa-mode .filters-bar input[type="date"] {
+      background: rgba(255,255,255,.07) !important;
+      border: 1px solid rgba(255,255,255,.12) !important;
+      color: #f1f5f9 !important;
+      border-radius: 9px !important;
+    }
+    body.sa-mode .filters-bar .form-control option { background: #1e293b !important; }
+    body.sa-mode .filters-bar label { color: #64748b !important; }
+    body.sa-mode .filters-bar .btn-primary {
+      background: #2563eb !important; border-color: #2563eb !important; color: #fff !important;
+      box-shadow: 0 2px 10px rgba(37,99,235,.4) !important; border-radius: 9px !important;
+    }
+    body.sa-mode .filters-bar .btn-outline {
+      background: rgba(255,255,255,.07) !important; border-color: rgba(255,255,255,.15) !important;
+      color: #94a3b8 !important; border-radius: 9px !important;
+    }
+    body.sa-mode .filters-bar .btn-outline:hover { background: rgba(255,255,255,.12) !important; color: #e2e8f0 !important; }
+
+    /* Table */
+    body.sa-mode .table-container { background: transparent !important; }
+    body.sa-mode table { border-collapse: collapse !important; width: 100% !important; }
+    body.sa-mode thead tr { background: rgba(255,255,255,.04) !important; border-bottom: 1px solid rgba(255,255,255,.08) !important; }
+    body.sa-mode thead th { color: #475569 !important; font-size: .7rem !important; text-transform: uppercase !important; letter-spacing: .07em !important; font-weight: 700 !important; padding: 10px 14px !important; }
+    body.sa-mode tbody tr { border-bottom: 1px solid rgba(255,255,255,.04) !important; transition: background .12s; }
+    body.sa-mode tbody tr:hover { background: rgba(255,255,255,.04) !important; }
+    body.sa-mode tbody td { color: #cbd5e1 !important; font-size: .85rem !important; padding: 11px 14px !important; }
+    body.sa-mode .text-muted { color: #475569 !important; }
+    body.sa-mode .table-empty { color: #475569 !important; text-align: center !important; padding: 48px !important; }
+
+    /* Badges dark */
+    body.sa-mode .badge { font-size: .7rem !important; font-weight: 700 !important; padding: 3px 9px !important; border-radius: 20px !important; }
+    body.sa-mode .badge-success { background: rgba(16,185,129,.2) !important; color: #34d399 !important; border: 1px solid rgba(16,185,129,.3) !important; }
+    body.sa-mode .badge-danger  { background: rgba(239,68,68,.2)  !important; color: #fca5a5 !important; border: 1px solid rgba(239,68,68,.3)  !important; }
+    body.sa-mode .badge-warning { background: rgba(245,158,11,.2) !important; color: #fcd34d !important; border: 1px solid rgba(245,158,11,.3) !important; }
+    body.sa-mode .badge-info    { background: rgba(99,102,241,.2) !important; color: #a5b4fc !important; border: 1px solid rgba(99,102,241,.3) !important; }
+    body.sa-mode .badge-gray    { background: rgba(255,255,255,.1)!important; color: #94a3b8  !important; border: 1px solid rgba(255,255,255,.15)!important; }
+
+    /* Botão detalhes */
+    body.sa-mode .btn-xs {
+      background: rgba(255,255,255,.07) !important; color: #94a3b8 !important;
+      border: 1px solid rgba(255,255,255,.12) !important; border-radius: 7px !important; padding: 4px 10px !important;
+    }
+    body.sa-mode .btn-xs:hover { background: rgba(255,255,255,.14) !important; color: #e2e8f0 !important; }
+
+    /* Pagination */
+    body.sa-mode .pagination { padding: 14px 20px !important; border-top: 1px solid rgba(255,255,255,.07) !important; }
+    body.sa-mode .pagination button {
+      background: rgba(255,255,255,.07) !important; border: 1px solid rgba(255,255,255,.12) !important;
+      color: #94a3b8 !important; border-radius: 8px !important;
+    }
+    body.sa-mode .pagination button.active,
+    body.sa-mode .pagination button:hover:not(:disabled) {
+      background: #2563eb !important; border-color: #2563eb !important; color: #fff !important;
+    }
+
+    /* Modal dark */
+    body.sa-mode .modal-overlay { background: rgba(0,0,0,.75) !important; backdrop-filter: blur(4px) !important; }
+    body.sa-mode .modal { background: #1e293b !important; border: 1px solid rgba(255,255,255,.1) !important; border-radius: 16px !important; color: #e2e8f0 !important; }
+    body.sa-mode .modal-header { border-bottom: 1px solid rgba(255,255,255,.08) !important; background: rgba(0,0,0,.1) !important; }
+    body.sa-mode .modal-footer { border-top: 1px solid rgba(255,255,255,.08) !important; background: rgba(0,0,0,.15) !important; }
+    body.sa-mode .modal-title { color: #f1f5f9 !important; }
+    body.sa-mode .modal-close { color: #64748b !important; background: transparent !important; border: none !important; }
+    body.sa-mode .modal-close:hover { color: #e2e8f0 !important; background: rgba(255,255,255,.08) !important; }
+    body.sa-mode .log-json { background: rgba(0,0,0,.3) !important; border-color: rgba(255,255,255,.1) !important; color: #94a3b8 !important; }
+    body.sa-mode .log-detail-row label { color: #475569 !important; }
+    body.sa-mode .log-detail-row span { color: #e2e8f0 !important; }
+    body.sa-mode .log-section-title { color: #475569 !important; border-color: rgba(255,255,255,.07) !important; }
+    body.sa-mode .modal .btn-outline { background: rgba(255,255,255,.07) !important; color: #94a3b8 !important; border-color: rgba(255,255,255,.15) !important; border-radius: 9px !important; }
   </style>
 </head>
 <body>
@@ -117,25 +209,29 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (Auth.isSuperAdmin()) {
     // Super admin: header próprio, sem sidebar de empresa
+    document.body.classList.add('sa-mode');
     document.getElementById('sidebarMount').remove();
     const main = document.getElementById('main');
     main.style.cssText = 'margin-left:0;padding-top:0';
     main.insertAdjacentHTML('afterbegin', `
-      <header style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 50%,#3b82f6 100%);
+      <header style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 45%,#2563eb 100%);
         color:#fff;padding:16px 28px;display:flex;align-items:center;
         justify-content:space-between;gap:12px;position:sticky;top:0;z-index:100;
-        box-shadow:0 2px 12px rgba(0,0,0,.25)">
+        box-shadow:0 2px 24px rgba(37,99,235,.4);border-bottom:1px solid rgba(255,255,255,.08)">
         <div style="display:flex;align-items:center;gap:12px">
-          <img src="/img/logo-icon.png" style="width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.15);padding:4px" />
+          <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,rgba(255,255,255,.2),rgba(255,255,255,.05));border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.3);font-size:1.1rem">
+            <i class="fas fa-shield-alt" style="color:#fca5a5"></i>
+          </div>
           <div>
-            <div style="font-weight:700;font-size:1rem">Logs de Auditoria — Todas as Empresas</div>
-            <div style="font-size:.72rem;opacity:.65">Super Admin</div>
+            <div style="font-weight:800;font-size:1.05rem;line-height:1.2">Logs de Auditoria</div>
+            <div style="font-size:.7rem;opacity:.55;margin-top:2px">Super Admin · Todas as empresas</div>
           </div>
         </div>
-        <a href="admin.html" style="background:rgba(255,255,255,.12);color:#fff;
-          border:1px solid rgba(255,255,255,.3);padding:7px 16px;border-radius:8px;
-          font-size:.82rem;font-weight:600;text-decoration:none;display:flex;align-items:center;gap:6px">
-          <i class="fas fa-arrow-left"></i> Painel Admin
+        <a href="admin.html" style="background:rgba(255,255,255,.1);color:#fff;
+          border:1px solid rgba(255,255,255,.2);padding:8px 14px;border-radius:8px;
+          font-size:.82rem;font-weight:600;text-decoration:none;display:flex;align-items:center;gap:6px;
+          transition:background .15s">
+          <i class="fas fa-arrow-left"></i> <span>Painel Admin</span>
         </a>
       </header>`);
     document.getElementById('topbarMount').remove();
