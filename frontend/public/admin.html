@@ -350,83 +350,73 @@
   </div>
 
   <!-- ── App Mobile ── -->
-  <div id="secaoAppMobile" style="margin-top:40px;scroll-margin-top:80px">
-    <div style="display:flex;align-items:center;margin-bottom:16px">
+  <div id="secaoAppMobile" style="margin-top:40px;scroll-margin-top:80px;max-width:740px">
+    <div style="display:flex;align-items:center;margin-bottom:14px">
       <h2 style="font-size:1rem;font-weight:700;margin:0;color:#f1f5f9">
-        <i class="fas fa-mobile-screen-button" style="color:#3b82f6;margin-right:8px"></i>App Mobile — Versões
+        <i class="fas fa-mobile-screen-button" style="color:#3b82f6;margin-right:8px"></i>App Mobile
       </h2>
     </div>
 
-    <!-- Duas colunas: info à esquerda, formulário à direita -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;align-items:start">
+    <!-- Card único: hero + form + histórico -->
+    <div class="card" style="overflow:hidden">
 
-      <!-- Coluna esquerda: versão atual + changelog -->
-      <div class="card" style="overflow:hidden">
-        <div style="padding:16px 18px;background:linear-gradient(135deg,#1e3a5f,#2563eb);display:flex;align-items:center;gap:14px">
-          <div style="width:46px;height:46px;border-radius:12px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">
-            <i class="fas fa-mobile-screen-button" style="color:#fff"></i>
-          </div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:.95rem;font-weight:700;color:#fff">App Mobile — Android</div>
-            <div style="font-size:.78rem;color:rgba(255,255,255,.7);margin-top:3px" id="saAppVersaoAtual">Sem versão publicada</div>
-          </div>
-          <a id="saAppBtnBaixar" href="#" target="_blank" rel="noopener"
-            style="background:#fff;color:#1e3a5f;border-radius:7px;padding:8px 14px;font-weight:700;display:inline-flex;align-items:center;gap:6px;text-decoration:none;white-space:nowrap;font-size:.78rem;flex-shrink:0">
-            <i class="fas fa-download"></i> Baixar APK
-          </a>
+      <!-- Hero: versão atual -->
+      <div style="padding:16px 20px;background:linear-gradient(135deg,#1e3a5f,#2563eb);display:flex;align-items:center;gap:14px">
+        <div style="width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">
+          <i class="fas fa-mobile-screen-button" style="color:#fff"></i>
         </div>
-        <div style="padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:7px">
-          <i class="fas fa-file-alt" style="color:#3b82f6;font-size:.85rem"></i>
-          <span style="font-weight:600;color:#94a3b8;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em">Novidades desta versão</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:.9rem;font-weight:700;color:#fff">App Mobile — Android</div>
+          <div style="font-size:.75rem;color:rgba(255,255,255,.65);margin-top:2px" id="saAppVersaoAtual">Sem versão publicada</div>
         </div>
-        <div style="padding:14px 18px">
-          <div class="sa-app-changelog" id="saAppChangelog">—</div>
+        <a id="saAppBtnBaixar" href="#" target="_blank" rel="noopener"
+          style="background:#fff;color:#1e3a5f;border-radius:7px;padding:7px 14px;font-weight:700;display:inline-flex;align-items:center;gap:6px;text-decoration:none;white-space:nowrap;font-size:.78rem;flex-shrink:0">
+          <i class="fas fa-download"></i> Baixar APK
+        </a>
+      </div>
+
+      <!-- Publicar nova versão -->
+      <div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.07)">
+        <div style="font-size:.78rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px">
+          <i class="fas fa-cloud-upload-alt" style="color:#16a34a;margin-right:6px"></i>Publicar nova versão
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+          <div>
+            <label class="form-label">Versão</label>
+            <input class="form-control" id="saNovaVersao" placeholder="1.4.0" style="font-size:.83rem" />
+          </div>
+          <div>
+            <label class="form-label">Plataforma</label>
+            <select class="form-control" id="saNovaPlataforma" style="font-size:.83rem">
+              <option value="android">Android</option>
+              <option value="ios">iOS</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:flex-end">
+            <button class="btn btn-primary" id="saBtnPublicar"
+              style="background:#16a34a;border-color:#16a34a;width:100%;justify-content:center;font-size:.83rem">
+              <i class="fas fa-paper-plane"></i> Publicar
+            </button>
+          </div>
+        </div>
+        <div style="margin-bottom:10px">
+          <label class="form-label">Link do APK (GitHub Release)</label>
+          <input class="form-control" id="saNovaUrl" placeholder="https://github.com/.../releases/download/..." style="font-size:.83rem" />
+        </div>
+        <div>
+          <label class="form-label">Changelog</label>
+          <textarea class="form-control" id="saNovoChangelog" rows="3" placeholder="O que mudou nessa versão..." style="font-size:.83rem"></textarea>
         </div>
       </div>
 
-      <!-- Coluna direita: publicar nova versão -->
-      <div class="card">
-        <div style="padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:7px">
-          <i class="fas fa-cloud-upload-alt" style="color:#16a34a;font-size:.85rem"></i>
-          <span style="font-weight:600;color:#94a3b8;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em">Publicar nova versão</span>
+      <!-- Histórico de versões -->
+      <div style="padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.07)">
+        <div style="font-size:.78rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em">
+          <i class="fas fa-history" style="color:#64748b;margin-right:6px"></i>Histórico de versões
         </div>
-        <div style="padding:16px 18px">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-            <div class="form-group">
-              <label class="form-label">Versão</label>
-              <input class="form-control" id="saNovaVersao" placeholder="ex: 1.4.0" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Plataforma</label>
-              <select class="form-control" id="saNovaPlataforma">
-                <option value="android">Android</option>
-                <option value="ios">iOS</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-group" style="margin-bottom:12px">
-            <label class="form-label">Link do APK/IPA (GitHub Release)</label>
-            <input class="form-control" id="saNovaUrl" placeholder="https://github.com/.../releases/download/..." />
-          </div>
-          <div class="form-group" style="margin-bottom:16px">
-            <label class="form-label">Changelog</label>
-            <textarea class="form-control" id="saNovoChangelog" rows="5" placeholder="O que mudou nessa versão..."></textarea>
-          </div>
-          <button class="btn btn-primary" id="saBtnPublicar"
-            style="background:#16a34a;border-color:#16a34a;width:100%;justify-content:center">
-            <i class="fas fa-paper-plane"></i> Publicar versão
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Histórico — largura total -->
-    <div class="card">
-      <div style="padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:7px">
-        <i class="fas fa-history" style="color:#64748b;font-size:.85rem"></i>
-        <span style="font-weight:600;color:#94a3b8;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em">Histórico de versões</span>
       </div>
       <div id="saAppHistorico"><div class="page-loader"><span class="spinner"></span></div></div>
+
     </div>
   </div>
 </div>
