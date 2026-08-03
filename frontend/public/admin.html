@@ -351,69 +351,80 @@
 
   <!-- ── App Mobile ── -->
   <div id="secaoAppMobile" style="margin-top:40px;scroll-margin-top:80px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+    <div style="display:flex;align-items:center;margin-bottom:16px">
       <h2 style="font-size:1rem;font-weight:700;margin:0;color:#f1f5f9">
         <i class="fas fa-mobile-screen-button" style="color:#3b82f6;margin-right:8px"></i>App Mobile — Versões
       </h2>
     </div>
 
-    <div class="sa-app-hero" id="saHeroApp" style="display:none">
-      <div class="sa-app-hero-icon"><i class="fas fa-mobile-screen-button"></i></div>
-      <div style="flex:1;min-width:200px">
-        <div style="font-size:1.05rem;font-weight:700">App Mobile — Android</div>
-        <div style="font-size:.85rem;opacity:.8;margin-top:4px" id="saAppVersaoAtual">Carregando...</div>
-      </div>
-      <a id="saAppBtnBaixar" href="#" target="_blank" rel="noopener"
-        style="background:#fff;color:#1e3a5f;border-radius:8px;padding:10px 20px;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none;white-space:nowrap;font-size:.88rem">
-        <i class="fas fa-download"></i> Baixar APK
-      </a>
-    </div>
+    <!-- Duas colunas: info à esquerda, formulário à direita -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;align-items:start">
 
-    <div class="card" style="margin-bottom:16px">
-      <div style="padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:8px">
-        <i class="fas fa-file-alt" style="color:#3b82f6"></i>
-        <span style="font-weight:600;color:#f1f5f9;font-size:.88rem">Novidades da versão atual</span>
-      </div>
-      <div style="padding:14px 18px"><div class="sa-app-changelog" id="saAppChangelog">—</div></div>
-    </div>
-
-    <div class="card" style="margin-bottom:16px">
-      <div style="padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:8px">
-        <i class="fas fa-cloud-upload-alt" style="color:#16a34a"></i>
-        <span style="font-weight:600;color:#f1f5f9;font-size:.88rem">Publicar nova versão</span>
-      </div>
-      <div style="padding:18px 20px">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-          <div class="form-group">
-            <label class="form-label">Versão</label>
-            <input class="form-control" id="saNovaVersao" placeholder="ex: 1.4.0" />
+      <!-- Coluna esquerda: versão atual + changelog -->
+      <div class="card" style="overflow:hidden">
+        <div style="padding:16px 18px;background:linear-gradient(135deg,#1e3a5f,#2563eb);display:flex;align-items:center;gap:14px">
+          <div style="width:46px;height:46px;border-radius:12px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">
+            <i class="fas fa-mobile-screen-button" style="color:#fff"></i>
           </div>
-          <div class="form-group">
-            <label class="form-label">Plataforma</label>
-            <select class="form-control" id="saNovaPlataforma">
-              <option value="android">Android</option>
-              <option value="ios">iOS</option>
-            </select>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:.95rem;font-weight:700;color:#fff">App Mobile — Android</div>
+            <div style="font-size:.78rem;color:rgba(255,255,255,.7);margin-top:3px" id="saAppVersaoAtual">Sem versão publicada</div>
           </div>
+          <a id="saAppBtnBaixar" href="#" target="_blank" rel="noopener"
+            style="background:#fff;color:#1e3a5f;border-radius:7px;padding:8px 14px;font-weight:700;display:inline-flex;align-items:center;gap:6px;text-decoration:none;white-space:nowrap;font-size:.78rem;flex-shrink:0">
+            <i class="fas fa-download"></i> Baixar APK
+          </a>
         </div>
-        <div class="form-group" style="margin-bottom:14px">
-          <label class="form-label">Link do APK/IPA (GitHub Release)</label>
-          <input class="form-control" id="saNovaUrl" placeholder="https://github.com/.../releases/download/..." />
+        <div style="padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:7px">
+          <i class="fas fa-file-alt" style="color:#3b82f6;font-size:.85rem"></i>
+          <span style="font-weight:600;color:#94a3b8;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em">Novidades desta versão</span>
         </div>
-        <div class="form-group" style="margin-bottom:18px">
-          <label class="form-label">Changelog</label>
-          <textarea class="form-control" id="saNovoChangelog" rows="4" placeholder="O que mudou nessa versão..."></textarea>
+        <div style="padding:14px 18px">
+          <div class="sa-app-changelog" id="saAppChangelog">—</div>
         </div>
-        <button class="btn btn-primary" id="saBtnPublicar" style="background:#16a34a;border-color:#16a34a">
-          <i class="fas fa-paper-plane"></i> Publicar versão
-        </button>
+      </div>
+
+      <!-- Coluna direita: publicar nova versão -->
+      <div class="card">
+        <div style="padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:7px">
+          <i class="fas fa-cloud-upload-alt" style="color:#16a34a;font-size:.85rem"></i>
+          <span style="font-weight:600;color:#94a3b8;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em">Publicar nova versão</span>
+        </div>
+        <div style="padding:16px 18px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div class="form-group">
+              <label class="form-label">Versão</label>
+              <input class="form-control" id="saNovaVersao" placeholder="ex: 1.4.0" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Plataforma</label>
+              <select class="form-control" id="saNovaPlataforma">
+                <option value="android">Android</option>
+                <option value="ios">iOS</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:12px">
+            <label class="form-label">Link do APK/IPA (GitHub Release)</label>
+            <input class="form-control" id="saNovaUrl" placeholder="https://github.com/.../releases/download/..." />
+          </div>
+          <div class="form-group" style="margin-bottom:16px">
+            <label class="form-label">Changelog</label>
+            <textarea class="form-control" id="saNovoChangelog" rows="5" placeholder="O que mudou nessa versão..."></textarea>
+          </div>
+          <button class="btn btn-primary" id="saBtnPublicar"
+            style="background:#16a34a;border-color:#16a34a;width:100%;justify-content:center">
+            <i class="fas fa-paper-plane"></i> Publicar versão
+          </button>
+        </div>
       </div>
     </div>
 
+    <!-- Histórico — largura total -->
     <div class="card">
-      <div style="padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:8px">
-        <i class="fas fa-history" style="color:#64748b"></i>
-        <span style="font-weight:600;color:#f1f5f9;font-size:.88rem">Histórico de versões</span>
+      <div style="padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:7px">
+        <i class="fas fa-history" style="color:#64748b;font-size:.85rem"></i>
+        <span style="font-weight:600;color:#94a3b8;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em">Histórico de versões</span>
       </div>
       <div id="saAppHistorico"><div class="page-loader"><span class="spinner"></span></div></div>
     </div>
