@@ -189,6 +189,24 @@
     .page-loader { display: flex; justify-content: center; padding: 32px; }
     .sa-banner { background: rgba(37,99,235,.15); border-bottom: 1px solid rgba(37,99,235,.3); color: #93c5fd; padding: 8px 20px; font-size: .82rem; display: flex; align-items: center; justify-content: center; gap: 12px; }
 
+    /* ── App Mobile section ── */
+    .sa-app-hero {
+      display: flex; align-items: center; gap: 24px; padding: 24px 28px;
+      background: linear-gradient(135deg, #1e3a5f, #3b82f6); border-radius: 14px;
+      color: #fff; margin-bottom: 16px; flex-wrap: wrap;
+    }
+    .sa-app-hero-icon {
+      width: 56px; height: 56px; border-radius: 14px; background: rgba(255,255,255,.15);
+      display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;
+    }
+    .sa-app-changelog {
+      background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 8px;
+      padding: 14px 16px; white-space: pre-wrap; font-size: .85rem; line-height: 1.6; color: #cbd5e1;
+    }
+    .sa-app-history-item { border-bottom: 1px solid rgba(255,255,255,.07); padding: 14px 18px; }
+    .sa-app-history-item:last-child { border-bottom: none; }
+    .sa-app-history-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+
     /* ── Mobile ── */
     @media (max-width: 640px) {
       .sa-header { padding: 12px 16px; }
@@ -219,6 +237,10 @@
       style="background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.3)">
       <i class="fas fa-plus"></i> Nova Empresa
     </button>
+    <a href="#secaoAppMobile" class="btn btn-outline"
+      style="background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.2)">
+      <i class="fas fa-mobile-screen-button"></i> App Mobile
+    </a>
     <a href="logs.html" class="btn btn-outline"
       style="background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.2)">
       <i class="fas fa-shield-alt"></i> Logs
@@ -325,6 +347,76 @@
 
   <div id="listaEmpresas">
     <div class="page-loader"><span class="spinner"></span></div>
+  </div>
+
+  <!-- ── App Mobile ── -->
+  <div id="secaoAppMobile" style="margin-top:40px;scroll-margin-top:80px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+      <h2 style="font-size:1rem;font-weight:700;margin:0;color:#f1f5f9">
+        <i class="fas fa-mobile-screen-button" style="color:#3b82f6;margin-right:8px"></i>App Mobile — Versões
+      </h2>
+    </div>
+
+    <div class="sa-app-hero" id="saHeroApp" style="display:none">
+      <div class="sa-app-hero-icon"><i class="fas fa-mobile-screen-button"></i></div>
+      <div style="flex:1;min-width:200px">
+        <div style="font-size:1.05rem;font-weight:700">App Mobile — Android</div>
+        <div style="font-size:.85rem;opacity:.8;margin-top:4px" id="saAppVersaoAtual">Carregando...</div>
+      </div>
+      <a id="saAppBtnBaixar" href="#" target="_blank" rel="noopener"
+        style="background:#fff;color:#1e3a5f;border-radius:8px;padding:10px 20px;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none;white-space:nowrap;font-size:.88rem">
+        <i class="fas fa-download"></i> Baixar APK
+      </a>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div style="padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:8px">
+        <i class="fas fa-file-alt" style="color:#3b82f6"></i>
+        <span style="font-weight:600;color:#f1f5f9;font-size:.88rem">Novidades da versão atual</span>
+      </div>
+      <div style="padding:14px 18px"><div class="sa-app-changelog" id="saAppChangelog">—</div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div style="padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:8px">
+        <i class="fas fa-cloud-upload-alt" style="color:#16a34a"></i>
+        <span style="font-weight:600;color:#f1f5f9;font-size:.88rem">Publicar nova versão</span>
+      </div>
+      <div style="padding:18px 20px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div class="form-group">
+            <label class="form-label">Versão</label>
+            <input class="form-control" id="saNovaVersao" placeholder="ex: 1.4.0" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Plataforma</label>
+            <select class="form-control" id="saNovaPlataforma">
+              <option value="android">Android</option>
+              <option value="ios">iOS</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:14px">
+          <label class="form-label">Link do APK/IPA (GitHub Release)</label>
+          <input class="form-control" id="saNovaUrl" placeholder="https://github.com/.../releases/download/..." />
+        </div>
+        <div class="form-group" style="margin-bottom:18px">
+          <label class="form-label">Changelog</label>
+          <textarea class="form-control" id="saNovoChangelog" rows="4" placeholder="O que mudou nessa versão..."></textarea>
+        </div>
+        <button class="btn btn-primary" id="saBtnPublicar" style="background:#16a34a;border-color:#16a34a">
+          <i class="fas fa-paper-plane"></i> Publicar versão
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:8px">
+        <i class="fas fa-history" style="color:#64748b"></i>
+        <span style="font-weight:600;color:#f1f5f9;font-size:.88rem">Histórico de versões</span>
+      </div>
+      <div id="saAppHistorico"><div class="page-loader"><span class="spinner"></span></div></div>
+    </div>
   </div>
 </div>
 
@@ -1314,6 +1406,95 @@ document.getElementById('btnSalvarSuperAdmin').addEventListener('click', async (
 });
 
 carregarSuperAdmins();
+
+// ── App Mobile ──
+let _appVersoes = [];
+
+async function carregarAppVersoes() {
+  try {
+    const data = await API.get('/app-versoes', { plataforma: 'android' });
+    _appVersoes = data.versoes || [];
+    renderSaAppAtual();
+    renderSaAppHistorico();
+  } catch (err) {
+    toast(err.data?.erro || 'Erro ao carregar versões do app.', 'error');
+  }
+}
+
+function renderSaAppAtual() {
+  const atual = _appVersoes[0];
+  const hero  = document.getElementById('saHeroApp');
+  if (!atual) {
+    hero.style.display = 'none';
+    document.getElementById('saAppChangelog').textContent = 'Nenhuma versão publicada.';
+    return;
+  }
+  hero.style.display = 'flex';
+  document.getElementById('saAppVersaoAtual').textContent =
+    `Versão ${atual.versao} · publicada em ${fmtData(atual.criado_em)}`;
+  document.getElementById('saAppBtnBaixar').href = atual.apk_url;
+  document.getElementById('saAppChangelog').textContent = atual.changelog || 'Sem changelog.';
+}
+
+function renderSaAppHistorico() {
+  const el = document.getElementById('saAppHistorico');
+  if (!_appVersoes.length) {
+    el.innerHTML = '<div style="padding:16px;color:#64748b;text-align:center">Nenhuma versão publicada.</div>';
+    return;
+  }
+  el.innerHTML = _appVersoes.map(v => `
+    <div class="sa-app-history-item">
+      <div class="sa-app-history-header">
+        <div>
+          <strong style="color:#f1f5f9">v${v.versao}</strong>
+          <span style="margin-left:8px;background:rgba(255,255,255,.08);color:#94a3b8;padding:2px 8px;border-radius:8px;font-size:.7rem;display:inline-block">${v.plataforma}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:.75rem;color:#64748b">${fmtDataHora(v.criado_em)} · ${v.publicado_por_nome || 'Sistema'}</span>
+          <a class="btn btn-xs btn-outline" href="${v.apk_url}" target="_blank" rel="noopener"
+            style="color:#60a5fa;border-color:rgba(96,165,250,.4);background:rgba(96,165,250,.08)">
+            <i class="fas fa-download"></i>
+          </a>
+          <button class="btn btn-xs btn-outline"
+            style="color:#fca5a5;border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.08)"
+            onclick="excluirAppVersao(${v.id})"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+      ${v.changelog ? `<div style="font-size:.8rem;color:#64748b;margin-top:8px;white-space:pre-line">${v.changelog}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+async function excluirAppVersao(id) {
+  const ok = await confirmDialog('Remover esta versão do histórico?');
+  if (!ok) return;
+  try {
+    await API.delete(`/app-versoes/${id}`);
+    toast('Versão removida.', 'success');
+    await carregarAppVersoes();
+  } catch (err) { toast(err.data?.erro || 'Erro ao remover.', 'error'); }
+}
+
+document.getElementById('saBtnPublicar').addEventListener('click', async () => {
+  const versao     = document.getElementById('saNovaVersao').value.trim();
+  const plataforma = document.getElementById('saNovaPlataforma').value;
+  const apk_url    = document.getElementById('saNovaUrl').value.trim();
+  const changelog  = document.getElementById('saNovoChangelog').value.trim();
+  if (!versao || !apk_url) { toast('Preencha versão e link do arquivo.', 'warning'); return; }
+  const btn = document.getElementById('saBtnPublicar');
+  btn.disabled = true;
+  try {
+    await API.post('/app-versoes', { versao, plataforma, apk_url, changelog });
+    toast('Versão publicada!', 'success');
+    document.getElementById('saNovaVersao').value   = '';
+    document.getElementById('saNovaUrl').value      = '';
+    document.getElementById('saNovoChangelog').value = '';
+    await carregarAppVersoes();
+  } catch (err) { toast(err.data?.erro || 'Erro ao publicar.', 'error'); }
+  finally { btn.disabled = false; }
+});
+
+carregarAppVersoes();
 </script>
 </body>
 </html>
