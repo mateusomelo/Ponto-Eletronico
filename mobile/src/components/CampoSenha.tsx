@@ -31,9 +31,9 @@ export default CampoSenha;
 
 const styles = StyleSheet.create({
   wrap: {
-    flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#e2e8f0',
-    borderRadius: 8, paddingRight: 4,
+    flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#1e3a5f',
+    borderRadius: 8, paddingRight: 4, backgroundColor: '#162032',
   },
-  input: { flex: 1, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, color: '#1e293b' },
+  input: { flex: 1, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, color: '#f1f5f9' },
   olhoBtn: { padding: 6 },
 });

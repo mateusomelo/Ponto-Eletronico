@@ -72,16 +72,16 @@ export default function MaisMenuScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f0f4f8' },
-  title: { fontSize: 18, fontWeight: '700', color: '#1e293b' },
-  subtitle: { fontSize: 13, color: '#64748b', marginBottom: 12 },
-  groupLabel: { fontSize: 11, fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', marginTop: 16, marginBottom: 8, marginLeft: 4 },
+  container: { flex: 1, backgroundColor: '#0f172a' },
+  title: { fontSize: 18, fontWeight: '700', color: '#f1f5f9' },
+  subtitle: { fontSize: 13, color: '#94a3b8', marginBottom: 12 },
+  groupLabel: { fontSize: 11, fontWeight: '700', color: '#64748b', textTransform: 'uppercase', marginTop: 16, marginBottom: 8, marginLeft: 4 },
   item: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    backgroundColor: '#fff', borderRadius: 10, padding: 16, marginBottom: 8,
+    backgroundColor: '#1e293b', borderRadius: 10, padding: 16, marginBottom: 8,
   },
   itemIcone: { width: 22 },
-  itemText: { flex: 1, fontSize: 14, fontWeight: '600', color: '#1e293b' },
+  itemText: { flex: 1, fontSize: 14, fontWeight: '600', color: '#f1f5f9' },
   logoutBtn: { marginTop: 20, alignItems: 'center', paddingVertical: 14, flexDirection: 'row', justifyContent: 'center' },
   logoutText: { color: '#ef4444', fontWeight: '700', fontSize: 14 },
 });

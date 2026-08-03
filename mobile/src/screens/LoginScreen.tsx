@@ -81,20 +81,20 @@ export default function LoginScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f0f4f8', justifyContent: 'center', padding: 24 },
+  container: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', padding: 24 },
   logoBox: { alignItems: 'center', marginBottom: 32 },
   logoImg: { width: 220, height: 56 },
-  form: { backgroundColor: '#fff', borderRadius: 16, padding: 24 },
-  label: { fontSize: 13, color: '#475569', marginBottom: 6, marginTop: 12 },
+  form: { backgroundColor: '#1e293b', borderRadius: 16, padding: 24, borderWidth: 1, borderColor: '#1e3a5f' },
+  label: { fontSize: 13, color: '#94a3b8', marginBottom: 6, marginTop: 12 },
   input: {
-    borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 10,
-    paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: '#1e293b',
+    borderWidth: 1, borderColor: '#1e3a5f', borderRadius: 10, backgroundColor: '#162032',
+    paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: '#f1f5f9',
   },
-  erro: { color: '#ef4444', marginTop: 12, fontSize: 13 },
+  erro: { color: '#fca5a5', marginTop: 12, fontSize: 13 },
   btn: {
-    backgroundColor: '#3b82f6', borderRadius: 10, paddingVertical: 14,
+    backgroundColor: '#2563eb', borderRadius: 10, paddingVertical: 14,
     alignItems: 'center', marginTop: 20,
   },
   btnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
-  link: { color: '#3b82f6', textAlign: 'center', marginTop: 18, fontSize: 13 },
+  link: { color: '#60a5fa', textAlign: 'center', marginTop: 18, fontSize: 13 },
 });

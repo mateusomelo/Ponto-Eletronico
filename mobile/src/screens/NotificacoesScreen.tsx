@@ -97,21 +97,21 @@ export default function NotificacoesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f0f4f8' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f0f4f8' },
+  container: { flex: 1, backgroundColor: '#0f172a' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0f172a' },
   marcarTodas: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-end', marginRight: 16, marginTop: 12 },
   marcarTodasText: { color: '#3b82f6', fontSize: 12, fontWeight: '600' },
   emptyBox: { alignItems: 'center', marginTop: 60 },
-  empty: { color: '#94a3b8', fontSize: 13, marginTop: 10 },
+  empty: { color: '#64748b', fontSize: 13, marginTop: 10 },
   card: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 12,
-    backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 10,
+    backgroundColor: '#1e293b', borderRadius: 12, padding: 14, marginBottom: 10,
   },
-  cardUnread: { backgroundColor: '#eff6ff', borderWidth: 1, borderColor: '#bfdbfe' },
+  cardUnread: { backgroundColor: 'rgba(37,99,235,.18)', borderWidth: 1, borderColor: 'rgba(37,99,235,.4)' },
   icon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   body: { flex: 1 },
-  titulo: { fontSize: 13.5, fontWeight: '700', color: '#1e293b' },
-  msg: { fontSize: 12.5, color: '#64748b', marginTop: 2 },
-  data: { fontSize: 10.5, color: '#94a3b8', marginTop: 6 },
+  titulo: { fontSize: 13.5, fontWeight: '700', color: '#f1f5f9' },
+  msg: { fontSize: 12.5, color: '#94a3b8', marginTop: 2 },
+  data: { fontSize: 10.5, color: '#64748b', marginTop: 6 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#3b82f6', marginTop: 5 },
 });

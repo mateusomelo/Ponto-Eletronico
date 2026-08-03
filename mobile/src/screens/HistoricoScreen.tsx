@@ -71,18 +71,18 @@ export default function HistoricoScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f0f4f8' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f0f4f8' },
-  empty: { textAlign: 'center', color: '#94a3b8', marginTop: 40, fontSize: 13 },
+  container: { flex: 1, backgroundColor: '#0f172a' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0f172a' },
+  empty: { textAlign: 'center', color: '#64748b', marginTop: 40, fontSize: 13 },
   item: {
-    flexDirection: 'row', backgroundColor: '#fff', borderRadius: 12,
+    flexDirection: 'row', backgroundColor: '#1e293b', borderRadius: 12,
     padding: 14, marginBottom: 10, alignItems: 'flex-start',
   },
   dot: { width: 10, height: 10, borderRadius: 5, marginTop: 5, marginRight: 12 },
-  foto: { width: 44, height: 44, borderRadius: 22, marginRight: 12, backgroundColor: '#e2e8f0' },
+  foto: { width: 44, height: 44, borderRadius: 22, marginRight: 12, backgroundColor: '#1e3a5f' },
   dotEntrada: { backgroundColor: '#10b981' },
   dotSaida: { backgroundColor: '#ef4444' },
-  itemTipo: { fontWeight: '700', fontSize: 14, color: '#1e293b' },
-  itemData: { fontSize: 12, color: '#64748b', marginTop: 2 },
-  itemEndereco: { fontSize: 11, color: '#94a3b8', marginTop: 4 },
+  itemTipo: { fontWeight: '700', fontSize: 14, color: '#f1f5f9' },
+  itemData: { fontSize: 12, color: '#94a3b8', marginTop: 2 },
+  itemEndereco: { fontSize: 11, color: '#64748b', marginTop: 4 },
 });

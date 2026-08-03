@@ -61,18 +61,18 @@ export default function RelatoriosScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f0f4f8' },
-  title: { fontSize: 18, fontWeight: '700', color: '#1e293b', marginBottom: 16 },
+  container: { flex: 1, backgroundColor: '#0f172a' },
+  title: { fontSize: 18, fontWeight: '700', color: '#f1f5f9', marginBottom: 16 },
   btnRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
   btn: { flex: 1, borderRadius: 10, paddingVertical: 14, alignItems: 'center' },
   btnPdf: { backgroundColor: '#ef4444' },
   btnExcel: { backgroundColor: '#10b981' },
   btnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
-  sectionTitle: { fontSize: 14, fontWeight: '700', color: '#1e293b', marginBottom: 8 },
-  empty: { color: '#94a3b8', fontSize: 13, textAlign: 'center', marginTop: 20 },
-  card: { backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 10 },
-  cardNome: { fontWeight: '700', fontSize: 14, color: '#1e293b' },
-  cardCargo: { fontSize: 12, color: '#64748b', marginBottom: 8 },
+  sectionTitle: { fontSize: 14, fontWeight: '700', color: '#f1f5f9', marginBottom: 8 },
+  empty: { color: '#64748b', fontSize: 13, textAlign: 'center', marginTop: 20 },
+  card: { backgroundColor: '#1e293b', borderRadius: 12, padding: 14, marginBottom: 10 },
+  cardNome: { fontWeight: '700', fontSize: 14, color: '#f1f5f9' },
+  cardCargo: { fontSize: 12, color: '#94a3b8', marginBottom: 8 },
   cardStats: { flexDirection: 'row', gap: 14 },
-  cardStat: { fontSize: 11, color: '#475569' },
+  cardStat: { fontSize: 11, color: '#94a3b8' },
 });

@@ -81,19 +81,19 @@ export default function ConfiguracoesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f0f4f8' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f0f4f8' },
-  title: { fontSize: 18, fontWeight: '700', color: '#1e293b', marginBottom: 16 },
+  container: { flex: 1, backgroundColor: '#0f172a' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0f172a' },
+  title: { fontSize: 18, fontWeight: '700', color: '#f1f5f9', marginBottom: 16 },
   row: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#1e293b',
     borderRadius: 10, padding: 12, marginBottom: 8,
   },
-  label: { fontSize: 13, fontWeight: '600', color: '#1e293b' },
-  desc: { fontSize: 11, color: '#94a3b8', marginTop: 2 },
+  label: { fontSize: 13, fontWeight: '600', color: '#f1f5f9' },
+  desc: { fontSize: 11, color: '#64748b', marginTop: 2 },
   input: {
-    borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 8,
+    borderWidth: 1, borderColor: '#1e3a5f', borderRadius: 8,
     paddingHorizontal: 10, paddingVertical: 6, minWidth: 90, textAlign: 'right', fontSize: 13,
-    color: '#1e293b',
+    color: '#f1f5f9', backgroundColor: '#162032',
   },
   btn: { backgroundColor: '#3b82f6', borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginTop: 16 },
   btnText: { color: '#fff', fontWeight: '700', fontSize: 15 },

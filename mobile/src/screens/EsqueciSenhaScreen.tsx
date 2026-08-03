@@ -54,13 +54,13 @@ export default function EsqueciSenhaScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f0f4f8', justifyContent: 'center', padding: 24 },
-  form: { backgroundColor: '#fff', borderRadius: 16, padding: 24 },
-  title: { fontSize: 18, fontWeight: '700', color: '#1e293b', marginBottom: 8 },
-  subtitle: { fontSize: 13, color: '#64748b', marginBottom: 20, lineHeight: 19 },
+  container: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', padding: 24 },
+  form: { backgroundColor: '#1e293b', borderRadius: 16, padding: 24 },
+  title: { fontSize: 18, fontWeight: '700', color: '#f1f5f9', marginBottom: 8 },
+  subtitle: { fontSize: 13, color: '#94a3b8', marginBottom: 20, lineHeight: 19 },
   input: {
-    borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 10,
-    paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: '#1e293b',
+    borderWidth: 1, borderColor: '#1e3a5f', borderRadius: 10,
+    paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: '#f1f5f9', backgroundColor: '#162032',
   },
   msg: { color: '#10b981', marginTop: 14, fontSize: 13 },
   btn: {

@@ -119,25 +119,26 @@ export default function UsuariosScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f0f4f8' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f0f4f8' },
+  container: { flex: 1, backgroundColor: '#0f172a' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0f172a' },
   btnNovo: { backgroundColor: '#3b82f6', margin: 16, marginBottom: 0, borderRadius: 10, paddingVertical: 12, alignItems: 'center' },
   btnNovoText: { color: '#fff', fontWeight: '700', fontSize: 14 },
   search: {
-    margin: 16, marginBottom: 0, backgroundColor: '#fff', borderRadius: 10,
-    paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#e2e8f0',
+    margin: 16, marginBottom: 0, backgroundColor: '#162032', borderRadius: 10,
+    paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#1e3a5f',
+    color: '#f1f5f9',
   },
-  empty: { color: '#94a3b8', fontSize: 13, textAlign: 'center', marginTop: 20 },
+  empty: { color: '#64748b', fontSize: 13, textAlign: 'center', marginTop: 20 },
   card: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#1e293b',
     borderRadius: 12, padding: 14, marginBottom: 10,
   },
-  nome: { fontWeight: '700', fontSize: 14, color: '#1e293b' },
-  email: { fontSize: 12, color: '#64748b', marginTop: 2 },
-  cargo: { fontSize: 11, color: '#94a3b8', marginTop: 2 },
+  nome: { fontWeight: '700', fontSize: 14, color: '#f1f5f9' },
+  email: { fontSize: 12, color: '#94a3b8', marginTop: 2 },
+  cargo: { fontSize: 11, color: '#64748b', marginTop: 2 },
   badge: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 16 },
-  badgeAtivo: { backgroundColor: '#dcfce7' },
-  badgeBloqueado: { backgroundColor: '#fee2e2' },
-  badgeText: { fontSize: 11, fontWeight: '600', color: '#1e293b' },
+  badgeAtivo: { backgroundColor: 'rgba(16,185,129,.2)' },
+  badgeBloqueado: { backgroundColor: 'rgba(239,68,68,.2)' },
+  badgeText: { fontSize: 11, fontWeight: '600', color: '#f1f5f9' },
   linkExcluir: { fontSize: 11, color: '#ef4444', fontWeight: '600' },
 });

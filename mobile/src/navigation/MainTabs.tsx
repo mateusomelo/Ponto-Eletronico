@@ -51,8 +51,9 @@ export default function MainTabs() {
   return (
     <Tab.Navigator
       screenOptions={{
-        tabBarActiveTintColor: '#3b82f6',
-        tabBarInactiveTintColor: '#94a3b8',
+        tabBarActiveTintColor: '#60a5fa',
+        tabBarInactiveTintColor: '#475569',
+        tabBarStyle: { backgroundColor: '#0f172a', borderTopColor: '#1e3a5f' },
         headerRight: () => (
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <SinoNotificacoes />
