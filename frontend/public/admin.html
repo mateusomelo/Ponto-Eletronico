@@ -383,7 +383,7 @@
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
           <div>
             <label class="form-label">Versão</label>
-            <input class="form-control" id="saNovaVersao" placeholder="1.4.0" style="font-size:.83rem" />
+            <input class="form-control" id="saNovaVersao" placeholder="ex: 1.4.0" style="font-size:.83rem" />
           </div>
           <div>
             <label class="form-label">Plataforma</label>
@@ -1424,13 +1424,10 @@ async function carregarAppVersoes() {
 
 function renderSaAppAtual() {
   const atual = _appVersoes[0];
-  const hero  = document.getElementById('saHeroApp');
   if (!atual) {
-    hero.style.display = 'none';
     document.getElementById('saAppChangelog').textContent = 'Nenhuma versão publicada.';
     return;
   }
-  hero.style.display = 'flex';
   document.getElementById('saAppVersaoAtual').textContent =
     `Versão ${atual.versao} · publicada em ${fmtData(atual.criado_em)}`;
   document.getElementById('saAppBtnBaixar').href = atual.apk_url;
