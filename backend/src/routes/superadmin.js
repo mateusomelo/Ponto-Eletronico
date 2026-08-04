@@ -14,6 +14,10 @@ router.delete('/:id', ctrl.excluir);
 // Métricas financeiras e operacionais
 router.get('/metricas', ctrl.metricas);
 
+// Login activity across all companies
+router.get('/logins', ctrl.logins);
+router.get('/logins-empresas', ctrl.loginsEmpresas);
+
 // Impersonação: acessa a empresa como seu admin principal
 router.post('/impersonar/:empresaId', ctrl.impersonar);
 

@@ -250,4 +250,42 @@ async function metricas(req, res) {
   }
 }
 
-module.exports = { listar, criar, atualizar, excluir, impersonar, metricas };
+// GET /api/superadmin/logins
+async function logins(req, res) {
+  try {
+    const LogAcesso = require('../models/LogAcesso');
+    const resultado = await LogAcesso.listar({
+      pagina:     parseInt(req.query.pagina)     || 1,
+      por_pagina: parseInt(req.query.por_pagina) || 50,
+      acao:       req.query.acao || 'login',
+      company_id: null,
+    });
+    return res.json(resultado);
+  } catch (err) {
+    console.error('[SuperAdmin] logins:', err);
+    return res.status(500).json({ erro: 'Erro interno.' });
+  }
+}
+
+// GET /api/superadmin/logins-empresas
+async function loginsEmpresas(req, res) {
+  try {
+    const [rows] = await pool.query(`
+      SELECT
+        e.id, e.nome, e.status,
+        SUM(CASE WHEN l.acao = 'login.sucesso' AND l.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) AS logins_30d,
+        MAX(CASE WHEN l.acao = 'login.sucesso' THEN l.created_at END) AS ultimo_login,
+        SUM(CASE WHEN l.acao = 'login.falhou'  AND l.created_at >= DATE_SUB(NOW(), INTERVAL 7  DAY) THEN 1 ELSE 0 END) AS falhas_7d
+      FROM empresas e
+      LEFT JOIN logs_acesso l ON l.company_id = e.id
+      GROUP BY e.id, e.nome, e.status
+      ORDER BY ultimo_login DESC
+    `);
+    return res.json(rows);
+  } catch (err) {
+    console.error('[SuperAdmin] loginsEmpresas:', err);
+    return res.status(500).json({ erro: 'Erro interno.' });
+  }
+}
+
+module.exports = { listar, criar, atualizar, excluir, impersonar, metricas, logins, loginsEmpresas };
